@@ -14,7 +14,13 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
-
+    "baseUrl": ".",
+    "paths": {
+      "@app-shared/*": ["src/app/shared/*"],
+      "@app-environments/*": ["src/environments/*"],
+      "@app-features/*": ["src/app/features/*"],
+      "@app-routes/*": ["src/app/routes/*"]
+    },
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
