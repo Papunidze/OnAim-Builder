@@ -33,6 +33,7 @@ export default tseslint.config(
       import: importPlugin,
       prettier: prettierPlugin,
     },
+
     rules: {
       ...reactHooks.configs.recommended.rules,
       ...reactPlugin.configs.recommended.rules,
@@ -60,7 +61,10 @@ export default tseslint.config(
       ],
 
       "react/jsx-fragments": ["error", "syntax"],
-      "react/jsx-filename-extension": ["error", { extensions: [".tsx"] }],
+      "react/jsx-filename-extension": [
+        "error",
+        { extensions: [".tsx", ".ts"] },
+      ],
       "react/react-in-jsx-scope": "off", // for React 17+
       "react/prop-types": "off",
       "react/jsx-boolean-value": ["error", "never"],
@@ -78,7 +82,12 @@ export default tseslint.config(
       "import/no-default-export": "off",
       "import/no-duplicates": "error",
 
-      "prettier/prettier": "error",
+      "prettier/prettier": [
+        "error",
+        {
+          endOfLine: "auto",
+        },
+      ],
       "react-refresh/only-export-components": [
         "warn",
         { allowConstantExport: true },
