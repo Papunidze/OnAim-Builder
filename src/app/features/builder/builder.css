@@ -1,0 +1,16 @@
+.builder {
+  display: flex;
+  width: 100%;
+  background-color: var(--background-primary);
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+}
+
+.builder__content {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 230px 1fr 300px;
+  place-items: center;
+  align-content: center;
+}

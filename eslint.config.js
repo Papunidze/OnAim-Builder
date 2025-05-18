@@ -82,12 +82,6 @@ export default tseslint.config(
       "import/no-default-export": "off",
       "import/no-duplicates": "error",
 
-      "prettier/prettier": [
-        "error",
-        {
-          endOfLine: "auto",
-        },
-      ],
       "react-refresh/only-export-components": [
         "warn",
         { allowConstantExport: true },

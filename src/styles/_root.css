@@ -1,0 +1,81 @@
+:root {
+  --primary: #02cc59;
+  --secondary: #f9f6f2;
+  --text-color-primary: #151515;
+  --text-color-secondary: #a5a5a5;
+  --text-color-light: #fff;
+  --text-color-link: #2999f5;
+  --background-primary: #fff;
+  --background-secondary: #000;
+  --icon-size-xs: 12px;
+  --icon-size-sm: 14px;
+  --icon-size-md: 16px;
+  --icon-size-lg: 18px;
+  --icon-size-xl: 20px;
+  --icon-size-xxl: 24px;
+  --border-primary: #ebebeb;
+  --border-secondary: #c9c9c9;
+  --font-size-xs: 12px;
+  --font-size-base: 16px;
+  --font-size-sm: 14px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+  --font-size-xxl: 28px;
+  --font-size-2xl: 32px;
+  --font-size-3xl: 40px;
+  --font-size-4xl: 48px;
+  --font-size-5xl: 56px;
+  --font-size-6xl: 68px;
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --shadow-sm:
+    0px 0px 5px 0px #00000005, 0px 2px 10px 0px #0000000f,
+    0px 0px 1px 0px #0000004d;
+  --shadow-md:
+    0px 0px 15px 0px #00000008, 0px 2px 30px 0px #00000014,
+    0px 0px 1px 0px #0000004d;
+  --shadow-lg:
+    0px 0px 30px 0px #0000000a, 0px 30px 60px 0px #0000001f,
+    0px 0px 1px 0px #0000004d;
+  --shadow-xl: #0000001a 0px 4px 6px -1px, #0000000f 0px 2px 4px -1px;
+  --shadow-2xl: #0000001a 0px 10px 15px -3px, #0000000d 0px 4px 6px -2px;
+  --shadow-3xl: #00000040 0px 25px 50px -12px;
+  --shadow-inner: #0000000f 0px 2px 4px 0px inset;
+  --shadow-none: none;
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+  --spacing-2xs: 2px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+  --spacing-3xl: 32px;
+  --spacing-4xl: 40px;
+  --spacing-5xl: 64px;
+  --spacing-6xl: 80px;
+  --transition-fast: 0.2s ease-in-out;
+  --transition-medium: 0.3s ease-in-out;
+  --transition-slow: 0.5s ease-in-out;
+  --z-index-dropdown: 1000;
+  --z-index-modal: 1050;
+  --z-index-tooltip: 1100;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-xxl: 24px;
+  --radius-full: 9999px;
+  --scrollbar-track: #f1f1f1;
+  --scrollbar-thumb: #c1c1c1;
+  --scrollbar-thumb-hover: #a8a8a8;
+  --font-family-base: "Satoshi", sans-serif;
+  --topbar-height: 80px;
+}

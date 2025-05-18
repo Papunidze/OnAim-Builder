@@ -1,0 +1,94 @@
+.wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.interactive {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.interactive:hover {
+  transform: scale(1.05);
+}
+
+.interactive:active {
+  transform: scale(0.95);
+}
+
+.rounded {
+  border-radius: 50%;
+}
+
+.rounded .image {
+  border-radius: 50%;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo .image {
+  object-fit: contain;
+}
+
+.logo.primary {
+  height: auto;
+}
+
+.logo.secondary {
+  filter: brightness(0.9);
+}
+
+.logo.monochrome {
+  filter: grayscale(1);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon .image {
+  object-fit: contain;
+}
+
+.icon.ui {
+  width: 24px;
+  height: 24px;
+}
+
+.icon.action {
+  width: 20px;
+  height: 20px;
+}
+
+.icon.navigation {
+  width: 24px;
+  height: 24px;
+}
+
+.icon.small {
+  width: 16px;
+  height: 16px;
+}
+
+.icon.medium {
+  width: 32px;
+  height: 32px;
+}
+
+.icon.large {
+  width: 48px;
+  height: 48px;
+}
+
+.image {
+  max-width: 100%;
+  height: auto;
+}

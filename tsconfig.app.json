@@ -19,13 +19,13 @@
       "@app-shared/*": ["src/app/shared/*"],
       "@app-environments/*": ["src/environments/*"],
       "@app-features/*": ["src/app/features/*"],
-      "@app-routes/*": ["src/app/routes/*"]
+      "@app-routes/*": ["src/app/routes/*"],
+      "@images/*": ["public/image/*"]
     },
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },

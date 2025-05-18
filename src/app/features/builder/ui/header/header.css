@@ -1,0 +1,126 @@
+.builder-header {
+  width: 100%;
+  height: var(--topbar-height);
+  background: var(--background-light);
+}
+
+.builder-header__content {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xl) var(--spacing-4xl);
+}
+.builder-header__divider {
+  width: 1px;
+  height: 40px;
+  background: #dcdcdc;
+}
+
+.builder-header__left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.builder-header__left .builder-header__divider {
+  margin: 0 var(--spacing-2xl);
+}
+
+.builder-header__logo img {
+  display: block;
+  max-height: var(--topbar-height);
+  width: auto;
+  height: auto;
+}
+
+.builder-header__view-switch {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.builder-header__view-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--spacing-4xl);
+  height: var(--spacing-4xl);
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  transition:
+    background 0.2s,
+    border 0.2s;
+}
+
+.builder-header__view-button.is-active {
+  border: 1px solid var(--primary);
+  background: rgba(2, 204, 89, 0.05);
+}
+
+.builder-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.builder-header__history {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.builder-header__icon-button {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: var(--spacing-xs);
+  cursor: pointer;
+  gap: var(--spacing-xs);
+  flex-direction: column;
+}
+
+.builder-header__icon-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.builder-header__icon-button-label {
+  color: var(--text-color-secondary);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-xs);
+  text-align: center;
+  font-style: normal;
+  font-weight: var(--font-weight-regular);
+  line-height: normal;
+}
+
+.builder-header__preview-label {
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-color-primary);
+  font-family: var(--font-family-base);
+  background: none;
+  border: none;
+  outline: none;
+}
+
+.builder-header__save-button {
+  font-family: var(--font-family-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--spacing-4xl);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: #02cc59;
+  color: var(--text-color-light);
+  border: none;
+  border-radius: 34px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  min-width: 100px;
+}
