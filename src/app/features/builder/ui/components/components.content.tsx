@@ -3,15 +3,15 @@ import { Image } from "@app-shared/components";
 import styles from "./components.module.css";
 import type { FolderEntry } from "./components.action";
 
-interface Props {
+interface ComponentsContentProps {
   folders: FolderEntry[];
-  onSelectComponent: (component: string | null) => void;
+  addComponent: (name: string) => void;
 }
 
 export default function ComponentsContent({
   folders,
-  onSelectComponent,
-}: Props): JSX.Element {
+  addComponent,
+}: ComponentsContentProps): JSX.Element {
   return (
     <div className={styles.builderPropertyComponents} role="menu">
       <div className={styles.builderPropertyComponentsContent}>
@@ -21,7 +21,7 @@ export default function ComponentsContent({
             type="button"
             role="menuitem"
             className={styles.builderPropertyComponentsItem}
-            onClick={() => onSelectComponent(name)}
+            onClick={() => addComponent(name)}
           >
             <span className={styles.builderPropertyComponentsItemLabel}>
               {name}

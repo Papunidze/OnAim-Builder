@@ -1,14 +1,16 @@
 import { useState, useEffect, type JSX } from "react";
+import { useBuilder } from "@app-shared/services/builder/useBuilder";
 import ComponentsContent from "./components.content";
 import { fetchFolders, type FolderEntry } from "./components.action";
 
-interface Props {
-  onSelectComponent: (component: string | null) => void;
+interface ComponentsProps {
+  viewMode: "desktop" | "mobile";
 }
 
-export default function Components({ onSelectComponent }: Props): JSX.Element {
+export default function Components({ viewMode }: ComponentsProps): JSX.Element {
   const [folders, setFolders] = useState<FolderEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const { addComponent } = useBuilder();
 
   useEffect(() => {
     fetchFolders()
@@ -21,7 +23,7 @@ export default function Components({ onSelectComponent }: Props): JSX.Element {
   return (
     <ComponentsContent
       folders={folders}
-      onSelectComponent={onSelectComponent}
+      addComponent={(name) => addComponent(name, viewMode)}
     />
   );
 }

@@ -3,25 +3,34 @@ import { useState, type JSX } from "react";
 import Components from "./ui/components/components";
 import Header from "./ui/header/header";
 import Property from "./ui/property-adjustments/property-adjustment";
+import { useBuilder } from "@app-shared/services/builder/useBuilder";
 
 import styles from "./builder.module.css";
 import ContentRenderer from "./ui/content";
 
 const Builder = (): JSX.Element => {
-  const [selectedComponent, setSelectedComponent] = useState<string | null>(
-    null
-  );
   const [viewMode, setViewMode] = useState<"desktop" | "mobile">("desktop");
+  const { getComponents } = useBuilder();
+
+  const currentComponents = getComponents(viewMode);
 
   return (
     <div className={styles.builder}>
       <Header viewMode={viewMode} onViewChange={setViewMode} />
       <div className={styles.builderContent}>
-        <Components onSelectComponent={setSelectedComponent} />
-        <ContentRenderer
-          componentName={selectedComponent}
-          viewMode={viewMode}
-        />
+        <Components viewMode={viewMode} />
+        <div className={styles.contentContainer}>
+          {currentComponents.length > 0 ? (
+            <ContentRenderer
+              key={viewMode}
+              componentNames={currentComponents}
+              viewMode={viewMode}
+            />
+          ) : (
+            <div>No components selected. Add components from the panel.</div>
+          )}
+        </div>
+
         <Property />
       </div>
     </div>

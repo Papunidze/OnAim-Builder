@@ -1,10 +1,10 @@
 .mobileFrame {
   min-height: -webkit-fill-available;
+  overflow-y: auto;
   background-repeat: no-repeat;
   background-size: cover;
   background-position: top;
   background-attachment: local;
-  padding: 20px 11px 11px;
   width: 414px;
   container-type: inline-size;
   container-name: content-mobile-container;
@@ -16,5 +16,4 @@
     0 132px 79px rgba(0, 0, 0, 0.05),
     0 234px 94px rgba(0, 0, 0, 0.01),
     0 366px 103px rgba(0, 0, 0, 0);
-  padding: 20px 11px 11px;
 }

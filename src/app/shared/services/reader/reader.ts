@@ -1,4 +1,5 @@
 import ActualReact from "react";
+import type { ReactElement, ComponentType } from "react";
 
 export interface FileData {
   file: string;
@@ -7,125 +8,127 @@ export interface FileData {
   prefix: string;
 }
 
+interface ModuleExports {
+  default?: ComponentType<unknown> | object;
+  [key: string]: ComponentType<unknown> | object | undefined;
+}
+
+interface CustomModule {
+  exports: ModuleExports;
+}
+
 export class ReaderService {
-  constructor(private fileData: FileData[]) {}
+  constructor(private readonly fileData: FileData[]) {}
 
-  public getScriptContent(fileName: string): string | undefined {
-    const file = this.fileData.find(
-      (f: FileData) => f.file === fileName && f.type === "script"
-    );
-    return file?.content;
+  private findFile(
+    fileName: string,
+    type: "script" | "style"
+  ): FileData | undefined {
+    return this.fileData.find((f) => f.file === fileName && f.type === type);
   }
 
-  public getStyleContent(fileName: string): string | undefined {
-    const file = this.fileData.find(
-      (f: FileData) => f.file === fileName && f.type === "style"
-    );
-    return file?.content;
+  getScriptContent(fileName: string): string | undefined {
+    return this.findFile(fileName, "script")?.content;
   }
 
-  public getAllScripts(): FileData[] {
-    return this.fileData.filter((f: FileData) => f.type === "script");
+  getStyleContent(fileName: string): string | undefined {
+    return this.findFile(fileName, "style")?.content;
   }
 
-  public getAllStyles(): FileData[] {
-    return this.fileData.filter((f: FileData) => f.type === "style");
+  getAllScripts(): FileData[] {
+    return this.fileData.filter((f) => f.type === "script");
   }
 
-  public getReactComponentFromString(
-    jsCode: string,
-    fileNameForDebug: string
-  ): React.ComponentType<unknown> | null {
-    try {
-      interface ModuleExports {
-        default?: unknown;
-        [key: string]: unknown;
-      }
-      const m: { exports: ModuleExports } = { exports: {} };
+  getAllStyles(): FileData[] {
+    return this.fileData.filter((f) => f.type === "style");
+  }
 
-      const customRequire = (moduleName: string): unknown => {
-        if (moduleName === "react") {
-          return ActualReact;
-        }
+  private isReactComponent(
+    component: unknown
+  ): component is ComponentType<unknown> {
+    if (typeof component === "function") return true;
 
-        const dependencyFile = this.fileData.find(
-          (f: FileData) =>
-            (f.file === moduleName ||
-              f.file === `${moduleName}.js` ||
-              f.file === `${moduleName}.ts` ||
-              f.file === `${moduleName}.tsx`) &&
-            f.type === "script"
-        );
-
-        if (dependencyFile?.content) {
-          const nestedM: { exports: ModuleExports } = { exports: {} };
-          const dependencyModuleContent = dependencyFile.content;
-          const depFunc = new Function(
-            "module",
-            "exports",
-            "require",
-            "React",
-            dependencyModuleContent
-          );
-          depFunc(nestedM, nestedM.exports, customRequire, ActualReact);
-          return nestedM.exports.default !== undefined
-            ? nestedM.exports.default
-            : nestedM.exports;
-        }
-
-        console.warn(
-          `[ReaderService - ${fileNameForDebug}] Attempted to require unresolved module: ${moduleName}. Returning empty object.`
-        );
-        return {};
+    if (
+      typeof component === "object" &&
+      component !== null &&
+      ("$$typeof" in component || "render" in component)
+    ) {
+      const comp = component as {
+        $$typeof?: symbol;
+        render?: () => ReactElement;
       };
 
-      const componentFunction = new Function(
+      return (
+        typeof comp.render === "function" ||
+        comp.$$typeof === Symbol.for("react.forward_ref") ||
+        comp.$$typeof === Symbol.for("react.memo")
+      );
+    }
+
+    return false;
+  }
+
+  private customRequire(
+    fileNameForDebug: string
+  ): (moduleName: string) => ComponentType<unknown> | object {
+    return (moduleName: string): ComponentType<unknown> | object => {
+      if (moduleName === "react") return ActualReact;
+
+      const match = this.fileData.find(
+        (f) =>
+          f.type === "script" &&
+          (f.file === moduleName ||
+            f.file === `${moduleName}.js` ||
+            f.file === `${moduleName}.ts` ||
+            f.file === `${moduleName}.tsx`)
+      );
+
+      if (!match?.content) {
+        console.warn(
+          `[ReaderService - ${fileNameForDebug}] Could not resolve module: "${moduleName}".`
+        );
+        return {};
+      }
+
+      const mod: CustomModule = { exports: {} };
+      const depFn = new Function(
         "module",
         "exports",
         "require",
         "React",
-        jsCode
+        match.content
       );
-      componentFunction(m, m.exports, customRequire, ActualReact);
+      depFn(
+        mod,
+        mod.exports,
+        this.customRequire(fileNameForDebug),
+        ActualReact
+      );
 
-      const component =
-        m.exports.default !== undefined ? m.exports.default : m.exports;
+      return mod.exports.default ?? mod.exports;
+    };
+  }
 
-      if (
-        component &&
-        (typeof component === "function" ||
-          (typeof component === "object" &&
-            component !== null &&
-            ((component as { $$typeof?: symbol }).$$typeof ===
-              Symbol.for("react.forward_ref") ||
-              (component as { $$typeof?: symbol }).$$typeof ===
-                Symbol.for("react.element") ||
-              (component as { $$typeof?: symbol }).$$typeof ===
-                Symbol.for("react.memo"))))
-      ) {
-        return component as React.ComponentType<unknown>;
-      } else if (
-        component &&
-        typeof component === "object" &&
-        component !== null &&
-        typeof (component as { render?: (...args: unknown[]) => unknown })
-          .render === "function"
-      ) {
-        return component as React.ComponentType<unknown>;
-      } else {
-        console.error(
-          `[ReaderService - ${fileNameForDebug}] Evaluated code did not export a recognizable React component. Exports:`,
-          m.exports
-        );
-        return null;
-      }
-    } catch (error: unknown) {
+  getReactComponentFromString(
+    jsCode: string,
+    fileNameForDebug: string
+  ): ComponentType<unknown> | null {
+    try {
+      const mod: CustomModule = { exports: {} };
+      const fn = new Function("module", "exports", "require", "React", jsCode);
+      fn(mod, mod.exports, this.customRequire(fileNameForDebug), ActualReact);
+
+      const exported = mod.exports.default ?? mod.exports;
+
+      return this.isReactComponent(exported) ? exported : null;
+    } catch (error) {
+      const err = error as Error;
       console.error(
-        `[ReaderService - ${fileNameForDebug}] Error evaluating component string:`,
-        error instanceof Error ? error.message : String(error),
-        error instanceof Error ? error.stack : undefined,
+        `[ReaderService - ${fileNameForDebug}] Error parsing component string:`,
+        err.message,
+        err.stack,
         "\nCode snapshot:",
-        jsCode.substring(0, 500) + "..."
+        jsCode.slice(0, 500) + "..."
       );
       return null;
     }

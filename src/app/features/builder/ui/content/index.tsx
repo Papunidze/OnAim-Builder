@@ -1,92 +1,169 @@
-import React, { useState, useEffect, type JSX } from "react";
-import { fetchComponents, type ContentFile } from "./content.action";
-import { ReaderService, type FileData } from "@app-shared/services";
+import React, { useState, useEffect, type JSX, useCallback } from "react";
+import { ReaderService } from "@app-shared/services";
 import DesktopContent from "./desktop/desktop-content";
 import MobileContent from "./mobile/mobil-content";
+import { fetchComponents, type ContentFile } from "./content.action";
+import type { FileData } from "@app-shared/services/reader/reader";
 
 interface ContentRendererProps {
-  componentName: string | null;
+  componentNames: string[];
   viewMode: "desktop" | "mobile";
 }
 
+interface InstanceState {
+  name: string;
+  status: "idle" | "loading" | "loaded" | "error";
+  Comp?: React.ComponentType<unknown> | null;
+  style?: string;
+  error?: string;
+}
+
 const ContentRenderer = ({
-  componentName,
+  componentNames,
   viewMode,
-}: ContentRendererProps): JSX.Element => {
-  const [reader, setReader] = useState<ReaderService | null>(null);
-  const [ComponentToRender, setComponentToRender] =
-    useState<React.ComponentType<unknown> | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+}: ContentRendererProps): JSX.Element | null => {
+  const [instanceStates, setInstanceStates] = useState<InstanceState[]>([]);
 
-  useEffect(() => {
-    if (!componentName) return;
-    setIsLoading(true);
-    setError(null);
+  const fetchAndSetComponentInstance = useCallback(
+    async (componentName: string, index: number) => {
+      setInstanceStates((prevInstances) => {
+        const newInstances = [...prevInstances];
+        if (newInstances[index]?.status !== "loading") {
+          newInstances[index] = {
+            ...newInstances[index],
+            name: componentName,
+            status: "loading" as const,
+          };
+          return newInstances;
+        }
+        return prevInstances;
+      });
 
-    fetchComponents(componentName)
-      .then((files: ContentFile[]) => {
-        const fd: FileData[] = files.map((f) => ({
+      try {
+        const files: ContentFile[] = await fetchComponents(componentName);
+        const fileData: FileData[] = files.map((f) => ({
           file: f.file,
           type: f.type as "script" | "style",
           content: f.content,
           prefix: f.prefix,
         }));
-        setReader(new ReaderService(fd));
-      })
-      .catch((e) => setError((e as Error).message))
-      .finally(() => setIsLoading(false));
-  }, [componentName]);
+        const reader = new ReaderService(fileData);
+        const stylesArr = reader.getAllStyles();
+        const componentStyleContent = stylesArr
+          .map((s) => s.content)
+          .join("\n");
+        const script = reader.getScriptContent("index.tsx");
+        if (!script)
+          throw new Error(
+            `index.tsx not found for ${componentName} at index ${index}`
+          );
+        const Comp = reader.getReactComponentFromString(script, componentName);
+        if (!Comp)
+          throw new Error(
+            `Failed to evaluate component ${componentName} at index ${index}`
+          );
+
+        setInstanceStates((prevInstances) => {
+          const newInstances = [...prevInstances];
+          newInstances[index] = {
+            name: componentName,
+            status: "loaded" as const,
+            Comp,
+            style: componentStyleContent,
+          };
+          return newInstances;
+        });
+      } catch (err: unknown) {
+        const errorMessage =
+          err instanceof Error ? err.message : "An unknown error occurred";
+        setInstanceStates((prevInstances) => {
+          const newInstances = [...prevInstances];
+          newInstances[index] = {
+            ...(prevInstances[index] || {}),
+            name: componentName,
+            status: "error" as const,
+            error: errorMessage,
+            Comp: prevInstances[index]?.Comp,
+            style: prevInstances[index]?.style,
+          };
+          return newInstances;
+        });
+      }
+    },
+    []
+  );
 
   useEffect(() => {
-    if (!reader) return;
-    setIsLoading(true);
-    setError(null);
+    setInstanceStates((prevInstances) => {
+      const newLength = componentNames.length;
+      const oldLength = prevInstances.length;
+      const newInstances = new Array(newLength).fill(null).map((_, i) => {
+        const currentName = componentNames[i];
+        const oldInstance = i < oldLength ? prevInstances[i] : null;
 
-    const styles = reader.getAllStyles();
-    let tag = document.getElementById("dynamic-styles") as HTMLStyleElement;
-    if (!tag) {
-      tag = document.createElement("style");
-      tag.id = "dynamic-styles";
-      document.head.appendChild(tag);
-    }
-    tag.innerHTML = styles.map((s) => s.content).join("\n");
+        if (!oldInstance || oldInstance.name !== currentName) {
+          return {
+            name: currentName,
+            status: "idle" as const,
+          };
+        }
 
-    const js = reader.getScriptContent("index.tsx");
-    if (!js) {
-      setError("index.tsx not found");
-      setIsLoading(false);
-      return;
-    }
+        return oldInstance;
+      });
+      return newInstances;
+    });
+  }, [componentNames]);
 
-    const Comp = reader.getReactComponentFromString(js, "index.tsx");
-    if (!Comp) {
-      setError("Failed to evaluate React component");
-    } else {
-      setComponentToRender(() => Comp);
-    }
-    setIsLoading(false);
-  }, [reader]);
+  useEffect(() => {
+    instanceStates.forEach((instance, index) => {
+      if (instance.status === "idle") {
+        fetchAndSetComponentInstance(instance.name, index);
+      }
+    });
+  }, [instanceStates, fetchAndSetComponentInstance]);
 
-  if (isLoading) {
-    return <div>Loading component…</div>;
-  }
-  if (error) {
-    return <div style={{ color: "red" }}>Error: {error}</div>;
-  }
-  if (ComponentToRender) {
-    return viewMode === "desktop" ? (
-      <DesktopContent>
-        <ComponentToRender />
-      </DesktopContent>
-    ) : (
-      <MobileContent>
-        <ComponentToRender />
-      </MobileContent>
-    );
+  const aggregatedStyleContent = instanceStates
+    .filter((instance) => instance.status === "loaded" && instance.style)
+    .map((instance) => instance.style)
+    .join("\n");
+
+  if (componentNames.length === 0) {
+    return <div>No components to render.</div>;
   }
 
-  return <div>No component loaded</div>;
+  const content = (
+    <>
+      {aggregatedStyleContent && (
+        <style dangerouslySetInnerHTML={{ __html: aggregatedStyleContent }} />
+      )}
+      {instanceStates.map((instance, index) => {
+        const key = `${instance.name}-${index}`;
+
+        if (instance.status === "idle" || instance.status === "loading") {
+          return <div key={key}>Loading {instance.name}...</div>;
+        }
+        if (instance.status === "error") {
+          return (
+            <div key={key} style={{ color: "red" }}>
+              Error loading {instance.name}: {instance.error}
+              {instance.Comp && <instance.Comp />}
+            </div>
+          );
+        }
+        if (instance.status === "loaded" && instance.Comp) {
+          const Component = instance.Comp;
+          return <Component key={key} />;
+        }
+        return <div key={key}>Preparing {instance.name}...</div>;
+      })}
+    </>
+  );
+
+  return viewMode === "desktop" ? (
+    <DesktopContent>{content}</DesktopContent>
+  ) : (
+    <MobileContent>{content}</MobileContent>
+  );
 };
 
 export default ContentRenderer;
