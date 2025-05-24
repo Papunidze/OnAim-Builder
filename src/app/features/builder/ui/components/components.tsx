@@ -1,28 +1,27 @@
-import { Image } from "@app-shared/components";
-import { type JSX } from "react";
+import { useState, useEffect, type JSX } from "react";
+import ComponentsContent from "./components.content";
+import { fetchFolders, type FolderEntry } from "./components.action";
 
-const items = ["leaderboard", "ruls", "withdrow"];
+interface Props {
+  onSelectComponent: (component: string | null) => void;
+}
 
-import "./components.css";
-const Components = (): JSX.Element => {
+export default function Components({ onSelectComponent }: Props): JSX.Element {
+  const [folders, setFolders] = useState<FolderEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchFolders()
+      .then(setFolders)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div>Loading…</div>;
   return (
-    <div className="builder-property-components">
-      <div className="builder-property-components__content">
-        {items.map((item) => (
-          <button
-            key={item}
-            type="button"
-            className={`builder-property-components__item builder-property-components__item--${item}`}
-          >
-            <label className="builder-property-components__item-label">
-              {item}
-            </label>
-            <Image imageKey="icon:chevron" />
-          </button>
-        ))}
-      </div>
-    </div>
+    <ComponentsContent
+      folders={folders}
+      onSelectComponent={onSelectComponent}
+    />
   );
-};
-
-export default Components;
+}

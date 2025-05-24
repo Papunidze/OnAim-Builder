@@ -1,46 +1,49 @@
-.builder-header {
+.builderHeader {
   width: 100%;
   height: var(--topbar-height);
-  background: var(--background-light);
+  background: var(--background-primary);
+  box-shadow:
+    0 4px 9px rgba(143, 143, 143, 0.1),
+    0 17px 17px rgba(143, 143, 143, 0.09);
 }
 
-.builder-header__content {
-  max-width: var(--max-width);
+.builderHeaderContent {
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-xl) var(--spacing-4xl);
 }
-.builder-header__divider {
+
+.builderHeaderDivider {
   width: 1px;
   height: 40px;
   background: #dcdcdc;
 }
 
-.builder-header__left {
+.builderHeaderLeft {
   display: flex;
   align-items: center;
   gap: var(--spacing-lg);
 }
 
-.builder-header__left .builder-header__divider {
+.builderHeaderLeft .builderHeaderDivider {
   margin: 0 var(--spacing-2xl);
 }
 
-.builder-header__logo img {
+.builderHeaderLogo img {
   display: block;
   max-height: var(--topbar-height);
   width: auto;
   height: auto;
 }
 
-.builder-header__view-switch {
+.builderHeaderViewSwitch {
   display: flex;
   gap: var(--spacing-sm);
 }
 
-.builder-header__view-button {
+.builderHeaderViewButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -55,23 +58,23 @@
     border 0.2s;
 }
 
-.builder-header__view-button.is-active {
+.builderHeaderViewButton.isActive {
   border: 1px solid var(--primary);
   background: rgba(2, 204, 89, 0.05);
 }
 
-.builder-header__actions {
+.builderHeaderActions {
   display: flex;
   align-items: center;
   gap: var(--spacing-lg);
 }
 
-.builder-header__history {
+.builderHeaderHistory {
   display: flex;
   gap: var(--spacing-sm);
 }
 
-.builder-header__icon-button {
+.builderHeaderIconButton {
   display: flex;
   align-items: center;
   background: none;
@@ -82,12 +85,12 @@
   flex-direction: column;
 }
 
-.builder-header__icon-button:disabled {
+.builderHeaderIconButtonDisabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.builder-header__icon-button-label {
+.builderHeaderIconButtonLabel {
   color: var(--text-color-secondary);
   font-family: var(--font-family-base);
   font-size: var(--font-size-xs);
@@ -97,7 +100,7 @@
   line-height: normal;
 }
 
-.builder-header__preview-label {
+.builderHeaderPreviewLabel {
   cursor: pointer;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
@@ -108,7 +111,7 @@
   outline: none;
 }
 
-.builder-header__save-button {
+.builderHeaderSaveButton {
   font-family: var(--font-family-base);
   display: flex;
   align-items: center;

@@ -71,14 +71,6 @@ export default tseslint.config(
       "react/jsx-no-useless-fragment": "error",
       "react/jsx-pascal-case": "error",
 
-      "import/order": [
-        "error",
-        {
-          groups: ["builtin", "external", "internal", ["parent", "sibling"]],
-          "newlines-between": "always",
-          alphabetize: { order: "asc", caseInsensitive: true },
-        },
-      ],
       "import/no-default-export": "off",
       "import/no-duplicates": "error",
 

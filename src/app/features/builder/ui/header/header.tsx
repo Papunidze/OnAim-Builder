@@ -1,63 +1,78 @@
 import { Image } from "@app-shared/components";
 import type { JSX } from "react";
-import "./header.css";
 
-const Header = (): JSX.Element => (
-  <header className="builder-header">
-    <div className="builder-header__content">
-      <div className="builder-header__left">
-        <div className="builder-header__logo">
+import styles from "./header.module.css";
+
+interface HeaderProps {
+  viewMode: "desktop" | "mobile";
+  onViewChange: (mode: "desktop" | "mobile") => void;
+}
+
+const Header = ({ viewMode, onViewChange }: HeaderProps): JSX.Element => (
+  <header className={styles.builderHeader}>
+    <div className={styles.builderHeaderContent}>
+      <div className={styles.builderHeaderLeft}>
+        <div className={styles.builderHeaderLogo}>
           <Image imageKey="logo:primary" alt="Logo" />
         </div>
-        <div className="builder-header__divider" />
-        <div className="builder-header__view-switch">
+        <div className={styles.builderHeaderDivider} />
+        <div className={styles.builderHeaderViewSwitch}>
           <button
             type="button"
-            className="builder-header__view-button builder-header__view-button--desktop is-active"
+            className={
+              styles.builderHeaderViewButton +
+              (viewMode === "desktop" ? ` ${styles.isActive}` : "")
+            }
             aria-label="Desktop view"
+            onClick={() => onViewChange("desktop")}
           >
             <Image imageKey="icon:desktop" />
           </button>
           <button
             type="button"
-            className="builder-header__view-button builder-header__view-button--mobile"
+            className={
+              styles.builderHeaderViewButton +
+              (viewMode === "mobile" ? ` ${styles.isActive}` : "")
+            }
             aria-label="Mobile view"
+            onClick={() => onViewChange("mobile")}
           >
             <Image imageKey="icon:mobile" />
           </button>
         </div>
       </div>
-
-      <div className="builder-header__actions">
-        <div className="builder-header__history">
-          <button className="builder-header__icon-button" aria-label="Undo">
+      <div className={styles.builderHeaderActions}>
+        <div className={styles.builderHeaderHistory}>
+          <button className={styles.builderHeaderIconButton} aria-label="Undo">
             <Image imageKey="icon:undo" />
-            <label className="builder-header__icon-button-label">Undo</label>
+            <label className={styles.builderHeaderIconButtonLabel}>Undo</label>
           </button>
           <button
-            className="builder-header__icon-button"
+            className={
+              styles.builderHeaderIconButton +
+              " " +
+              styles.builderHeaderIconButtonDisabled
+            }
             disabled
             aria-label="Redo"
           >
             <Image imageKey="icon:redo" />
-            <span className="builder-header__icon-button-label">Redo</span>
+            <span className={styles.builderHeaderIconButtonLabel}>Redo</span>
           </button>
         </div>
-
-        <div className="builder-header__divider" />
-
-        <button className="builder-header__icon-button" aria-label="Custom">
+        <div className={styles.builderHeaderDivider} />
+        <button className={styles.builderHeaderIconButton} aria-label="Custom">
           <Image imageKey="icon:reset" />
-          <label className="builder-header__icon-button-label">Reset</label>
+          <label className={styles.builderHeaderIconButtonLabel}>Reset</label>
         </button>
-
-        <div className="builder-header__divider" />
-
-        <button className="builder-header__preview-label" aria-label="Preview">
+        <div className={styles.builderHeaderDivider} />
+        <button
+          className={styles.builderHeaderPreviewLabel}
+          aria-label="Preview"
+        >
           Preview
         </button>
-
-        <button className="builder-header__save-button">Save</button>
+        <button className={styles.builderHeaderSaveButton}>Save</button>
       </div>
     </div>
   </header>

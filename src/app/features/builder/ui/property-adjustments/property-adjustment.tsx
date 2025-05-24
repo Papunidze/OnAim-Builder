@@ -1,11 +1,11 @@
 import type { JSX } from "react";
 
-import "./property-adjustment.css";
+import styles from "./property-adjustment.module.css";
 
 const Property = (): JSX.Element => {
   return (
-    <div className="builder-property-adjustment">
-      <div className="builder-property-adjustment__content"></div>
+    <div className={styles.builderPropertyAdjustment}>
+      <div className={styles.builderPropertyAdjustmentContent}></div>
     </div>
   );
 };
