@@ -1,15 +1,11 @@
 import { cache } from "react";
-import {
-  fetchComponents,
-  type ContentFile,
-} from "../../content/content.action";
+import { fetchComponents, type ContentFile } from "../api/action";
 import {
   EnhancedReaderService,
   type FileData,
 } from "@app-shared/services/reader";
 import type { ComponentFileData, ComponentFetchResult } from "../types";
 
-// Constants
 export const DEFAULT_SCRIPT_PATTERNS = [
   "index.tsx",
   "index.ts",
@@ -58,7 +54,6 @@ export const compileComponent = cache(
     const { script, usedPattern } = getScriptContent(reader, componentName);
 
     if (!script) {
-      console.error(`[COMPILER] No script found for: ${componentName}`);
       throw new Error(
         `No script file found for ${componentName}. Available files: ${fileData.map((f) => f.file).join(", ")}`
       );
@@ -70,9 +65,6 @@ export const compileComponent = cache(
     );
 
     if (!component) {
-      console.error(
-        `[COMPILER] Failed to generate component for: ${componentName}`
-      );
       throw new Error(
         `Failed to evaluate component from ${usedPattern || "script"} for ${componentName}`
       );
@@ -85,6 +77,10 @@ export const compileComponent = cache(
       component,
       styles,
       prefix,
+      compiledData: {
+        files: fileData,
+        settingsObject: undefined,
+      },
     };
   }
 );

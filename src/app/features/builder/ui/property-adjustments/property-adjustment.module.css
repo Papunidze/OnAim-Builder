@@ -49,3 +49,30 @@
 .builderPropertyAdjustmentItem:hover {
   background-color: #f9fafb;
 }
+
+.noComponentSelected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: #666;
+  font-size: var(--font-size-base);
+  min-height: 200px;
+}
+
+.noComponentSelected p {
+  margin: 0;
+  font-style: italic;
+}
+
+.noComponentSelected {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #666;
+  font-style: italic;
+  text-align: center;
+}

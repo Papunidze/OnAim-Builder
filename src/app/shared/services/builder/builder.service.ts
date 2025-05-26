@@ -13,6 +13,7 @@ export class BuilderService {
       version: "1.0.0",
       lastModified: Date.now(),
     },
+    selectedComponentId: undefined,
   };
 
   private subscribers: (() => void)[] = [];
@@ -44,24 +45,12 @@ export class BuilderService {
       }
     };
   }
-
   private emit<K extends keyof BuilderServiceEvents>(
     event: K,
     data: BuilderServiceEvents[K]
   ): void {
     const listeners = this.eventListeners.get(event) || [];
     listeners.forEach((callback) => callback(data));
-  }
-
-  private debounce<T extends (...args: Parameters<T>) => ReturnType<T>>(
-    func: T,
-    delay: number
-  ): T {
-    let timeoutId: NodeJS.Timeout;
-    return ((...args: Parameters<T>) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => func(...args), delay);
-    }) as T;
   }
 
   private saveHistory(): void {
@@ -227,37 +216,33 @@ export class BuilderService {
         version: "1.0.0",
         lastModified: Date.now(),
       },
+      selectedComponentId: undefined,
     };
     this.emit("stateCleared", undefined);
     this.notifySubscribers();
   }
 
-  canUndo(): boolean {
-    return this.undoStack.length > 0;
-  }
+  selectComponent(componentId: string | null): void {
+    const prevSelectedId = this.state.selectedComponentId;
 
-  canRedo(): boolean {
-    return this.redoStack.length > 0;
-  }
+    if (prevSelectedId === componentId) {
+      return; // No change
+    }
 
-  undo(): boolean {
-    if (!this.canUndo()) return false;
+    this.state.selectedComponentId = componentId || undefined;
 
-    this.redoStack.push(JSON.parse(JSON.stringify(this.state)));
-    this.state = this.undoStack.pop()!;
-    this.emit("stateLoaded", this.state);
+    const selectedComponent = componentId
+      ? this.getComponent(componentId)
+      : null;
+    this.emit("componentSelected", selectedComponent);
     this.notifySubscribers();
-    return true;
   }
 
-  redo(): boolean {
-    if (!this.canRedo()) return false;
-
-    this.undoStack.push(JSON.parse(JSON.stringify(this.state)));
-    this.state = this.redoStack.pop()!;
-    this.emit("stateLoaded", this.state);
-    this.notifySubscribers();
-    return true;
+  getSelectedComponent(): ComponentState | null {
+    if (!this.state.selectedComponentId) {
+      return null;
+    }
+    return this.getComponent(this.state.selectedComponentId) || null;
   }
 
   exportState(): string {
@@ -312,7 +297,6 @@ export class BuilderService {
       lastModified: this.state.metadata.lastModified,
     };
   }
-
   setProjectName(name: string): void {
     this.state.metadata.projectName = name;
     this.notifySubscribers();
@@ -320,6 +304,38 @@ export class BuilderService {
 
   getProjectName(): string | undefined {
     return this.state.metadata.projectName;
+  }
+
+  canUndo(): boolean {
+    return this.undoStack.length > 0;
+  }
+
+  canRedo(): boolean {
+    return this.redoStack.length > 0;
+  }
+
+  undo(): boolean {
+    if (this.undoStack.length === 0) {
+      return false;
+    }
+
+    const previousState = this.undoStack.pop()!;
+    this.redoStack.push(JSON.parse(JSON.stringify(this.state)));
+    this.state = previousState;
+    this.notifySubscribers();
+    return true;
+  }
+
+  redo(): boolean {
+    if (this.redoStack.length === 0) {
+      return false;
+    }
+
+    const nextState = this.redoStack.pop()!;
+    this.undoStack.push(JSON.parse(JSON.stringify(this.state)));
+    this.state = nextState;
+    this.notifySubscribers();
+    return true;
   }
 }
 

@@ -1,20 +1,9 @@
 import React from "react";
 import "./leaderboard.css";
 import Button from "./button";
-
-interface Leader {
-  name: string;
-  score: number;
-}
+import { leaders } from "./action";
 
 const Leaderboard: React.FC = () => {
-  const leaders: Leader[] = [
-    { name: "Giga", score: 1200 },
-    { name: "Gela", score: 950 },
-    { name: "Eve", score: 780 },
-    { name: "Mallory", score: 630 },
-  ];
-
   return (
     <div className="leaderboard">
       <Button />

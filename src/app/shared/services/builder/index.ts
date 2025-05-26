@@ -8,3 +8,4 @@ export type {
 export type { UseBuilderReturn } from "./useBuilder.service";
 
 export { builderService } from "./builder.service";
+export { useBuilder } from "./useBuilder.service";

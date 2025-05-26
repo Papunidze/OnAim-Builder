@@ -46,6 +46,11 @@ export interface UseBuilderReturn {
 
   projectName?: string;
   setProjectName: (name: string) => void;
+
+  // Component selection methods
+  selectComponent: (componentId: string | null) => void;
+  getSelectedComponent: () => ComponentState | null;
+  selectedComponentId?: string;
 }
 
 export function useBuilder(): UseBuilderReturn {
@@ -159,9 +164,16 @@ export function useBuilder(): UseBuilderReturn {
     builderService.setProjectName(name);
   }, []);
 
+  const selectComponent = useCallback((componentId: string | null) => {
+    builderService.selectComponent(componentId);
+  }, []);
+
+  const getSelectedComponent = useCallback(() => {
+    return builderService.getSelectedComponent();
+  }, []);
+
   const stats = builderService.getStats();
   const projectName = builderService.getProjectName();
-
   return {
     components,
     stats,
@@ -184,5 +196,8 @@ export function useBuilder(): UseBuilderReturn {
     redo,
     projectName,
     setProjectName,
+    selectComponent,
+    getSelectedComponent,
+    selectedComponentId: components.selectedComponentId,
   };
 }

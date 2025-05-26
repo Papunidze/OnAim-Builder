@@ -88,6 +88,19 @@
   border-radius: 8px;
   margin: 8px 0;
   overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.componentWrapper:hover {
+  border-color: #007bff;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+}
+
+.componentWrapper.selected {
+  border-color: #007bff;
+  border-width: 2px;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
 }
 
 .componentLabel {

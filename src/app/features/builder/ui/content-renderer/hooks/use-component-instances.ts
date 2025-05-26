@@ -7,6 +7,7 @@ import {
   useCallback,
 } from "react";
 import type { ComponentState } from "@app-shared/services/builder";
+import { useBuilder } from "@app-shared/services/builder";
 import type {
   ComponentFetchResult,
   ComponentInstanceState,
@@ -81,6 +82,7 @@ export function useComponentInstances(
   isPending: boolean;
 } {
   const { maxRetryCount = MAX_RETRY_COUNT } = options;
+  const { updateComponent } = useBuilder();
 
   const [instances, setInstances] = useState<ComponentInstanceState[]>(() =>
     components.map((comp) => createComponentState.idle(comp.id, comp.name))
@@ -174,10 +176,17 @@ export function useComponentInstances(
             createComponentState.loading(comp.id, comp.name)
           );
         });
-
         const result = await loadComponentWithTimeout(comp);
 
         loadedComponentsRef.current.add(comp.id);
+
+        // Store compiled data in builder service to avoid redundant API calls
+        if (result.compiledData) {
+          updateComponent(comp.id, {
+            compiledData: result.compiledData,
+          });
+        }
+
         startTransition(() => {
           updateInstance(comp.id, () =>
             createComponentState.loaded(
@@ -212,7 +221,7 @@ export function useComponentInstances(
         loadingComponentsRef.current.delete(comp.id);
       }
     },
-    [updateInstance, loadComponentWithTimeout]
+    [updateInstance, loadComponentWithTimeout, updateComponent]
   );
 
   useEffect(() => {

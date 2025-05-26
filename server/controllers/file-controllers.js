@@ -216,6 +216,5 @@ exports.fetchCompiledFilesInFolder = catchAsync(async (req, res, next) => {
       return { file, type: "unknown" };
     })
   );
-
   res.json({ status: "success", data: results });
 });

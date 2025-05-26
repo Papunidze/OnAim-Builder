@@ -1,11 +1,8 @@
 import { useState, useEffect, type JSX } from "react";
 import { useBuilder } from "@app-shared/services/builder/useBuilder.service";
 import ComponentsContent from "./components.content";
-import { fetchFolders, type FolderEntry } from "./components.action";
-
-interface ComponentsProps {
-  viewMode: "desktop" | "mobile";
-}
+import { fetchFolders } from "./api";
+import type { ComponentsProps, FolderEntry } from "./types";
 
 export default function Components({ viewMode }: ComponentsProps): JSX.Element {
   const [folders, setFolders] = useState<FolderEntry[]>([]);

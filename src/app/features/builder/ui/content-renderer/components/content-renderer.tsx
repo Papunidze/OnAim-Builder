@@ -1,10 +1,13 @@
 import type { JSX } from "react";
 import { useMemo } from "react";
-import type { ContentRendererProps } from "../types";
+
 import { ComponentInstance } from "../components/component-instance";
 import { DesktopLayout, MobileLayout } from "../layouts";
-import styles from "./content-renderer.module.css";
+
 import { useComponentInstances } from "../hooks";
+
+import type { ContentRendererProps } from "../types";
+import styles from "./content-renderer.module.css";
 
 export function ContentRenderer({
   components,

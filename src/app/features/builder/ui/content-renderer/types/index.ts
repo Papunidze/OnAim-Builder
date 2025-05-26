@@ -31,6 +31,17 @@ export interface ComponentFetchResult {
   component: React.ComponentType<unknown> | null;
   styles: string;
   prefix: string;
+  compiledData?: {
+    files: ComponentFileData[];
+    settingsObject?: {
+      draw: () => HTMLElement;
+      setOnChange?: (
+        callback: (values: Record<string, unknown>) => void
+      ) => void;
+      setValue?: (values: Record<string, unknown>) => void;
+      title?: string;
+    };
+  };
 }
 
 export interface UseComponentInstancesOptions {

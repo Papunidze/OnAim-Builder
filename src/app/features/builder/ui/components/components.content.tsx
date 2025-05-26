@@ -1,12 +1,7 @@
 import type { JSX } from "react";
-import { Image } from "@app-shared/components";
+import Image from "@app-shared/components/image";
 import styles from "./components.module.css";
-import type { FolderEntry } from "./components.action";
-
-interface ComponentsContentProps {
-  folders: FolderEntry[];
-  addComponent: (name: string) => void;
-}
+import type { ComponentsContentProps } from "./types";
 
 export default function ComponentsContent({
   folders,

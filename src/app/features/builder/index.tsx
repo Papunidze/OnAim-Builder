@@ -1,12 +1,13 @@
 import { useState, type JSX } from "react";
 
-import Components from "./ui/components/components";
+import { ContentRenderer } from "./ui/content-renderer";
 import Header from "./ui/header/header";
+import { Components } from "./ui/components";
 import Property from "./ui/property-adjustments/property-adjustment";
+
 import { useBuilder } from "@app-shared/services/builder/useBuilder.service";
 
 import styles from "./builder.module.css";
-import { ContentRenderer } from "./ui/content-renderer";
 
 const Builder = (): JSX.Element => {
   const [viewMode, setViewMode] = useState<"desktop" | "mobile">("desktop");

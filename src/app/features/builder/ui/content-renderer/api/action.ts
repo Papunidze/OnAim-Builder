@@ -21,7 +21,6 @@ export const fetchComponents = async (
       throw new Error("Component name is required and must be a string");
     }
 
-    // Add unique identifier to the request to ensure unique prefixes
     const queryParam = uniqueId ? `?uid=${encodeURIComponent(uniqueId)}` : "";
     const res = await rest.GET<FolderResponse>(
       `/file/folders/${name}${queryParam}`

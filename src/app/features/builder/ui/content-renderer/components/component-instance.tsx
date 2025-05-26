@@ -1,13 +1,22 @@
 import type { JSX } from "react";
 import type { ComponentRenderProps } from "../types";
-import { ErrorBoundary } from "@app-shared/components";
 import styles from "./component-instance.module.css";
+import { ErrorBoundary } from "@app-shared/components";
+import { useBuilder } from "@app-shared/services/builder";
 
 export function ComponentInstance({
   instance,
   onRetry,
 }: ComponentRenderProps): JSX.Element {
+  const { selectComponent, selectedComponentId } = useBuilder();
   const key = `${instance.id}-${instance.name}`;
+  const isSelected = selectedComponentId === instance.id;
+  const handleClick = (e: React.MouseEvent): void => {
+    e.preventDefault();
+    e.stopPropagation();
+    selectComponent(instance.id);
+  };
+
   if (instance.status === "idle" || instance.status === "loading") {
     return (
       <div key={key} className={styles.componentLoading}>
@@ -65,7 +74,10 @@ export function ComponentInstance({
           </div>
         )}
       >
-        <div className={styles.componentWrapper}>
+        <div
+          className={`${styles.componentWrapper} ${isSelected ? styles.selected : ""}`}
+          onClick={handleClick}
+        >
           <div className={styles.componentLabel}>
             {instance.name} - Prefix: {instance.prefix || "N/A"}
           </div>
