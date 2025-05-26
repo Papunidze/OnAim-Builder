@@ -1,5 +1,5 @@
 import { useState, useEffect, type JSX } from "react";
-import { useBuilder } from "@app-shared/services/builder/useBuilder";
+import { useBuilder } from "@app-shared/services/builder/useBuilder.service";
 import ComponentsContent from "./components.content";
 import { fetchFolders, type FolderEntry } from "./components.action";
 

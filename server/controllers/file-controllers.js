@@ -108,11 +108,9 @@ exports.fetchCompiledFilesInFolder = catchAsync(async (req, res, next) => {
   const folder = sanitizeName(raw);
   const dir = path.join(__dirname, "../config/uploads", folder);
 
-  const prefix = [
-    folder,
-    Date.now().toString(36),
-    Math.random().toString(36).slice(2, 7),
-  ].join("_");
+  // Use unique identifier from query parameter if provided, otherwise generate one
+  const uniqueId = req.query.uid || Math.random().toString(36).slice(2, 7);
+  const prefix = [folder, Date.now().toString(36), uniqueId].join("_");
 
   let items;
   try {

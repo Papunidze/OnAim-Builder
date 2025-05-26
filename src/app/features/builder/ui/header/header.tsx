@@ -2,6 +2,7 @@ import { Image } from "@app-shared/components";
 import type { JSX } from "react";
 
 import styles from "./header.module.css";
+import { builderService } from "@app-shared/services/builder";
 
 interface HeaderProps {
   viewMode: "desktop" | "mobile";
@@ -43,7 +44,11 @@ const Header = ({ viewMode, onViewChange }: HeaderProps): JSX.Element => (
       </div>
       <div className={styles.builderHeaderActions}>
         <div className={styles.builderHeaderHistory}>
-          <button className={styles.builderHeaderIconButton} aria-label="Undo">
+          <button
+            className={styles.builderHeaderIconButton}
+            aria-label="Undo"
+            onClick={() => builderService.undo()}
+          >
             <Image imageKey="icon:undo" />
             <label className={styles.builderHeaderIconButtonLabel}>Undo</label>
           </button>
@@ -55,13 +60,18 @@ const Header = ({ viewMode, onViewChange }: HeaderProps): JSX.Element => (
             }
             disabled
             aria-label="Redo"
+            onClick={() => builderService.redo()}
           >
             <Image imageKey="icon:redo" />
             <span className={styles.builderHeaderIconButtonLabel}>Redo</span>
           </button>
         </div>
         <div className={styles.builderHeaderDivider} />
-        <button className={styles.builderHeaderIconButton} aria-label="Custom">
+        <button
+          className={styles.builderHeaderIconButton}
+          aria-label="Custom"
+          onClick={() => builderService.clear()}
+        >
           <Image imageKey="icon:reset" />
           <label className={styles.builderHeaderIconButtonLabel}>Reset</label>
         </button>

@@ -1,4 +1,4 @@
-import { rest } from "@app-shared/services";
+import { rest } from "@app-shared/services/api";
 
 export interface FolderEntry {
   name: string;

@@ -1,4 +1,4 @@
-import { rest } from "@app-shared/services";
+import { rest } from "@app-shared/services/api";
 
 export interface ContentFile {
   content: string;
@@ -12,11 +12,65 @@ interface FolderResponse {
   data: ContentFile[];
 }
 
-export const fetchComponents = (name: string): Promise<ContentFile[]> => {
-  return rest.GET<FolderResponse>(`/file/folders/${name}`).then((res) => {
+export const fetchComponents = async (
+  name: string,
+  uniqueId?: string
+): Promise<ContentFile[]> => {
+  try {
+    if (!name || typeof name !== "string") {
+      throw new Error("Component name is required and must be a string");
+    }
+
+    // Add unique identifier to the request to ensure unique prefixes
+    const queryParam = uniqueId ? `?uid=${encodeURIComponent(uniqueId)}` : "";
+    const res = await rest.GET<FolderResponse>(
+      `/file/folders/${name}${queryParam}`
+    );
+
+    if (!res) {
+      throw new Error("No response received from server");
+    }
+
     if (res.status !== "success" && res.status !== "OK") {
       throw new Error(`API error: ${res.status}`);
     }
-    return res.data;
-  });
+
+    if (!Array.isArray(res.data)) {
+      throw new Error("Invalid data format received from server");
+    }
+
+    return validateAndFilterFiles(res.data, name);
+  } catch (error) {
+    console.error(`Error fetching components for "${name}":`, error);
+    throw error instanceof Error ? error : new Error(String(error));
+  }
 };
+
+function validateAndFilterFiles(
+  files: ContentFile[],
+  componentName: string
+): ContentFile[] {
+  const validatedFiles = files.filter((file) => {
+    if (!file.file || !file.content || !file.type) {
+      return false;
+    }
+    return true;
+  });
+
+  if (validatedFiles.length === 0) {
+    throw new Error(`No valid files found for component: ${componentName}`);
+  }
+
+  const scripts = validatedFiles.filter((f) => f.type === "script");
+  const styles = validatedFiles.filter((f) => f.type === "style");
+
+  console.warn(
+    `Found for ${componentName}: ${scripts.length} scripts, ${styles.length} styles`
+  );
+
+  if (scripts.length === 0) {
+    throw new Error(`No script files found for component: ${componentName}`);
+  }
+
+  return validatedFiles;
+}

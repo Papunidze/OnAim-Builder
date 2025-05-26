@@ -1,0 +1,107 @@
+.componentLoading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  text-align: center;
+  color: #666;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin: 8px 0;
+}
+
+.loadingSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e0e0e0;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.componentError {
+  color: #dc3545;
+  padding: 16px;
+  border: 1px solid #dc3545;
+  border-radius: 8px;
+  margin: 8px 0;
+  background: #fff5f5;
+}
+
+.errorHeader {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.errorMessage {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.retryButton {
+  padding: 6px 12px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s;
+}
+
+.retryButton:hover {
+  background: #c82333;
+}
+
+.fallbackComponent {
+  margin-top: 8px;
+  border-top: 1px solid #ddd;
+  padding-top: 8px;
+}
+
+.fallbackLabel {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.renderError {
+  color: #ff6b00;
+  padding: 16px;
+  border: 1px solid #ff6b00;
+  border-radius: 8px;
+  margin: 8px 0;
+  background: #fff8f0;
+}
+
+.componentWrapper {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin: 8px 0;
+  overflow: hidden;
+}
+
+.componentLabel {
+  background: #f8f9fa;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #666;
+  border-bottom: 1px solid #e0e0e0;
+  font-family: monospace;
+}
+
+.componentPreparing {
+  padding: 16px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}

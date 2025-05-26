@@ -1,6 +1,6 @@
-import React from "react";
+import { JSX } from "react";
 
-const Button = () => {
+const Button = (): JSX.Element => {
   return <div>Button</div>;
 };
 

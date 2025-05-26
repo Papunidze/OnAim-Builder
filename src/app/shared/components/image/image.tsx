@@ -18,7 +18,6 @@ export const Image = ({
 }: ImageProps): JSX.Element | null => {
   const config = imageRegistry.get(imageKey);
   if (!config) {
-    console.warn(`Image with key "${imageKey}" not found in registry`);
     return null;
   }
 
