@@ -5,6 +5,7 @@
   box-shadow:
     0 4px 9px rgba(143, 143, 143, 0.1),
     0 17px 17px rgba(143, 143, 143, 0.09);
+  z-index: 999999;
 }
 
 .builderHeaderContent {

@@ -145,30 +145,52 @@ exports.fetchCompiledFilesInFolder = catchAsync(async (req, res, next) => {
         const tempFilePath = path.join(dir, `temp_${prefix}_${file}`);
         await fs.writeFile(tempFilePath, originalContent, "utf-8");
 
-        const out = await esbuild.build({
-          entryPoints: [tempFilePath],
-          bundle: true,
-          write: false,
-          absWorkingDir: dir,
-          resolveExtensions: [".tsx", ".ts", ".jsx", ".js", ".css", ".scss"],
-          loader: {
-            ".tsx": "tsx",
-            ".ts": "ts",
-            ".jsx": "jsx",
-            ".js": "js",
-            ".css": "text",
-            ".scss": "text",
-          },
-          format: "cjs",
-          external: [
-            "react",
-            "react-dom",
-            "react/jsx-runtime",
-            "builder-settings-types",
-          ],
-        });
-
-        await fs.unlink(tempFilePath);
+        let out;
+        try {
+          out = await esbuild.build({
+            entryPoints: [tempFilePath],
+            bundle: true,
+            write: false,
+            absWorkingDir: dir,
+            resolveExtensions: [".tsx", ".ts", ".jsx", ".js", ".css", ".scss"],
+            loader: {
+              ".tsx": "tsx",
+              ".ts": "ts",
+              ".jsx": "jsx",
+              ".js": "js",
+              ".css": "text",
+              ".scss": "text",
+            },
+            format: "cjs",
+            external: [
+              "react",
+              "react-dom",
+              "react/jsx-runtime",
+              "builder-settings-types",
+              "*.css",
+              "*.scss",
+            ],
+            plugins: [
+              {
+                name: "css-import-plugin",
+                setup(build) {
+                  build.onResolve({ filter: /\.css$/ }, (args) => {
+                    return { path: args.path, external: true };
+                  });
+                },
+              },
+            ],
+          });
+        } finally {
+          try {
+            await fs.unlink(tempFilePath);
+          } catch (unlinkError) {
+            console.warn(
+              `Failed to delete temp file ${tempFilePath}:`,
+              unlinkError.message
+            );
+          }
+        }
 
         return {
           file,
@@ -181,7 +203,7 @@ exports.fetchCompiledFilesInFolder = catchAsync(async (req, res, next) => {
       if (ext === ".scss") {
         let scssContent = await fs.readFile(full, "utf-8");
         scssContent = scssContent.replace(
-          /\.([A-Za-z_-][A-Za-z0-9_-]*)/g,
+          /\.([A-Za-z_-][A-ZaZ0-9_-]*)/g,
           (_, cls) => `.${prefix}-${cls}`
         );
 
@@ -194,7 +216,7 @@ exports.fetchCompiledFilesInFolder = catchAsync(async (req, res, next) => {
       if (ext === ".css") {
         let cssContent = await fs.readFile(full, "utf-8");
         cssContent = cssContent.replace(
-          /\.([A-Za-z_-][A-Za-z0-9_-]*)/g,
+          /\.([A-Za-z_-][A-ZaZ0-9_-]*)/g,
           (_, cls) => `.${prefix}-${cls}`
         );
         return { file, type: "style", content: cssContent, prefix };

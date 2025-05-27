@@ -61,11 +61,6 @@ function validateAndFilterFiles(
   }
 
   const scripts = validatedFiles.filter((f) => f.type === "script");
-  const styles = validatedFiles.filter((f) => f.type === "style");
-
-  console.warn(
-    `Found for ${componentName}: ${scripts.length} scripts, ${styles.length} styles`
-  );
 
   if (scripts.length === 0) {
     throw new Error(`No script files found for component: ${componentName}`);
