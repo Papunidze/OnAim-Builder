@@ -4,6 +4,8 @@ import type {
   BuilderState,
   EventCallback,
 } from "./buiilder.interfaces";
+import { compileSettingsObject } from "@app-features/builder/ui/property-adjustments/services";
+import { loadComponentData } from "@app-features/builder/ui/content-renderer/services";
 
 export class BuilderService {
   private state: BuilderState = {
@@ -107,10 +109,6 @@ export class BuilderService {
       timestamp: Date.now(),
     };
     try {
-      const { loadComponentData } = await import(
-        "../../../features/builder/ui/content-renderer/services/component-loader"
-      );
-
       const cacheVersion = `${Date.now()}`;
       const fileData = await loadComponentData(
         name,
@@ -133,12 +131,26 @@ export class BuilderService {
         );
         if (settingsFile) {
           try {
-            const { compileSettingsObject } = await import(
-              "../../../features/builder/ui/property-adjustments/services/settings-compiler"
-            );
             const settingsObject = compileSettingsObject(settingsFile.content);
             if (settingsObject) {
               component.compiledData.settingsObject = settingsObject;
+
+              if (
+                Object.keys(component.props).length === 0 &&
+                typeof settingsObject.getValues === "function"
+              ) {
+                try {
+                  const defaultValues = settingsObject.getValues();
+                  if (defaultValues && typeof defaultValues === "object") {
+                    component.props = { ...defaultValues };
+                  }
+                } catch (error) {
+                  console.warn(
+                    `Failed to extract default values from settings for component ${name}:`,
+                    error
+                  );
+                }
+              }
             }
           } catch (error) {
             console.warn(

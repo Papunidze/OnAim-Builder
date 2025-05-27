@@ -14,7 +14,7 @@ export const oa_settings = new SettingGroup({
       title: "Leaderboard",
       settings: {
         background: new ColorSetting({
-          default: "255,255,255",
+          default: "0,0,0",
           title: "background",
         }),
         width: new WidthSetting({

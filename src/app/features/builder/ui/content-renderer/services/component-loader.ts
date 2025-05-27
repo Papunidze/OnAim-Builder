@@ -47,7 +47,6 @@ export const loadComponentData = cache(
     );
 
     if (!files || files.length === 0) {
-      console.error(`[LOADER] No files found for component: ${componentName}`);
       throw new Error(`No files found for component: ${componentName}`);
     }
 
@@ -88,7 +87,6 @@ export const compileComponent = cache(
       script,
       usedPattern || componentName
     );
-
     if (!component) {
       throw new Error(
         `Failed to evaluate component from ${usedPattern || "script"} for ${componentName}`
@@ -181,7 +179,6 @@ export async function loadComponent(
   componentStyles?: Record<string, string>
 ): Promise<ComponentFetchResult> {
   const cacheVersion = getCacheVersion(componentId);
-
   return loadComponentCached(
     componentName,
     componentId,

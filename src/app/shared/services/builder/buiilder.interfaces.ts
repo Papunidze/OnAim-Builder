@@ -18,7 +18,6 @@ export interface ComponentState {
       }
     >;
   };
-  // Add compiled component data to avoid redundant API calls
   compiledData?: {
     files: {
       file: string;

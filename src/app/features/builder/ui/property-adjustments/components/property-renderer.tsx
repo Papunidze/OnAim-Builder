@@ -50,9 +50,12 @@ function useComponentState(): {
 }
 
 class SettingsRenderer {
-  private hostElement: HTMLDivElement;
-  private onError: (error: string) => void;
-  private onUpdate: (id: string, updates: { props: PropertyValue }) => void;
+  private readonly hostElement: HTMLDivElement;
+  private readonly onError: (error: string) => void;
+  private readonly onUpdate: (
+    id: string,
+    updates: { props: PropertyValue }
+  ) => void;
 
   constructor(
     hostElement: HTMLDivElement,
@@ -89,6 +92,19 @@ class SettingsRenderer {
         this.onUpdate(componentId, {
           props: { ...currentProps, ...newValues },
         });
+      });
+    }
+  }
+
+  private applySettingsStyles(
+    settingsObject: SettingsObject,
+    componentId: string,
+    currentProps?: PropertyValue
+  ): void {
+    if (typeof settingsObject.getValues === "function") {
+      const values = settingsObject.getValues();
+      this.onUpdate(componentId, {
+        props: { ...currentProps, ...values },
       });
     }
 
@@ -128,6 +144,8 @@ class SettingsRenderer {
       this.hostElement.appendChild(element);
 
       if (component.id) {
+        this.applySettingsStyles(settingsObject, component.id, component.props);
+
         this.setupSettingsHandlers(
           settingsObject,
           component.id,

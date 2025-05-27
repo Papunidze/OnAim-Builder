@@ -12,6 +12,7 @@ export interface SettingsObject {
   draw: () => HTMLElement;
   setOnChange?: (callback: (values: Record<string, unknown>) => void) => void;
   setValue?: (values: Record<string, unknown>) => void;
+  getValues?: () => Record<string, unknown>;
   title?: string;
 }
 

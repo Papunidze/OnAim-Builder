@@ -174,6 +174,7 @@ export function useComponentInstances(
         comp.props,
         comp.styles
       );
+
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(
           () => reject(new Error(`Timeout loading ${comp.name}`)),
