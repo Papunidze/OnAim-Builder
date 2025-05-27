@@ -36,7 +36,7 @@ export function ComponentInstance({
 
   if (instance.status === "error") {
     const retryCount = instance.retryCount || 0;
-    const canRetry = retryCount < 3; // Max retry count
+    const canRetry = retryCount < 3;
 
     return (
       <div key={key} className={styles.componentError}>

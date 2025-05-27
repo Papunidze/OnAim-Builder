@@ -98,8 +98,9 @@ export class BuilderService {
   ): Promise<ComponentState> {
     this.saveHistory();
 
-    const component: ComponentState = {
-      id: this.generateId(),
+    const componentId = this.generateId();
+    const initialComponent: ComponentState = {
+      id: componentId,
       name,
       viewMode,
       props: options?.props || {},
@@ -107,17 +108,30 @@ export class BuilderService {
       position: options?.position,
       size: options?.size,
       timestamp: Date.now(),
+      status: "loading",
     };
+
+    this.state[viewMode].push(initialComponent);
+    this.emit("componentAdded", initialComponent);
+    this.selectComponent(initialComponent.id);
+    this.notifySubscribers();
+
     try {
       const cacheVersion = `${Date.now()}`;
-      const fileData = await loadComponentData(
-        name,
-        component.id,
-        cacheVersion
+      const fileData = await loadComponentData(name, componentId, cacheVersion);
+
+      const targetComponent = this.state[viewMode].find(
+        (c) => c.id === componentId
       );
+      if (!targetComponent) {
+        console.error(
+          `Component with id ${componentId} not found after initial add.`
+        );
+        return initialComponent;
+      }
 
       if (fileData && fileData.length > 0) {
-        component.compiledData = {
+        targetComponent.compiledData = {
           files: fileData.map((file) => ({
             file: file.file,
             type: file.type,
@@ -133,16 +147,16 @@ export class BuilderService {
           try {
             const settingsObject = compileSettingsObject(settingsFile.content);
             if (settingsObject) {
-              component.compiledData.settingsObject = settingsObject;
+              targetComponent.compiledData.settingsObject = settingsObject;
 
               if (
-                Object.keys(component.props).length === 0 &&
+                Object.keys(targetComponent.props).length === 0 &&
                 typeof settingsObject.getValues === "function"
               ) {
                 try {
                   const defaultValues = settingsObject.getValues();
                   if (defaultValues && typeof defaultValues === "object") {
-                    component.props = { ...defaultValues };
+                    targetComponent.props = { ...defaultValues };
                   }
                 } catch (error) {
                   console.warn(
@@ -157,21 +171,30 @@ export class BuilderService {
               `Failed to compile settings for component ${name}:`,
               error
             );
+            targetComponent.status = "error";
+            targetComponent.error = `Failed to compile settings: ${(error as Error).message}`;
           }
         }
       }
+      if (targetComponent.status !== "error") {
+        targetComponent.status = "loaded";
+      }
     } catch (error) {
       console.warn(`Failed to load component data for ${name}:`, error);
+      const targetComponent = this.state[viewMode].find(
+        (c) => c.id === componentId
+      );
+      if (targetComponent) {
+        targetComponent.status = "error";
+        targetComponent.error = `Failed to load component data: ${(error as Error).message}`;
+      }
     }
 
-    this.state[viewMode].push(component);
-    this.emit("componentAdded", component);
-
-    this.selectComponent(component.id);
-
     this.notifySubscribers();
-
-    return component;
+    const finalComponent = this.state[viewMode].find(
+      (c) => c.id === componentId
+    );
+    return finalComponent || initialComponent;
   }
 
   removeComponent(name: string, viewMode: "desktop" | "mobile"): boolean;

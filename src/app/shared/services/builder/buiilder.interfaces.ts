@@ -2,11 +2,24 @@ export interface ComponentState {
   id: string;
   name: string;
   viewMode: "desktop" | "mobile";
-  props?: Record<string, unknown>;
-  styles?: Record<string, string>;
+  props: Record<string, unknown>;
+  styles: Record<string, string>;
   position?: { x: number; y: number };
   size?: { width: number; height: number };
   timestamp: number;
+  component?: React.ComponentType<unknown>;
+  compiledData?: {
+    files: {
+      file: string;
+      type: string;
+      content: string;
+      prefix?: string;
+    }[];
+    settingsObject?: unknown;
+  };
+  status?: "idle" | "loading" | "loaded" | "error";
+  error?: string;
+  retryCount?: number;
   settings?: {
     title: string;
     settings: Record<
@@ -17,22 +30,6 @@ export interface ComponentState {
         type?: string;
       }
     >;
-  };
-  compiledData?: {
-    files: {
-      file: string;
-      type: "script" | "style";
-      content: string;
-      prefix: string;
-    }[];
-    settingsObject?: {
-      draw: () => HTMLElement;
-      setOnChange?: (
-        callback: (values: Record<string, unknown>) => void
-      ) => void;
-      setValue?: (values: Record<string, unknown>) => void;
-      title?: string;
-    };
   };
 }
 

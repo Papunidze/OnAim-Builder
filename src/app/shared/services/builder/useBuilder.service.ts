@@ -46,7 +46,6 @@ export interface UseBuilderReturn {
   projectName?: string;
   setProjectName: (name: string) => void;
 
-  // Component selection methods
   selectComponent: (componentId: string | null) => void;
   getSelectedComponent: () => ComponentState | null;
   selectedComponentId?: string;
