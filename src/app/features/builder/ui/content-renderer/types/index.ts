@@ -54,6 +54,5 @@ export interface ComponentRenderProps {
   onRetry: (instanceId: string) => void;
 }
 
-// React 19 compatible promise types
 export type ComponentPromise = Promise<ComponentFetchResult>;
 export type ComponentsPromise = Promise<ComponentInstanceState[]>;

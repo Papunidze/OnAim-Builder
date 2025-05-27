@@ -1,5 +1,6 @@
 import {
   ColorSetting,
+  OpacitySetting,
   SettingGroup,
   WidthSetting,
 } from "builder-settings-types";
@@ -8,10 +9,10 @@ export const oa_settings = new SettingGroup({
   title: "Settings",
   main: true,
   settings: {
-    leaderBoard: new SettingGroup({
+    leaderboard: new SettingGroup({
       title: "Leaderboard",
       settings: {
-        color: new ColorSetting({
+        background: new ColorSetting({
           default: "255,255,255",
           title: "background",
         }),
@@ -19,6 +20,9 @@ export const oa_settings = new SettingGroup({
           default: 860,
           mobile: 370,
           title: "width",
+        }),
+        opacity: new OpacitySetting({
+          default: 1,
         }),
       },
     }),

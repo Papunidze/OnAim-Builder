@@ -158,7 +158,6 @@ export class BuilderService {
 
     return removed;
   }
-
   updateComponent(id: string, updates: Partial<ComponentState>): boolean {
     this.saveHistory();
 
@@ -167,6 +166,16 @@ export class BuilderService {
       if (component) {
         const updatedComponent = { ...component, ...updates, id };
         Object.assign(component, updatedComponent);
+        if (updates.props || updates.styles) {
+          import(
+            "../../../features/builder/ui/content-renderer/services/component-loader"
+          )
+            .then((module) => {
+              module.invalidateComponentCache(id);
+            })
+            .catch(() => {});
+        }
+
         this.emit("componentUpdated", component);
         this.notifySubscribers();
         return true;
