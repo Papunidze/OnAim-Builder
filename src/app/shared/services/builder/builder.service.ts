@@ -84,8 +84,7 @@ export class BuilderService {
     this.subscribers.forEach((sub) => sub());
     this.updateMetadata();
   }
-
-  addComponent(
+  async addComponent(
     name: string,
     viewMode: "desktop" | "mobile",
     options?: {
@@ -94,7 +93,7 @@ export class BuilderService {
       position?: { x: number; y: number };
       size?: { width: number; height: number };
     }
-  ): ComponentState {
+  ): Promise<ComponentState> {
     this.saveHistory();
 
     const component: ComponentState = {
@@ -107,9 +106,57 @@ export class BuilderService {
       size: options?.size,
       timestamp: Date.now(),
     };
+    try {
+      const { loadComponentData } = await import(
+        "../../../features/builder/ui/content-renderer/services/component-loader"
+      );
+
+      const cacheVersion = `${Date.now()}`;
+      const fileData = await loadComponentData(
+        name,
+        component.id,
+        cacheVersion
+      );
+
+      if (fileData && fileData.length > 0) {
+        component.compiledData = {
+          files: fileData.map((file) => ({
+            file: file.file,
+            type: file.type,
+            content: file.content,
+            prefix: file.prefix,
+          })),
+        };
+
+        const settingsFile = fileData.find((file) =>
+          file.file.endsWith("settings.ts")
+        );
+        if (settingsFile) {
+          try {
+            const { compileSettingsObject } = await import(
+              "../../../features/builder/ui/property-adjustments/services/settings-compiler"
+            );
+            const settingsObject = compileSettingsObject(settingsFile.content);
+            if (settingsObject) {
+              component.compiledData.settingsObject = settingsObject;
+            }
+          } catch (error) {
+            console.warn(
+              `Failed to compile settings for component ${name}:`,
+              error
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.warn(`Failed to load component data for ${name}:`, error);
+    }
 
     this.state[viewMode].push(component);
     this.emit("componentAdded", component);
+
+    this.selectComponent(component.id);
+
     this.notifySubscribers();
 
     return component;

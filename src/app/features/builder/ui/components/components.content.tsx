@@ -16,7 +16,13 @@ export default function ComponentsContent({
             type="button"
             role="menuitem"
             className={styles.builderPropertyComponentsItem}
-            onClick={() => addComponent(name)}
+            onClick={async () => {
+              try {
+                await addComponent(name);
+              } catch (error) {
+                console.error(`Failed to add component ${name}:`, error);
+              }
+            }}
           >
             <span className={styles.builderPropertyComponentsItemLabel}>
               {name}

@@ -11,7 +11,6 @@ export interface UseBuilderReturn {
     uniqueComponentNames: number;
     lastModified: number;
   };
-
   addComponent: (
     name: string,
     viewMode: "desktop" | "mobile",
@@ -21,7 +20,7 @@ export interface UseBuilderReturn {
       position?: { x: number; y: number };
       size?: { width: number; height: number };
     }
-  ) => ComponentState;
+  ) => Promise<ComponentState>;
   removeComponent: (name: string, viewMode: "desktop" | "mobile") => boolean;
   removeComponentById: (id: string) => boolean;
   updateComponent: (id: string, updates: Partial<ComponentState>) => boolean;
@@ -73,9 +72,8 @@ export function useBuilder(): UseBuilderReturn {
 
     return unsubscribe;
   }, []);
-
   const addComponent = useCallback(
-    (
+    async (
       name: string,
       viewMode: "desktop" | "mobile",
       options?: {
@@ -85,7 +83,7 @@ export function useBuilder(): UseBuilderReturn {
         size?: { width: number; height: number };
       }
     ) => {
-      return builderService.addComponent(name, viewMode, options);
+      return await builderService.addComponent(name, viewMode, options);
     },
     []
   );

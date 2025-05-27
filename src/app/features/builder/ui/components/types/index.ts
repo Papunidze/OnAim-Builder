@@ -9,5 +9,5 @@ export interface ComponentsProps {
 
 export interface ComponentsContentProps {
   folders: FolderEntry[];
-  addComponent: (name: string) => void;
+  addComponent: (name: string) => Promise<void>;
 }

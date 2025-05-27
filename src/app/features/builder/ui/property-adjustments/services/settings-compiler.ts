@@ -5,6 +5,7 @@ import {
   WidthSetting,
   BorderSettingSet,
   OpacitySetting,
+  SelectApiSettings,
 } from "builder-settings-types";
 
 export interface SettingsObject {
@@ -20,6 +21,7 @@ const BUILDER_SETTINGS_TYPES = {
   WidthSetting,
   BorderSettingSet,
   OpacitySetting,
+  SelectApiSettings,
 } as const;
 
 class SettingsCache {
@@ -89,6 +91,7 @@ function createModuleContext(
         ColorSetting,
         WidthSetting,
         BorderSettingSet,
+        SelectApiSettings,
         OpacitySetting
       } = require('builder-settings-types');
       
