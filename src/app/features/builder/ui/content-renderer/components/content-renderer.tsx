@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 
 import { ComponentInstance } from "../components/component-instance";
 import { DesktopLayout, MobileLayout } from "../layouts";
@@ -9,12 +9,29 @@ import { useComponentInstances } from "../hooks";
 import type { ContentRendererProps } from "../types";
 import styles from "./content-renderer.module.css";
 
+const StyleElement = memo(
+  ({ styles: cssStyles }: { styles: string }) => (
+    <style dangerouslySetInnerHTML={{ __html: cssStyles }} />
+  ),
+  (prevProps, nextProps) => {
+    return prevProps.styles === nextProps.styles;
+  }
+);
+
+StyleElement.displayName = "StyleElement";
+
 export function ContentRenderer({
   components,
   viewMode,
 }: ContentRendererProps): JSX.Element {
   const { instances, aggregatedStyles, retryComponent, isPending } =
     useComponentInstances(components);
+
+  const componentsListClassName = useMemo(() => {
+    return isPending
+      ? `${styles.componentsList} ${styles.pending}`
+      : styles.componentsList;
+  }, [isPending]);
 
   const noComponentsMessage = useMemo(
     () => (
@@ -38,13 +55,9 @@ export function ContentRenderer({
 
   const content = (
     <>
-      {aggregatedStyles && (
-        <style dangerouslySetInnerHTML={{ __html: aggregatedStyles }} />
-      )}
+      {aggregatedStyles && <StyleElement styles={aggregatedStyles} />}
 
-      <div
-        className={`${styles.componentsList} ${isPending ? styles.pending : ""}`}
-      >
+      <div className={componentsListClassName}>
         {instances.map((instance) => (
           <ComponentInstance
             key={`${instance.id}-${instance.name}`}

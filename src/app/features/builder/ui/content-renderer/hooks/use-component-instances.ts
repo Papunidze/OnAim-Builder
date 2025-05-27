@@ -103,7 +103,6 @@ export function useComponentInstances(
         .join(","),
     [components]
   );
-
   const componentPropsRef = useRef<Map<string, string>>(new Map());
 
   const hasComponentPropsChanged = useCallback(
@@ -123,7 +122,6 @@ export function useComponentInstances(
     },
     []
   );
-
   const updateInstance = useCallback(
     (
       instanceId: string,
@@ -190,16 +188,17 @@ export function useComponentInstances(
     async (comp: ComponentState) => {
       const propsChanged = hasComponentPropsChanged(comp);
 
-      if (
-        loadingComponentsRef.current.has(comp.id) ||
-        (loadedComponentsRef.current.has(comp.id) && !propsChanged)
-      ) {
+      if (loadingComponentsRef.current.has(comp.id)) {
         return;
       }
 
-      if (propsChanged) {
+      if (propsChanged && loadedComponentsRef.current.has(comp.id)) {
         invalidateComponentCache(comp.id);
         loadedComponentsRef.current.delete(comp.id);
+      }
+
+      if (loadedComponentsRef.current.has(comp.id) && !propsChanged) {
+        return;
       }
 
       loadingComponentsRef.current.add(comp.id);
@@ -269,7 +268,6 @@ export function useComponentInstances(
 
     loadAllComponents();
   }, [componentIds, handleComponentLoad, components]);
-
   useEffect(() => {
     components.forEach((comp) => {
       if (hasComponentPropsChanged(comp)) {
@@ -298,11 +296,16 @@ export function useComponentInstances(
     },
     [instances, maxRetryCount, components, handleComponentLoad]
   );
-
   const aggregatedStyles = useMemo(() => {
-    return instances
-      .filter((instance) => instance.status === "loaded" && instance.styles)
+    const loadedInstances = instances.filter(
+      (instance) => instance.status === "loaded" && instance.styles
+    );
+
+    if (loadedInstances.length === 0) return "";
+
+    return loadedInstances
       .map((instance) => instance.styles)
+      .filter(Boolean)
       .join("\n");
   }, [instances]);
 

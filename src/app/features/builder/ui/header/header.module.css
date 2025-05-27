@@ -111,20 +111,3 @@
   border: none;
   outline: none;
 }
-
-.builderHeaderSaveButton {
-  font-family: var(--font-family-base);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: var(--spacing-4xl);
-  padding: var(--spacing-lg) var(--spacing-xl);
-  background: #02cc59;
-  color: var(--text-color-light);
-  border: none;
-  border-radius: 34px;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  cursor: pointer;
-  min-width: 100px;
-}

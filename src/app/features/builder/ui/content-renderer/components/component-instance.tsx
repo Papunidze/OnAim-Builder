@@ -1,4 +1,5 @@
 import type { JSX } from "react";
+import { useMemo } from "react";
 import type { ComponentRenderProps } from "../types";
 import styles from "./component-instance.module.css";
 import { ErrorBoundary } from "@app-shared/components";
@@ -11,6 +12,13 @@ export function ComponentInstance({
   const { selectComponent, selectedComponentId } = useBuilder();
   const key = `${instance.id}-${instance.name}`;
   const isSelected = selectedComponentId === instance.id;
+
+  const wrapperClassName = useMemo(() => {
+    return isSelected
+      ? `${styles.componentWrapper} ${styles.selected}`
+      : styles.componentWrapper;
+  }, [isSelected]);
+
   const handleClick = (e: React.MouseEvent): void => {
     e.preventDefault();
     e.stopPropagation();
@@ -74,10 +82,7 @@ export function ComponentInstance({
           </div>
         )}
       >
-        <div
-          className={`${styles.componentWrapper} ${isSelected ? styles.selected : ""}`}
-          onClick={handleClick}
-        >
+        <div className={wrapperClassName} onClick={handleClick}>
           <div className={styles.componentLabel}>
             {instance.name} - Prefix: {instance.prefix || "N/A"}
           </div>
