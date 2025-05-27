@@ -5,6 +5,7 @@ import {
   type FileData,
 } from "@app-shared/services/reader";
 import type { ComponentFileData, ComponentFetchResult } from "../types";
+import { StylesRenderer } from "../../property-adjustments/services/styles-render";
 
 export const DEFAULT_SCRIPT_PATTERNS = [
   "index.tsx",
@@ -15,7 +16,6 @@ export const DEFAULT_SCRIPT_PATTERNS = [
 
 export const MAX_RETRY_COUNT = 3;
 
-// Cache invalidation system for component recompilation
 const componentCacheInvalidation = new Map<string, number>();
 let globalCacheVersion = 0;
 
@@ -38,9 +38,8 @@ export const loadComponentData = cache(
   async (
     componentName: string,
     componentId: string,
-    cacheVersion: string // Used by React's cache function as part of the cache key
+    cacheVersion: string
   ): Promise<ComponentFileData[]> => {
-    // @ts-ignore - cacheVersion is used by React's cache function as cache key
     void cacheVersion;
     const files: ContentFile[] = await fetchComponents(
       componentName,
@@ -67,7 +66,7 @@ export const compileComponent = cache(
   async (
     componentName: string,
     fileData: ComponentFileData[],
-    cacheVersion: string, // Used by React's cache function as part of the cache key
+    cacheVersion: string,
     componentProps?: Record<string, unknown>,
     componentStyles?: Record<string, string>
   ): Promise<ComponentFetchResult> => {
@@ -153,11 +152,10 @@ const loadComponentCached = cache(
   async (
     componentName: string,
     componentId: string,
-    cacheVersion: string, // Used by React's cache function as part of the cache key
+    cacheVersion: string,
     componentProps?: Record<string, unknown>,
     componentStyles?: Record<string, string>
   ): Promise<ComponentFetchResult> => {
-    // @ts-ignore - cacheVersion is used by React's cache function as cache key
     void cacheVersion;
     const fileData = await loadComponentData(
       componentName,
@@ -198,52 +196,5 @@ function generateSettingsCSS(
   componentStyles: Record<string, string> = {},
   prefix: string
 ): string {
-  let cssVariables: string[] = [];
-
-  Object.entries(componentStyles).forEach(([key, value]) => {
-    if (typeof value === "string") {
-      cssVariables.push(`--${prefix}-${key}: ${value};`);
-    }
-  });
-  const processSettings = (
-    obj: Record<string, unknown>,
-    keyPrefix: string = ""
-  ) => {
-    Object.entries(obj).forEach(([key, value]) => {
-      const fullKey = keyPrefix ? `${keyPrefix}-${key}` : key;
-
-      if (value && typeof value === "object" && !Array.isArray(value)) {
-        processSettings(value as Record<string, unknown>, fullKey);
-      } else if (typeof value === "string" || typeof value === "number") {
-        let cssValue = String(value);
-        if (key === "background" && /^\d+,\s*\d+,\s*\d+$/.test(cssValue)) {
-          cssValue = `rgb(${cssValue})`;
-        } else if (key === "width" && /^\d+$/.test(cssValue)) {
-          cssValue = `${cssValue}px`;
-        } else if (key === "opacity" && /^\d+$/.test(cssValue)) {
-          cssValue = `calc(${cssValue} / 100)`;
-        }
-        cssVariables.push(`${fullKey}: ${cssValue};`);
-      }
-    });
-  };
-  processSettings(componentProps);
-
-  if (cssVariables.length > 0) {
-    const firstProperty = cssVariables[0];
-    const mainKey = firstProperty.split(":")[0].split("-")[0];
-    const className = `${prefix}-${mainKey}`;
-
-    const simpleProperties = cssVariables.map((rule) => {
-      const [property, value] = rule.split(": ");
-      const simpleProp = property.includes("-")
-        ? property.split("-").slice(1).join("-")
-        : property;
-      return `${simpleProp}: ${value}`;
-    });
-
-    return `.${className} {\n  ${simpleProperties.join("\n  ")}\n}`;
-  }
-
-  return "";
+  return StylesRenderer.generateCSS(componentProps, componentStyles, prefix);
 }

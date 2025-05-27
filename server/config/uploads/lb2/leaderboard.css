@@ -5,9 +5,9 @@
   background: black;
 }
 .leaderboard {
-  max-width: var(--lb2-leaderboard-width, 360px);
+  max-width: 360px;
   margin: 0 auto;
-  background: var(--lb2-leaderboard-color, #fff);
+  background: white;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   font-family: sans-serif;

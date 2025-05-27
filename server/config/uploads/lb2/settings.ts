@@ -1,4 +1,5 @@
 import {
+  BorderSettingSet,
   ColorSetting,
   OpacitySetting,
   SettingGroup,
@@ -22,8 +23,9 @@ export const oa_settings = new SettingGroup({
           title: "width",
         }),
         opacity: new OpacitySetting({
-          default: 1,
+          default: 100,
         }),
+        border: new BorderSettingSet({}),
       },
     }),
   },
