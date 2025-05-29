@@ -108,11 +108,18 @@ function createModuleContext(
         SelectApiSettings,
         OpacitySetting,
         StringSetting,
-        createSettingGroup
+        createSettingGroup,
+        SettingsToProps
       } = require('builder-settings-types');
-      
+
+      let settings;
+
       ${tsContent}
-      
+
+      if (!module.exports.default && typeof settings !== 'undefined') {
+        module.exports.default = settings;
+      }
+
       return module.exports;
     `
   ) as (exports: unknown, require: (moduleName: string) => unknown) => unknown;

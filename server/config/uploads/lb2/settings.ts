@@ -1,14 +1,14 @@
 import {
   BorderSettingSet,
   ColorSetting,
-  createSettingGroup,
   OpacitySetting,
   SettingGroup,
   StringSetting,
   WidthSetting,
+  SettingsToProps,
 } from "builder-settings-types";
 
-export const settings = createSettingGroup({
+export const settings = new SettingGroup({
   title: "Settings",
   main: true,
   settings: {
@@ -36,5 +36,7 @@ export const settings = createSettingGroup({
     }),
   },
 });
+
+export type Settings = SettingsToProps<typeof settings>;
 
 export default settings;

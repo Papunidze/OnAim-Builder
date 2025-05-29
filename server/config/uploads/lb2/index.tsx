@@ -1,22 +1,14 @@
 import React from "react";
 import "./leaderboard.css";
 import Button from "./button";
+import type { Settings } from "./settings";
 
 interface Leader {
   name: string;
   score: number;
 }
 
-interface Props {
-  leaderboard?: {
-    test?: string;
-    background?: string;
-    width?: number;
-    opacity?: number;
-    border?: unknown;
-  };
-}
-const Leaderboard: React.FC<Props> = (props) => {
+const Leaderboard: React.FC<Settings> = (props) => {
   const leaders: Leader[] = [
     { name: "Giga", score: 1200 },
     { name: "Gela", score: 950 },
