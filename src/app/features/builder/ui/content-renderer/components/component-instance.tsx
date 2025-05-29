@@ -4,14 +4,45 @@ import type { ComponentRenderProps } from "../types";
 import styles from "./component-instance.module.css";
 import { ErrorBoundary } from "@app-shared/components";
 import { useBuilder } from "@app-shared/services/builder";
+import { getCompiledSettings } from "@app-features/builder/ui/property-adjustments/services";
 
 export function ComponentInstance({
   instance,
   onRetry,
 }: ComponentRenderProps): JSX.Element {
-  const { selectComponent, selectedComponentId } = useBuilder();
+  const { selectComponent, selectedComponentId, getComponent } = useBuilder();
   const key = `${instance.id}-${instance.name}`;
   const isSelected = selectedComponentId === instance.id;
+
+  const component = getComponent(instance.id);
+  const getComponentProps = useMemo((): Record<string, unknown> => {
+    if (!component?.compiledData?.files) {
+      console.error("No component or compiled data for", instance.name);
+      return {};
+    }
+
+    const settingsFile = component.compiledData.files.find(
+      (file: { file: string }) => file.file === "settings.ts"
+    );
+
+    if (!settingsFile?.content) {
+      console.error("No settings file found for", instance.name);
+      return {};
+    }
+
+    const settingsObject = getCompiledSettings(
+      component.name,
+      settingsFile.content
+    );
+
+    if (!settingsObject || typeof settingsObject.getValues !== "function") {
+      console.error("Invalid settings object for", instance.name);
+      return {};
+    }
+    const values = settingsObject.getValues() || {};
+    return values;
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [component, instance.name, component?.props, component?.timestamp]);
 
   const wrapperClassName = useMemo(() => {
     return isSelected
@@ -86,7 +117,7 @@ export function ComponentInstance({
           <div className={styles.componentLabel}>
             {instance.name} - Prefix: {instance.prefix || "N/A"}
           </div>
-          <Component />
+          <Component {...getComponentProps} />
         </div>
       </ErrorBoundary>
     );

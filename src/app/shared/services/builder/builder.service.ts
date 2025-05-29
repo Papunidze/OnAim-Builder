@@ -1,8 +1,8 @@
-import type { ComponentState } from "react";
 import type {
   BuilderServiceEvents,
   BuilderState,
   EventCallback,
+  ComponentState,
 } from "./buiilder.interfaces";
 import { compileSettingsObject } from "@app-features/builder/ui/property-adjustments/services";
 import { loadComponentData } from "@app-features/builder/ui/content-renderer/services";
@@ -113,8 +113,6 @@ export class BuilderService {
 
     this.state[viewMode].push(initialComponent);
     this.emit("componentAdded", initialComponent);
-    this.selectComponent(initialComponent.id);
-    this.notifySubscribers();
 
     try {
       const cacheVersion = `${Date.now()}`;
@@ -190,6 +188,7 @@ export class BuilderService {
       }
     }
 
+    this.selectComponent(initialComponent.id);
     this.notifySubscribers();
     const finalComponent = this.state[viewMode].find(
       (c) => c.id === componentId
@@ -323,7 +322,7 @@ export class BuilderService {
     this.state.selectedComponentId = componentId || undefined;
 
     const selectedComponent = componentId
-      ? this.getComponent(componentId)
+      ? (this.getComponent(componentId) ?? null)
       : null;
     this.emit("componentSelected", selectedComponent);
     this.notifySubscribers();

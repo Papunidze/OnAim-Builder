@@ -1,20 +1,26 @@
 import {
   BorderSettingSet,
   ColorSetting,
+  createSettingGroup,
   OpacitySetting,
   SettingGroup,
+  StringSetting,
   WidthSetting,
 } from "builder-settings-types";
 
-export const oa_settings = new SettingGroup({
+export const settings = createSettingGroup({
   title: "Settings",
   main: true,
   settings: {
     leaderboard: new SettingGroup({
       title: "Leaderboard",
       settings: {
+        test: new StringSetting({
+          title: "Test",
+          default: "test",
+        }),
         background: new ColorSetting({
-          default: "0,0,0",
+          default: "255,255,255",
           title: "background",
         }),
         width: new WidthSetting({
@@ -30,3 +36,5 @@ export const oa_settings = new SettingGroup({
     }),
   },
 });
+
+export default settings;

@@ -6,6 +6,8 @@ import {
   BorderSettingSet,
   OpacitySetting,
   SelectApiSettings,
+  createSettingGroup,
+  StringSetting,
 } from "builder-settings-types";
 
 export interface SettingsObject {
@@ -23,6 +25,8 @@ const BUILDER_SETTINGS_TYPES = {
   BorderSettingSet,
   OpacitySetting,
   SelectApiSettings,
+  StringSetting,
+  createSettingGroup,
 } as const;
 
 class SettingsCache {
@@ -58,9 +62,18 @@ class SettingsCache {
     const key = this.generateCacheKey(componentName, content);
     this.cache.set(key, settingsObject);
   }
-
   clear(): void {
     this.cache.clear();
+  }
+
+  clearForComponent(componentName: string): void {
+    const keysToDelete: string[] = [];
+    for (const key of this.cache.keys()) {
+      if (key.startsWith(`${componentName}:`)) {
+        keysToDelete.push(key);
+      }
+    }
+    keysToDelete.forEach((key) => this.cache.delete(key));
   }
 
   get size(): number {
@@ -93,7 +106,9 @@ function createModuleContext(
         WidthSetting,
         BorderSettingSet,
         SelectApiSettings,
-        OpacitySetting
+        OpacitySetting,
+        StringSetting,
+        createSettingGroup
       } = require('builder-settings-types');
       
       ${tsContent}
@@ -174,6 +189,10 @@ export function getCompiledSettings(
 
 export function clearSettingsCache(): void {
   settingsCache.clear();
+}
+
+export function clearSettingsCacheForComponent(componentName: string): void {
+  settingsCache.clearForComponent(componentName);
 }
 
 export function getSettingsCacheStats(): { size: number } {
