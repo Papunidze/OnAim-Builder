@@ -3,6 +3,7 @@ import type { JSX } from "react";
 
 import styles from "./header.module.css";
 import { builderService } from "@app-shared/services/builder";
+import Save from "../save";
 
 interface HeaderProps {
   viewMode: "desktop" | "mobile";
@@ -82,7 +83,7 @@ const Header = ({ viewMode, onViewChange }: HeaderProps): JSX.Element => (
         >
           Preview
         </button>
-        <button className={styles.builderHeaderSaveButton}>Save</button>
+        <Save viewMode={viewMode} />
       </div>
     </div>
   </header>

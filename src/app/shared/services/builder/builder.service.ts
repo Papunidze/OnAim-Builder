@@ -137,13 +137,13 @@ export class BuilderService {
             prefix: file.prefix,
           })),
         };
-
         const settingsFile = fileData.find((file) =>
           file.file.endsWith("settings.ts")
         );
         if (settingsFile) {
           try {
             const settingsObject = compileSettingsObject(settingsFile.content);
+
             if (settingsObject) {
               targetComponent.compiledData.settingsObject = settingsObject;
 
@@ -277,9 +277,31 @@ export class BuilderService {
   hasComponent(name: string, viewMode: "desktop" | "mobile"): boolean {
     return this.state[viewMode].some((comp) => comp.name === name);
   }
-
   getComponents(viewMode: "desktop" | "mobile"): ComponentState[] {
     return [...this.state[viewMode]];
+  }
+  getLiveComponents(viewMode: "desktop" | "mobile"): ComponentState[] {
+    return this.state[viewMode];
+  }
+
+  reconstructSettingsObject(component: ComponentState): any {
+    if (!component.compiledData?.files) {
+      return null;
+    }
+
+    const settingsFile = component.compiledData.files.find((file) =>
+      file.file.endsWith("settings.ts")
+    );
+
+    if (!settingsFile?.content) {
+      return null;
+    }
+
+    try {
+      return compileSettingsObject(settingsFile.content);
+    } catch {
+      return null;
+    }
   }
 
   getComponentNames(viewMode: "desktop" | "mobile"): string[] {

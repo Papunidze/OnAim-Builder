@@ -15,6 +15,7 @@ export interface SettingsObject {
   setOnChange?: (callback: (values: Record<string, unknown>) => void) => void;
   setValue?: (values: Record<string, unknown>) => void;
   getValues?: () => Record<string, unknown>;
+  getJson?: () => Record<string, unknown>;
   title?: string;
 }
 
