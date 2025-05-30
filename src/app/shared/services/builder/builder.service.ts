@@ -4,7 +4,10 @@ import type {
   EventCallback,
   ComponentState,
 } from "./buiilder.interfaces";
-import { compileSettingsObject } from "@app-features/builder/ui/property-adjustments/services";
+import {
+  compileSettingsObject,
+  type SettingsObject,
+} from "@app-features/builder/ui/property-adjustments/services";
 import { loadComponentData } from "@app-features/builder/ui/content-renderer/services";
 
 export class BuilderService {
@@ -284,7 +287,7 @@ export class BuilderService {
     return this.state[viewMode];
   }
 
-  reconstructSettingsObject(component: ComponentState): any {
+  reconstructSettingsObject(component: ComponentState): SettingsObject | null {
     if (!component.compiledData?.files) {
       return null;
     }
