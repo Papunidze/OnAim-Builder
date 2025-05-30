@@ -2,6 +2,7 @@ import type { JSX } from "react";
 import styles from "./save.module.css";
 import { builderService } from "@app-shared/services/builder";
 import type { ComponentState } from "@app-shared/services/builder";
+import { StylesRenderer } from "@app-features/builder/ui/property-adjustments/services/styles-render";
 
 interface SaveProps {
   viewMode: "desktop" | "mobile";
@@ -22,11 +23,11 @@ interface ComponentExportData {
       coordinates: { x: number; y: number };
     };
     size?: { width: number; height: number };
-  };
-  configuration: {
+  };  configuration: {
     settings: Record<string, unknown>;
     props: Record<string, unknown>;
     styles: Record<string, unknown>;
+    elementSpecificCSS: string;
   };
 }
 
@@ -56,7 +57,9 @@ const Save = ({ viewMode }: SaveProps): JSX.Element => {
   const generateSaveData = (): SaveData => {
     const components = builderService.getLiveComponents(viewMode);
 
-    const extractComponentData = (components: ComponentState[]): ComponentExportData[] => {
+    const extractComponentData = (
+      components: ComponentState[]
+    ): ComponentExportData[] => {
       return components.map((component, index) => {
         const prefix =
           component.compiledData?.files?.find(
@@ -73,8 +76,17 @@ const Save = ({ viewMode }: SaveProps): JSX.Element => {
 
         if (settingsObject) {
           try {
-            if (typeof settingsObject === 'object' && settingsObject !== null && 'getJson' in settingsObject && typeof (settingsObject as Record<string, unknown>).getJson === "function") {
-              const jsonResult = ((settingsObject as Record<string, unknown>).getJson as () => unknown)();
+            if (
+              typeof settingsObject === "object" &&
+              settingsObject !== null &&
+              "getJson" in settingsObject &&
+              typeof (settingsObject as Record<string, unknown>).getJson ===
+                "function"
+            ) {
+              const jsonResult = (
+                (settingsObject as Record<string, unknown>)
+                  .getJson as () => unknown
+              )();
               if (typeof jsonResult === "string") {
                 try {
                   extractedSettings = JSON.parse(jsonResult);
@@ -84,8 +96,18 @@ const Save = ({ viewMode }: SaveProps): JSX.Element => {
               } else if (jsonResult && typeof jsonResult === "object") {
                 extractedSettings = jsonResult as Record<string, unknown>;
               }
-            } else if (typeof settingsObject === 'object' && settingsObject !== null && 'getValues' in settingsObject && typeof (settingsObject as Record<string, unknown>).getValues === "function") {
-              extractedSettings = ((settingsObject as Record<string, unknown>).getValues as () => unknown)() || {};
+            } else if (
+              typeof settingsObject === "object" &&
+              settingsObject !== null &&
+              "getValues" in settingsObject &&
+              typeof (settingsObject as Record<string, unknown>).getValues ===
+                "function"
+            ) {
+              extractedSettings =
+                (
+                  (settingsObject as Record<string, unknown>)
+                    .getValues as () => unknown
+                )() || {};
             } else {
               extractedSettings = settingsObject as Record<string, unknown>;
             }
@@ -104,8 +126,16 @@ const Save = ({ viewMode }: SaveProps): JSX.Element => {
           const gridColumns = 10;
           const row = Math.floor(index / gridColumns);
           const col = index % gridColumns;
-          gridPosition = [row, col];
-        }
+          gridPosition = [row, col];        }
+        
+        // Generate element-specific CSS using StylesRenderer
+        const componentStyles = component.styles || {};
+        const elementSpecificCSS = StylesRenderer.generateCSS(
+          extractedSettings as Record<string, unknown>,
+          componentStyles as Record<string, string>,
+          prefix
+        );
+
         return {
           component: {
             id: component.id,
@@ -126,6 +156,7 @@ const Save = ({ viewMode }: SaveProps): JSX.Element => {
             settings: extractedSettings as Record<string, unknown>,
             props: currentSettings,
             styles: component.styles || {},
+            elementSpecificCSS,
           },
         };
       });
@@ -133,7 +164,8 @@ const Save = ({ viewMode }: SaveProps): JSX.Element => {
     const componentData = extractComponentData(components);
     const componentNames = [
       ...new Set(componentData.map((c) => c.component.name)),
-    ];    const componentStats = componentNames.map((name) => {
+    ];
+    const componentStats = componentNames.map((name) => {
       const count = componentData.filter(
         (c) => c.component.name === name
       ).length;
