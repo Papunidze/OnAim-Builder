@@ -1,0 +1,60 @@
+import { builderService } from "@app-shared/services/builder";
+import type { SaveData } from "../types/save.types";
+import {
+  transformComponentToExportData,
+  generateFilename,
+  downloadFile,
+} from "../utils/save.utils";
+
+export class JSONExportService {
+  static generateSaveData(viewMode: "desktop" | "mobile"): SaveData {
+    const components = builderService.getLiveComponents(viewMode);
+    const componentData = components.map(transformComponentToExportData);
+
+    const componentNames = [
+      ...new Set(componentData.map((c) => c.component.name)),
+    ];
+    const componentStats = componentNames.map((name) => {
+      const count = componentData.filter(
+        (c) => c.component.name === name
+      ).length;
+      return { name, count };
+    });
+
+    return {
+      project: {
+        metadata: {
+          version: "1.0.0",
+          format: "OnAim Builder Export",
+          viewMode,
+          exportTimestamp: new Date().toISOString(),
+          lastModified: new Date(
+            builderService.getState().metadata.lastModified
+          ).toISOString(),
+          projectName: builderService.getProjectName() || "Untitled Project",
+          generator: "OnAim Builder v1.0.0",
+        },
+        statistics: {
+          components: {
+            total: componentData.length,
+            uniqueTypes: componentNames.length,
+            breakdown: componentStats,
+          },
+        },
+      },
+      components: componentData,
+    };
+  }
+
+  static export(viewMode: "desktop" | "mobile"): void {
+    const saveData = this.generateSaveData(viewMode);
+    const filename = generateFilename({
+      format: "json",
+      viewMode,
+      projectName: saveData.project.metadata.projectName,
+    });
+
+    const content = JSON.stringify(saveData, null, 2);
+    downloadFile(content, filename, "application/json");
+  }
+}

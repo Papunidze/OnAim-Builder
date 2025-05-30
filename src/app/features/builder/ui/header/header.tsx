@@ -3,7 +3,7 @@ import type { JSX } from "react";
 
 import styles from "./header.module.css";
 import { builderService } from "@app-shared/services/builder";
-import Save from "../save";
+import { Save } from "../save";
 
 interface HeaderProps {
   viewMode: "desktop" | "mobile";

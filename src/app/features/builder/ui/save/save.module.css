@@ -1,8 +1,14 @@
+.saveDropdownContainer {
+  position: relative;
+  display: inline-block;
+}
+
 .builderHeaderSaveButton {
   font-family: var(--font-family-base);
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: var(--spacing-sm);
   height: var(--spacing-4xl);
   padding: var(--spacing-lg) var(--spacing-xl);
   background: #02cc59;
@@ -13,4 +19,82 @@
   font-weight: var(--font-weight-bold);
   cursor: pointer;
   min-width: 100px;
+  transition: background-color 0.2s ease;
+}
+
+.builderHeaderSaveButton:hover {
+  background: #02b350;
+}
+
+.dropdownArrow {
+  font-size: 10px;
+  transition: transform 0.2s ease;
+}
+
+.saveDropdownContainer:has(.dropdownMenu) .dropdownArrow {
+  transform: rotate(180deg);
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  min-width: 240px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.dropdownItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: none;
+  background: white;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-sm);
+  color: var(--text-color-dark);
+  position: relative;
+}
+
+.dropdownItem:hover {
+  background: #f8f9fa;
+}
+
+.dropdownItem:not(:last-child) {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dropdownIcon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.dropdownContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.dropdownLabel {
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+  color: var(--text-color-dark);
+}
+
+.dropdownDescription {
+  font-size: var(--font-size-xs);
+  color: var(--text-color-muted, #666);
+  margin-top: 2px;
+  font-weight: normal;
 }
