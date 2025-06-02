@@ -14,7 +14,7 @@ const Leaderboard: React.FC = (props) => {
     { name: "Eve", score: 780 },
     { name: "Mallory", score: 630 },
   ];
-
+  console.warn("Leaderboard props:", props);
   return (
     <div className="leaderboard">
       <Button />
