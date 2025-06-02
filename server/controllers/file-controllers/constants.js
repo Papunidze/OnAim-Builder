@@ -36,7 +36,8 @@ const REGEX_PATTERNS = {
   SETTINGS_VAR: /export const (\w+) = new SettingGroup\(/,
   CLASS_NAME: /className\s*=\s*["']([A-Za-z0-9_-]+)["']/g,
   CSS_CLASS: /\.([A-Za-z_-][A-ZaZ0-9_-]*)/g,
-  SETTINGS_EXPORT: /(export\s+const\s+)([A-Za-z0-9_]+)(\s*=\s*new\s+SettingGroup\()/g,
+  SETTINGS_EXPORT:
+    /(export\s+const\s+)([A-Za-z0-9_]+)(\s*=\s*new\s+SettingGroup\()/g,
   EXPORT_LINES: /^(export type|export default)/,
   IMPORT_LINES: /^import /,
 };

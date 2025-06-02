@@ -56,9 +56,6 @@ export class EnhancedSourceExportService {
         existingComponents,
         componentPropsMap
       );
-
-      const componentList = existingComponents.join(", ");
-      alert(`Successfully downloaded source files for: ${componentList}`);
     } catch (error) {
       console.error("Failed to download server sources:", error);
       alert(

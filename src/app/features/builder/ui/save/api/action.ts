@@ -47,41 +47,6 @@ export const checkComponentExists = async (
   }
 };
 
-export const downloadComponentSource = async (
-  componentName: string,
-  componentProps?: Record<string, unknown>
-): Promise<void> => {
-  try {
-    if (!componentName || typeof componentName !== "string") {
-      throw new Error("Component name is required and must be a string");
-    }
-
-    const endpoint = `/file/download/${encodeURIComponent(componentName)}`;
-    const filename = `${componentName}_source_${Date.now()}.zip`;
-
-    if (componentProps && Object.keys(componentProps).length > 0) {
-      await api.downloadFile(endpoint, filename, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: { componentProps },
-      });
-    } else {
-      await api.downloadFile(endpoint, filename, {
-        method: "GET",
-      });
-    }
-  } catch (error) {
-    console.error("Download failed:", error);
-    throw new Error(
-      error instanceof Error
-        ? error.message
-        : "Failed to download component source"
-    );
-  }
-};
-
 export const downloadMultipleComponentsSources = async (
   componentNames: string[],
   componentPropsMap?: Record<string, Record<string, unknown>>
@@ -91,10 +56,9 @@ export const downloadMultipleComponentsSources = async (
       throw new Error("At least one component name is required");
     }
 
-    // Use the new multiple components endpoint
     const endpoint = `/file/download-multiple`;
     const filename = `multiple_components_${Date.now()}.zip`;
-
+    console.log(componentNames);
     await api.downloadFile(endpoint, filename, {
       method: "POST",
       headers: {

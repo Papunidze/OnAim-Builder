@@ -1,29 +1,3 @@
-/**
- * Generate page.tsx template for a single component
- */
-const generatePageTsx = (componentName) => {
-  const capitalizedName =
-    componentName.charAt(0).toUpperCase() + componentName.slice(1);
-
-  return `import React from "react";
-import ${capitalizedName}Component from "./${componentName}";
-import settings from "./${componentName}/settings";
-
-const ${capitalizedName}Page: React.FC = () => {
-  return (
-    <div className="page-container">
-      <${capitalizedName}Component {...settings.getValues()} />
-    </div>
-  );
-};
-
-export default ${capitalizedName}Page;
-`;
-};
-
-/**
- * Generate page.tsx template for multiple components
- */
 const generateMultipleComponentsPageTsx = (componentData) => {
   const imports = componentData
     .map((comp) => {
@@ -68,6 +42,5 @@ export default MultipleComponentsPage;
 };
 
 module.exports = {
-  generatePageTsx,
   generateMultipleComponentsPageTsx,
 };
