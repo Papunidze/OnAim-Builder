@@ -77,10 +77,10 @@ export class EnhancedSourceExportService {
           componentPropsMap[name] = componentProps as Record<string, unknown>;
         }
       });
-
       await downloadMultipleComponentsSources(
         existingComponents,
-        componentPropsMap
+        componentPropsMap,
+        viewMode
       );
     } catch (error) {
       console.error("Failed to download server sources:", error);

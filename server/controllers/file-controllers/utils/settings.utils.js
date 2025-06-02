@@ -1,6 +1,5 @@
 const fs = require("fs").promises;
 const path = require("path");
-const { REGEX_PATTERNS } = require("../constants");
 
 const loadSettingsConfig = async (dir, folder, componentProps = {}) => {
   try {

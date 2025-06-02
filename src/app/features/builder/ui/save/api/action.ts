@@ -49,7 +49,8 @@ export const checkComponentExists = async (
 
 export const downloadMultipleComponentsSources = async (
   componentNames: string[],
-  componentPropsMap?: Record<string, Record<string, unknown>>
+  componentPropsMap?: Record<string, Record<string, unknown>>,
+  viewMode?: "desktop" | "mobile"
 ): Promise<void> => {
   try {
     if (!Array.isArray(componentNames) || componentNames.length === 0) {
@@ -58,7 +59,6 @@ export const downloadMultipleComponentsSources = async (
 
     const endpoint = `/file/download-multiple`;
     const filename = `multiple_components_${Date.now()}.zip`;
-    console.log(componentNames);
     await api.downloadFile(endpoint, filename, {
       method: "POST",
       headers: {
@@ -67,6 +67,7 @@ export const downloadMultipleComponentsSources = async (
       body: {
         componentNames,
         componentPropsMap: componentPropsMap || {},
+        viewMode: viewMode || "desktop",
       },
     });
   } catch (error) {

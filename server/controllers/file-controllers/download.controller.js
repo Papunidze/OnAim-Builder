@@ -5,17 +5,27 @@ const AppError = require("../../utils/app-error");
 const sanitizeName = require("../../config/sanitize-name");
 const archiver = require("archiver");
 const { loadSettingsConfig } = require("./utils/settings.utils");
-const { generateMultipleComponentsPageTsx } = require("./utils/template.utils");
+const {
+  generateMultipleComponentsPageTsx,
+  generateViteMainTsx,
+  generateVitePackageJson,
+  generateViteConfig,
+  generateTsConfig,
+  generateIndexHtml,
+  generateIndexCss,
+  generateViteEnvDts,
+} = require("./utils/template.utils");
 const { ERROR_MESSAGES } = require("./constants");
 
 const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
   const componentNames = req.body?.componentNames || [];
   const componentPropsMap = req.body?.componentPropsMap || {};
+  const viewMode = req.body?.viewMode || "desktop";
+
   if (!Array.isArray(componentNames) || componentNames.length === 0) {
     return next(new AppError(ERROR_MESSAGES.INVALID_COMPONENT_NAME, 400));
   }
-
-  const zipFilename = `multiple_components_${Date.now()}.zip`;
+  const zipFilename = `vite-app-components_${Date.now()}.zip`;
   res.setHeader("Content-Type", "application/zip");
   res.setHeader("Content-Disposition", `attachment; filename="${zipFilename}"`);
 
@@ -68,15 +78,12 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
     }
     const instanceCount = componentInstanceMap.get(folder) + 1;
     componentInstanceMap.set(folder, instanceCount);
-
     const componentProps = componentPropsMap[componentName] || {};
     const settingsConfig = await loadSettingsConfig(
       dir,
       folder,
       componentProps
     );
-
-    const pageFolder = `page`;
 
     // Copy component files only once per base component
     if (!componentFilesAdded.has(folder)) {
@@ -98,7 +105,7 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
           let fileContent = await fs.readFile(filePath, "utf-8");
 
           archive.append(fileContent, {
-            name: `${pageFolder}/${folder}/${file}`,
+            name: `src/components/${folder}/${file}`,
           });
         }
       }
@@ -108,7 +115,7 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
     if (settingsConfig) {
       const settingsFileName = `${folder}_${instanceCount}settings.json`;
       archive.append(JSON.stringify(settingsConfig, null, 2), {
-        name: `${pageFolder}/${folder}/settings/${settingsFileName}`,
+        name: `src/components/${folder}/settings/${settingsFileName}`,
       });
     }
 
@@ -121,9 +128,92 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
       settings: settingsConfig,
     });
   }
+  // Generate Vite app structure
+  const mainTsxContent = generateViteMainTsx(processedComponents, viewMode);
+  archive.append(mainTsxContent, { name: `src/main.tsx` });
 
-  const pageTsxContent = generateMultipleComponentsPageTsx(processedComponents);
-  archive.append(pageTsxContent, { name: `page/page.tsx` });
+  // Generate package.json
+  const packageJsonContent = generateVitePackageJson();
+  archive.append(packageJsonContent, { name: `package.json` });
+
+  // Generate vite.config.ts
+  const viteConfigContent = generateViteConfig();
+  archive.append(viteConfigContent, { name: `vite.config.ts` });
+
+  // Generate tsconfig.json
+  const tsConfigContent = generateTsConfig();
+  archive.append(tsConfigContent, { name: `tsconfig.json` });
+
+  // Generate index.html
+  const indexHtmlContent = generateIndexHtml();
+  archive.append(indexHtmlContent, { name: `index.html` });
+
+  // Generate index.css
+  const indexCssContent = generateIndexCss();
+  archive.append(indexCssContent, { name: `src/index.css` });
+
+  // Generate vite-env.d.ts
+  const viteEnvContent = generateViteEnvDts();
+  archive.append(viteEnvContent, { name: `src/vite-env.d.ts` });
+
+  // Generate README.md
+  const readmeContent = `# OnAim Builder Components
+
+This is a Vite React TypeScript application containing your OnAim Builder components.
+
+## Getting Started
+
+1. Install dependencies:
+\`\`\`bash
+npm install
+\`\`\`
+
+2. Start the development server:
+\`\`\`bash
+npm run dev
+\`\`\`
+
+3. Build for production:
+\`\`\`bash
+npm run build
+\`\`\`
+
+## Components
+
+${processedComponents.map((comp) => `- ${comp.componentName.charAt(0).toUpperCase() + comp.componentName.slice(1)} (Instance ${comp.instanceNumber})`).join("\n")}
+
+Generated on: ${new Date().toISOString()}
+`;
+  archive.append(readmeContent, { name: `README.md` });
+
+  // Generate .gitignore
+  const gitignoreContent = `# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+`;
+  archive.append(gitignoreContent, { name: `.gitignore` });
+
   const mainManifest = {
     components: processedComponents.map((comp) => ({
       name: comp.componentName,
@@ -132,11 +222,15 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
     })),
     componentInstances: Object.fromEntries(componentInstanceMap),
     exportTimestamp: new Date().toISOString(),
-    generatedBy: "OnAim Builder Enhanced - Optimized Structure",
-    structure: "page/[component]/settings/[component]_[instance]settings.json",
-    mainPage: "page/page.tsx",
+    generatedBy: "OnAim Builder Enhanced - Complete Vite App",
+    projectType: "Vite React TypeScript",
+    structure:
+      "src/components/[component]/settings/[component]_[instance]settings.json",
+    mainFile: "src/main.tsx",
     totalComponents: processedComponents.length,
     settingsFormat: "Multiple settings files in settings subfolder",
+    instructions:
+      "Run 'npm install' then 'npm run dev' to start the development server",
   };
 
   archive.append(JSON.stringify(mainManifest, null, 2), {
