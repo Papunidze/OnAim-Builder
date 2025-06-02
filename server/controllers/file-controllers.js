@@ -5,6 +5,7 @@ const AppError = require("../utils/app-error");
 const sanitizeName = require("../config/sanitize-name");
 const esbuild = require("esbuild");
 const sass = require("sass");
+const archiver = require("archiver");
 const { ALLOWED_EXTENSIONS } = require("../config/storage");
 
 exports.uploadFile = catchAsync(async (req, res, next) => {
@@ -108,7 +109,6 @@ exports.fetchCompiledFilesInFolder = catchAsync(async (req, res, next) => {
   const folder = sanitizeName(raw);
   const dir = path.join(__dirname, "../config/uploads", folder);
 
-  // Use unique identifier from query parameter if provided, otherwise generate one
   const uniqueId = req.query.uid || Math.random().toString(36).slice(2, 7);
   const prefix = [folder, Date.now().toString(36), uniqueId].join("_");
 
@@ -208,7 +208,7 @@ exports.fetchCompiledFilesInFolder = catchAsync(async (req, res, next) => {
         );
 
         const css = sass
-          .renderSync({ data: scssContent, outputStyle: "expanded" }) // Use data instead of file
+          .renderSync({ data: scssContent, outputStyle: "expanded" })
           .css.toString();
         return { file, type: "style", content: css, prefix };
       }
@@ -239,4 +239,201 @@ exports.fetchCompiledFilesInFolder = catchAsync(async (req, res, next) => {
     })
   );
   res.json({ status: "success", data: results });
+});
+
+exports.downloadComponentZip = catchAsync(async (req, res, next) => {
+  const raw = req.params.name;
+  const folder = sanitizeName(raw);
+  const dir = path.join(__dirname, "../config/uploads", folder);
+
+  try {
+    await fs.access(dir);
+  } catch (err) {
+    return next(new AppError("Component folder not found", 404));
+  }
+
+  let files;
+  try {
+    files = await fs.readdir(dir);
+  } catch (err) {
+    return next(new AppError("Unable to read component files", 500));
+  }
+  const componentProps = req.body?.componentProps || {};
+
+  const loadSettingsConfig = async () => {
+    try {
+      if (componentProps && Object.keys(componentProps).length > 0) {
+        console.log(`Using component props for ${folder}:`, componentProps);
+        return componentProps;
+      }
+
+      const settingsJsonPath = path.join(dir, "settings.json");
+      const settingsContent = await fs.readFile(settingsJsonPath, "utf-8");
+      return JSON.parse(settingsContent);
+    } catch (err) {
+      console.warn(
+        `No settings.json found for ${folder}, using component props or defaults`
+      );
+      return componentProps || null;
+    }
+  };
+
+  const updateSettingsTs = (originalContent, settingsConfig) => {
+    if (!settingsConfig) return originalContent;
+
+    const settingsJsonString = JSON.stringify(settingsConfig, null, 2);
+
+    if (originalContent.includes(".setJson(")) {
+      return originalContent.replace(
+        /(\w+)\.setJson\([^)]+\);?/,
+        `$1.setJson(JSON.stringify(${settingsJsonString}, null, 2));`
+      );
+    }
+
+    const settingsVarMatch = originalContent.match(
+      /export const (\w+) = new SettingGroup\(/
+    );
+    if (settingsVarMatch) {
+      const settingsVarName = settingsVarMatch[1];
+
+      const lines = originalContent.split("\n");
+      let insertIndex = lines.length;
+
+      for (let i = lines.length - 1; i >= 0; i--) {
+        if (
+          lines[i].trim().startsWith("export type") ||
+          lines[i].trim().startsWith("export default")
+        ) {
+          insertIndex = i;
+        }
+      }
+      lines.splice(
+        insertIndex,
+        0,
+        "",
+        `// Apply extracted settings from OnAim Builder`
+      );
+      lines.splice(
+        insertIndex + 1,
+        0,
+        `const settingsJson = ${settingsJsonString};`
+      );
+      lines.splice(
+        insertIndex + 2,
+        0,
+        `${settingsVarName}.setJson(JSON.stringify(settingsJson, null, 2));`
+      );
+
+      return lines.join("\n");
+    }
+
+    return originalContent;
+  };
+
+  const zipFilename = `${folder}_source_${Date.now()}.zip`;
+  res.setHeader("Content-Type", "application/zip");
+  res.setHeader("Content-Disposition", `attachment; filename="${zipFilename}"`);
+
+  const archive = archiver("zip", {
+    zlib: { level: 9 },
+  });
+
+  archive.on("warning", (err) => {
+    if (err.code === "ENOENT") {
+      console.warn("Archive warning:", err);
+    } else {
+      throw err;
+    }
+  });
+
+  archive.on("error", (err) => {
+    throw err;
+  });
+
+  archive.pipe(res);
+  const settingsConfig = await loadSettingsConfig();
+
+  if (componentProps && Object.keys(componentProps).length > 0) {
+    const settingsJsonPath = path.join(dir, "settings.json");
+    try {
+      await fs.writeFile(
+        settingsJsonPath,
+        JSON.stringify(componentProps, null, 2),
+        "utf-8"
+      );
+      console.log(`Updated settings.json for ${folder} with component props`);
+    } catch (err) {
+      console.warn(
+        `Failed to update settings.json for ${folder}:`,
+        err.message
+      );
+    }
+  }
+
+  const pageFolder = `page/${folder}`;
+
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    const stats = await fs.stat(filePath);
+
+    if (stats.isFile()) {
+      let fileContent = await fs.readFile(filePath, "utf-8");
+
+      if (file.toLowerCase() === "settings.ts" && settingsConfig) {
+        fileContent = updateSettingsTs(fileContent, settingsConfig);
+      }
+
+      archive.append(fileContent, { name: `${pageFolder}/${file}` });
+    }
+  }
+  const manifest = {
+    componentName: folder,
+    files: files,
+    exportTimestamp: new Date().toISOString(),
+    generatedBy: "OnAim Builder Enhanced",
+    structure: `page/${folder}`,
+    settingsApplied: settingsConfig ? true : false,
+    settings: settingsConfig,
+  };
+
+  archive.append(JSON.stringify(manifest, null, 2), { name: "manifest.json" });
+
+  await archive.finalize();
+});
+
+exports.checkComponentExists = catchAsync(async (req, res, next) => {
+  const raw = req.params.name;
+  const folder = sanitizeName(raw);
+  const dir = path.join(__dirname, "../config/uploads", folder);
+
+  try {
+    await fs.access(dir);
+    const files = await fs.readdir(dir);
+
+    const hasSettings = files.some((f) => f.toLowerCase().includes("settings"));
+    const hasComponent = files.some(
+      (f) => f.includes(".tsx") || f.includes(".ts")
+    );
+    const hasCss = files.some((f) => f.includes(".css"));
+
+    res.json({
+      status: "success",
+      data: {
+        exists: true,
+        componentName: folder,
+        files: files,
+        hasSettings,
+        hasComponent,
+        hasCss,
+      },
+    });
+  } catch (err) {
+    res.json({
+      status: "success",
+      data: {
+        exists: false,
+        componentName: folder,
+      },
+    });
+  }
 });

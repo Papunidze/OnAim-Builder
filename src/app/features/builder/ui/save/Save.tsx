@@ -3,8 +3,7 @@ import styles from "./save.module.css";
 import type { SaveProps } from "./types/save.types";
 import {
   JSONExportService,
-  SourceExportService,
-  HTMLBuildExportService,
+  EnhancedSourceExportService,
 } from "./services/export.services";
 import { useDropdown, useExportHandlers } from "./hooks/useSave.hooks";
 import { SaveDropdown, type DropdownOption } from "./components/SaveDropdown";
@@ -12,7 +11,6 @@ import { SaveDropdown, type DropdownOption } from "./components/SaveDropdown";
 const Save = ({ viewMode }: SaveProps): JSX.Element => {
   const { isOpen, dropdownRef, toggle, close } = useDropdown();
   const { handleExport } = useExportHandlers(close);
-
   const dropdownOptions: DropdownOption[] = [
     {
       id: "json",
@@ -22,19 +20,14 @@ const Save = ({ viewMode }: SaveProps): JSX.Element => {
       onClick: () => handleExport(() => JSONExportService.export(viewMode)),
     },
     {
-      id: "source",
-      label: "Download Source",
-      description: "Get component source files",
-      icon: "📁",
-      onClick: () => handleExport(() => SourceExportService.export(viewMode)),
-    },
-    {
-      id: "build",
-      label: "Download Build",
-      description: "Export as HTML build",
-      icon: "🌐",
+      id: "enhanced-source",
+      label: "Download Server Sources (ZIP)",
+      description: "Get full source code with correct elements and settings",
+      icon: "🗜️",
       onClick: () =>
-        handleExport(() => HTMLBuildExportService.export(viewMode)),
+        handleExport(() =>
+          EnhancedSourceExportService.downloadServerSources(viewMode)
+        ),
     },
   ];
 

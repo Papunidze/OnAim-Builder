@@ -37,14 +37,21 @@ export const useDropdown = (): {
 
 export const useExportHandlers = (
   onExportComplete?: () => void
-): { handleExport: (exportFunction: () => void) => void } => {
-  const handleExport = (exportFunction: () => void): void => {
+): { handleExport: (exportFunction: () => void | Promise<void>) => void } => {
+  const handleExport = async (
+    exportFunction: () => void | Promise<void>
+  ): Promise<void> => {
     try {
-      exportFunction();
+      const result = exportFunction();
+      if (result instanceof Promise) {
+        await result;
+      }
       onExportComplete?.();
     } catch (error) {
       console.error("Export failed:", error);
-      alert("Export failed. Please try again.");
+      alert(
+        `Export failed: ${error instanceof Error ? error.message : "Please try again."}`
+      );
     }
   };
 

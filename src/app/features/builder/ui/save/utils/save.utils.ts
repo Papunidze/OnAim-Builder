@@ -36,6 +36,10 @@ export const getComponentPrefix = (component: ComponentState): string => {
 export const extractComponentSettings = (
   component: ComponentState
 ): Record<string, unknown> => {
+  if (component.props && Object.keys(component.props).length > 0) {
+    return component.props as Record<string, unknown>;
+  }
+
   let settingsObject = component.compiledData?.settingsObject as unknown;
   let extractedSettings = {};
 

@@ -3,8 +3,9 @@ const path = require("path");
 const {
   uploadFile,
   fetchFolders,
-  fetchFilesInFolder,
   fetchCompiledFilesInFolder,
+  downloadComponentZip,
+  checkComponentExists,
 } = require("../controllers/file-controllers");
 const { upload } = require("../config/storage");
 
@@ -22,5 +23,11 @@ router.post(
 router.get("/folders", fetchFolders);
 
 router.get("/folders/:name", fetchCompiledFilesInFolder);
+
+router.get("/download/:name", downloadComponentZip);
+
+router.post("/download/:name", downloadComponentZip);
+
+router.get("/check/:name", checkComponentExists);
 
 module.exports = router;

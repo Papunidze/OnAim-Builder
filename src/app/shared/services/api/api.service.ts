@@ -382,18 +382,47 @@ export const api = {
   downloadFile: async (
     endpoint: string,
     filename?: string,
-    options?: Omit<ApiOptions, "method">
+    options?: ApiOptions & { body?: unknown }
   ): Promise<void> => {
+    const { method = "GET", headers, body, params, signal } = options || {};
+
+    let processedBody: BodyInit | undefined;
+    const requestHeaders = new Headers(headers);
+
+    if (method === "POST" && body !== undefined) {
+      if (
+        typeof body === "object" &&
+        !(body instanceof Blob) &&
+        !(body instanceof FormData) &&
+        !(body instanceof URLSearchParams) &&
+        !(body instanceof ReadableStream)
+      ) {
+        const contentType = requestHeaders.get("Content-Type") || "";
+        if (
+          contentType.includes("application/json") ||
+          !requestHeaders.has("Content-Type")
+        ) {
+          requestHeaders.set("Content-Type", "application/json");
+          processedBody = JSON.stringify(body);
+        } else {
+          processedBody = body as BodyInit;
+        }
+      } else {
+        processedBody = body as BodyInit;
+      }
+    }
+
     const response = await fetch(
       buildUrl(
         import.meta.env.VITE_API_BASE_URL || "http://localhost:3000",
         endpoint,
-        options?.params
+        params
       ),
       {
-        method: "GET",
-        headers: options?.headers,
-        signal: options?.signal,
+        method,
+        headers: requestHeaders,
+        body: processedBody,
+        signal,
       }
     );
 

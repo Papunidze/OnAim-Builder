@@ -1,0 +1,13 @@
+{
+  "leaderboard": {
+    "background": "176, 176, 176",
+    "width": 860,
+    "opacity": 100,
+    "border": {
+      "size": 0,
+      "color": "0, 0, 30",
+      "opacity": 100,
+      "radius": 12
+    }
+  }
+}
