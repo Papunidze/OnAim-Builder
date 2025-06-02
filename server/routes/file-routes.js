@@ -3,6 +3,7 @@ const path = require("path");
 const {
   uploadFile,
   fetchFolders,
+  fetchFilesInFolder,
   fetchCompiledFilesInFolder,
   downloadComponentZip,
   downloadMultipleComponentsZip,
@@ -22,6 +23,8 @@ router.post(
 );
 
 router.get("/folders", fetchFolders);
+
+router.get("/folders/:name/files", fetchFilesInFolder);
 
 router.get("/folders/:name", fetchCompiledFilesInFolder);
 
