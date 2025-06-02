@@ -1,5 +1,4 @@
 const generateMultipleComponentsPageTsx = (componentData) => {
-  // Group components by their base name
   const componentGroups = {};
   componentData.forEach((comp) => {
     if (!componentGroups[comp.componentName]) {
@@ -32,7 +31,6 @@ const generateMultipleComponentsPageTsx = (componentData) => {
           : `${baseComponentName.charAt(0).toUpperCase() + baseComponentName.slice(1)} ${comp.instanceNumber}`;
 
       componentElements.push(`      <div className="${baseComponentName}-${comp.instanceNumber}-container">
-        <h3>${displayName}</h3>
         <${componentClassName} {...${settingsVarName}} />
       </div>`);
     });
@@ -41,16 +39,15 @@ const generateMultipleComponentsPageTsx = (componentData) => {
   return `import React from 'react';
 ${imports.join("\n")}
 
-const MultipleComponentsPage: React.FC = () => {
+const Page: React.FC = () => {
   return (
     <div className="page-container">
-      <h1>Multiple Components</h1>
-${componentElements.join("\n")}
+      ${componentElements.join("\n")}
     </div>
   );
 };
 
-export default MultipleComponentsPage;
+export default Page;
 `;
 };
 

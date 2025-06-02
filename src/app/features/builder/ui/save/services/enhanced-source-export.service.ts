@@ -21,23 +21,32 @@ export class EnhancedSourceExportService {
       if (potentialNames.length === 0) {
         alert("No potential server components found.");
         return;
-      } // Create a mapping of components with their instances
+      } // Create a mapping to track which components we've processed
       const componentInstanceMap = new Map<string, number>();
       const validComponents: {
         name: string;
         originalComponent: ComponentState;
       }[] = [];
 
-      // Check each potential component and track instances
-      for (const name of potentialNames) {
+      // Process each component individually to maintain proper mapping
+      const usedComponentIndices = new Set<number>();
+
+      for (let i = 0; i < potentialNames.length; i++) {
+        const name = potentialNames[i];
         const checkResult = await checkComponentExists(name);
+
         if (checkResult.exists && checkResult.hasSettings) {
-          // Find the original component for this name
-          const originalComponent = components.find(
-            (comp) => this.extractBaseComponentName(comp) === name
+          // Find the specific component for this instance (not just the first match)
+          const originalComponentIndex = components.findIndex(
+            (comp, index) =>
+              this.extractBaseComponentName(comp) === name &&
+              !usedComponentIndices.has(index)
           );
 
-          if (originalComponent) {
+          if (originalComponentIndex !== -1) {
+            const originalComponent = components[originalComponentIndex];
+            usedComponentIndices.add(originalComponentIndex);
+
             const currentCount = componentInstanceMap.get(name) || 0;
             componentInstanceMap.set(name, currentCount + 1);
 
