@@ -277,28 +277,77 @@ exports.downloadComponentZip = catchAsync(async (req, res, next) => {
       return componentProps || null;
     }
   };
-
   const updateSettingsTs = (originalContent, settingsConfig) => {
     if (!settingsConfig) return originalContent;
 
-    const settingsJsonString = JSON.stringify(settingsConfig, null, 2);
-
-    if (originalContent.includes(".setJson(")) {
-      return originalContent.replace(
-        /(\w+)\.setJson\([^)]+\);?/,
-        `$1.setJson(JSON.stringify(${settingsJsonString}, null, 2));`
+    if (
+      originalContent.includes('import settingsJson from "./settings.json"')
+    ) {
+      const settingsVarMatch = originalContent.match(
+        /export const (\w+) = new SettingGroup\(/
       );
+      if (settingsVarMatch && !originalContent.includes(".setJson(")) {
+        const settingsVarName = settingsVarMatch[1];
+        const lines = originalContent.split("\n");
+        let insertIndex = lines.length;
+
+        for (let i = lines.length - 1; i >= 0; i--) {
+          if (
+            lines[i].trim().startsWith("export type") ||
+            lines[i].trim().startsWith("export default")
+          ) {
+            insertIndex = i;
+          }
+        }
+
+        lines.splice(insertIndex, 0, "");
+        lines.splice(
+          insertIndex + 1,
+          0,
+          `// Apply settings from settings.json`
+        );
+        lines.splice(
+          insertIndex + 2,
+          0,
+          `${settingsVarName}.setJson(JSON.stringify(settingsJson, null, 2));`
+        );
+
+        return lines.join("\n");
+      }
+      return originalContent;
     }
 
+    // Add import and setJson call
     const settingsVarMatch = originalContent.match(
       /export const (\w+) = new SettingGroup\(/
     );
     if (settingsVarMatch) {
       const settingsVarName = settingsVarMatch[1];
-
       const lines = originalContent.split("\n");
-      let insertIndex = lines.length;
 
+      // Find where to insert the import (after other imports)
+      let importIndex = 0;
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].trim().startsWith("import ")) {
+          importIndex = i + 1;
+        } else if (lines[i].trim() === "" && importIndex > 0) {
+          importIndex = i;
+          break;
+        }
+      }
+
+      // Insert import statement
+      lines.splice(
+        importIndex,
+        0,
+        `import settingsJson from "./settings.json";`
+      );
+      if (lines[importIndex + 1].trim() !== "") {
+        lines.splice(importIndex + 1, 0, "");
+      }
+
+      // Find where to insert setJson call
+      let insertIndex = lines.length;
       for (let i = lines.length - 1; i >= 0; i--) {
         if (
           lines[i].trim().startsWith("export type") ||
@@ -307,17 +356,9 @@ exports.downloadComponentZip = catchAsync(async (req, res, next) => {
           insertIndex = i;
         }
       }
-      lines.splice(
-        insertIndex,
-        0,
-        "",
-        `// Apply extracted settings from OnAim Builder`
-      );
-      lines.splice(
-        insertIndex + 1,
-        0,
-        `const settingsJson = ${settingsJsonString};`
-      );
+
+      lines.splice(insertIndex, 0, "");
+      lines.splice(insertIndex + 1, 0, `// Apply settings from settings.json`);
       lines.splice(
         insertIndex + 2,
         0,
@@ -369,8 +410,29 @@ exports.downloadComponentZip = catchAsync(async (req, res, next) => {
       );
     }
   }
-
   const pageFolder = `page/${folder}`;
+  const generatePageTsx = (componentName) => {
+    const capitalizedName =
+      componentName.charAt(0).toUpperCase() + componentName.slice(1);
+
+    return `import React from "react";
+import ${capitalizedName}Component from "./${componentName}";
+import settings from "./${componentName}/settings";
+
+const ${capitalizedName}Page: React.FC = () => {
+  return (
+    <div className="page-container">
+      <${capitalizedName}Component {...settings.getValues()} />
+    </div>
+  );
+};
+
+export default ${capitalizedName}Page;
+`;
+  };
+
+  const pageTsxContent = generatePageTsx(folder);
+  archive.append(pageTsxContent, { name: `page/page.tsx` });
 
   for (const file of files) {
     const filePath = path.join(dir, file);
@@ -392,11 +454,14 @@ exports.downloadComponentZip = catchAsync(async (req, res, next) => {
     exportTimestamp: new Date().toISOString(),
     generatedBy: "OnAim Builder Enhanced",
     structure: `page/${folder}`,
+    pageComponent: `page/page.tsx`,
     settingsApplied: settingsConfig ? true : false,
     settings: settingsConfig,
   };
 
-  archive.append(JSON.stringify(manifest, null, 2), { name: "manifest.json" });
+  archive.append(JSON.stringify(manifest, null, 2), {
+    name: "manifest.json",
+  });
 
   await archive.finalize();
 });

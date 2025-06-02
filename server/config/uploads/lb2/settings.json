@@ -1,8 +1,14 @@
 {
   "leaderboard": {
-    "test": "Updated Test Value",
-    "background": "236,9,9",
+    "test": "test",
+    "background": "255,255,255",
     "width": 860,
-    "opacity": 100
+    "opacity": 100,
+    "border": {
+      "size": 0,
+      "color": "0, 0, 30",
+      "opacity": 100,
+      "radius": 12
+    }
   }
 }
