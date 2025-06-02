@@ -56,7 +56,6 @@ class SettingsRenderer {
     id: string,
     updates: { props: PropertyValue }
   ) => void;
-
   constructor(
     hostElement: HTMLDivElement,
     onError: (error: string) => void,
@@ -81,7 +80,6 @@ class SettingsRenderer {
   ): settingsObject is SettingsObject {
     return !!(settingsObject && typeof settingsObject.draw === "function");
   }
-
   private setupSettingsHandlers(
     settingsObject: SettingsObject,
     componentId: string,
@@ -95,17 +93,14 @@ class SettingsRenderer {
       });
     }
   }
-
   private applySettingsStyles(
     settingsObject: SettingsObject,
-    componentId: string,
+    _componentId: string,
     currentProps?: PropertyValue
   ): void {
     if (typeof settingsObject.getValues === "function") {
       const values = settingsObject.getValues();
-      this.onUpdate(componentId, {
-        props: { ...currentProps, ...values },
-      });
+      this.onUpdate(_componentId, { props: { ...currentProps, ...values } });
     }
 
     if (currentProps && typeof settingsObject.setValue === "function") {
@@ -155,7 +150,6 @@ class SettingsRenderer {
 
       this.onError("");
     } catch (err) {
-      console.error("Error rendering settings:", err);
       const errorMessage =
         err instanceof Error ? err.message : "Failed to render settings";
       this.onError(errorMessage);

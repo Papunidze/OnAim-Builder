@@ -19,7 +19,13 @@ const Leaderboard: React.FC<Settings> = (props) => {
   const title = leaderboardSettings.test || "Leaderboard";
 
   return (
-    <div className="leaderboard">
+    <div
+      className="leaderboard"
+      style={{
+        backgroundColor: `rgb(${leaderboardSettings.background})`,
+        width: `${leaderboardSettings.width}px`,
+      }}
+    >
       <Button />
       <h2 className="leaderboard-title">{title}</h2>
       <ul className="leaderboard-list">

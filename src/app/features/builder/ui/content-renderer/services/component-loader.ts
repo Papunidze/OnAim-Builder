@@ -5,7 +5,6 @@ import {
   type FileData,
 } from "@app-shared/services/reader";
 import type { ComponentFileData, ComponentFetchResult } from "../types";
-import { StylesRenderer } from "../../property-adjustments/services/styles-render";
 
 export const DEFAULT_SCRIPT_PATTERNS = [
   "index.tsx",
@@ -65,15 +64,13 @@ export const compileComponent = cache(
   async (
     componentName: string,
     fileData: ComponentFileData[],
-    cacheVersion: string,
-    componentProps?: Record<string, unknown>,
-    componentStyles?: Record<string, string>
+    cacheVersion: string
   ): Promise<ComponentFetchResult> => {
     void cacheVersion;
     const reader = new EnhancedReaderService(fileData as FileData[]);
 
     const stylesArr = reader.getAllStyles();
-    let styles = stylesArr.map((s) => s.content).join("\n");
+    const styles = stylesArr.map((s) => s.content).join("\n");
 
     const { script, usedPattern } = getScriptContent(reader, componentName);
 
@@ -96,15 +93,6 @@ export const compileComponent = cache(
     const prefix =
       fileData.find((f) => f.type === "style")?.prefix ||
       `${componentName}_fallback`;
-
-    const settingsCSS = generateSettingsCSS(
-      componentProps,
-      componentStyles,
-      prefix
-    );
-    if (settingsCSS) {
-      styles += `\n\n/* Settings-based CSS */\n${settingsCSS}`;
-    }
 
     return {
       component,
@@ -150,9 +138,7 @@ const loadComponentCached = cache(
   async (
     componentName: string,
     componentId: string,
-    cacheVersion: string,
-    componentProps?: Record<string, unknown>,
-    componentStyles?: Record<string, string>
+    cacheVersion: string
   ): Promise<ComponentFetchResult> => {
     void cacheVersion;
     const fileData = await loadComponentData(
@@ -163,9 +149,7 @@ const loadComponentCached = cache(
     const result = await compileComponent(
       componentName,
       fileData,
-      cacheVersion,
-      componentProps,
-      componentStyles
+      cacheVersion
     );
 
     return result;
@@ -174,24 +158,8 @@ const loadComponentCached = cache(
 
 export async function loadComponent(
   componentName: string,
-  componentId: string,
-  componentProps?: Record<string, unknown>,
-  componentStyles?: Record<string, string>
+  componentId: string
 ): Promise<ComponentFetchResult> {
   const cacheVersion = getCacheVersion(componentId);
-  return loadComponentCached(
-    componentName,
-    componentId,
-    cacheVersion,
-    componentProps,
-    componentStyles
-  );
-}
-
-function generateSettingsCSS(
-  componentProps: Record<string, unknown> = {},
-  componentStyles: Record<string, string> = {},
-  prefix: string
-): string {
-  return StylesRenderer.generateCSS(componentProps, componentStyles, prefix);
+  return loadComponentCached(componentName, componentId, cacheVersion);
 }
