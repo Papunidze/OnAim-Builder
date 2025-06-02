@@ -4,9 +4,10 @@ import {
   OpacitySetting,
   SettingGroup,
   WidthSetting,
+  type SettingsToProps,
 } from "builder-settings-types";
 
-export const oa_settings = new SettingGroup({
+export const settings = new SettingGroup({
   title: "Settings",
   main: true,
   settings: {
@@ -30,3 +31,7 @@ export const oa_settings = new SettingGroup({
     }),
   },
 });
+
+export type Settings = SettingsToProps<typeof settings>;
+
+export default settings;

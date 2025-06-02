@@ -91,14 +91,20 @@ export const downloadMultipleComponentsSources = async (
       throw new Error("At least one component name is required");
     }
 
-    const downloadPromises = componentNames.map((name) => {
-      const componentProps = componentPropsMap
-        ? componentPropsMap[name]
-        : undefined;
-      return downloadComponentSource(name, componentProps);
-    });
+    // Use the new multiple components endpoint
+    const endpoint = `/file/download-multiple`;
+    const filename = `multiple_components_${Date.now()}.zip`;
 
-    await Promise.all(downloadPromises);
+    await api.downloadFile(endpoint, filename, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: {
+        componentNames,
+        componentPropsMap: componentPropsMap || {},
+      },
+    });
   } catch (error) {
     console.error("Multiple downloads failed:", error);
     throw new Error(

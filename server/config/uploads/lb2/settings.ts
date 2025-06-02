@@ -5,7 +5,7 @@ import {
   SettingGroup,
   StringSetting,
   WidthSetting,
-  SettingsToProps,
+  type SettingsToProps,
 } from "builder-settings-types";
 
 export const settings = new SettingGroup({

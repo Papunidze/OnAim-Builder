@@ -7,7 +7,7 @@ interface Leader {
   score: number;
 }
 
-const Leaderboard: React.FC = () => {
+const Leaderboard: React.FC = (props) => {
   const leaders: Leader[] = [
     { name: "Giga", score: 1200 },
     { name: "Gela", score: 950 },

@@ -5,6 +5,7 @@ const {
   fetchFolders,
   fetchCompiledFilesInFolder,
   downloadComponentZip,
+  downloadMultipleComponentsZip,
   checkComponentExists,
 } = require("../controllers/file-controllers");
 const { upload } = require("../config/storage");
@@ -27,6 +28,8 @@ router.get("/folders/:name", fetchCompiledFilesInFolder);
 router.get("/download/:name", downloadComponentZip);
 
 router.post("/download/:name", downloadComponentZip);
+
+router.post("/download-multiple", downloadMultipleComponentsZip);
 
 router.get("/check/:name", checkComponentExists);
 
