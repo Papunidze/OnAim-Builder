@@ -45,11 +45,9 @@ const storage = multer.diskStorage({
     const originalName = file.originalname;
     const ext = path.extname(originalName);
     const baseName = path.basename(originalName, ext);
-    // Sanitize basename
     const safeBaseName = baseName
       .replace(/\s+/g, "_")
       .replace(/[^a-zA-Z0-9-_]/g, "");
-    // Ensure not empty, fallback to a unique name part if sanitization results in empty string
     const finalBaseName = safeBaseName || `file_${Date.now().toString(36)}`;
     cb(null, `${finalBaseName}${ext}`);
   },

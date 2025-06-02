@@ -94,22 +94,13 @@ export function useComponentInstances(
 
   const loadingComponentsRef = useRef<Set<string>>(new Set());
   const loadedComponentsRef = useRef<Set<string>>(new Set());
-
-  const componentIds = useMemo(
-    () =>
-      components
-        .map((c) => c.id)
-        .sort()
-        .join(","),
-    [components]
-  );
   const componentPropsRef = useRef<Map<string, string>>(new Map());
-
   const hasComponentPropsChanged = useCallback(
     (comp: ComponentState): boolean => {
       const propsKey = JSON.stringify({
         props: comp.props,
         styles: comp.styles,
+        timestamp: comp.timestamp,
       });
       const previousPropsKey = componentPropsRef.current.get(comp.id);
 
@@ -166,12 +157,7 @@ export function useComponentInstances(
   }, [components]);
   const loadComponentWithTimeout = useCallback(
     async (comp: ComponentState): Promise<ComponentFetchResult> => {
-      const loadPromise = loadComponent(
-        comp.name,
-        comp.id,
-        comp.props,
-        comp.styles
-      );
+      const loadPromise = loadComponent(comp.name, comp.id);
 
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(
@@ -186,11 +172,11 @@ export function useComponentInstances(
   );
   const handleComponentLoad = useCallback(
     async (comp: ComponentState) => {
-      const propsChanged = hasComponentPropsChanged(comp);
-
       if (loadingComponentsRef.current.has(comp.id)) {
         return;
       }
+
+      const propsChanged = hasComponentPropsChanged(comp);
 
       if (propsChanged && loadedComponentsRef.current.has(comp.id)) {
         invalidateComponentCache(comp.id);
@@ -209,6 +195,7 @@ export function useComponentInstances(
             createComponentState.loading(comp.id, comp.name)
           );
         });
+
         const result = await loadComponentWithTimeout(comp);
 
         loadedComponentsRef.current.add(comp.id);
@@ -260,20 +247,32 @@ export function useComponentInstances(
       hasComponentPropsChanged,
     ]
   );
-  useEffect(() => {
-    const loadAllComponents = async (): Promise<void> => {
-      const loadPromises = components.map(handleComponentLoad);
-      await Promise.allSettled(loadPromises);
-    };
+  const prevComponentsRef = useRef<ComponentState[]>([]);
 
-    loadAllComponents();
-  }, [componentIds, handleComponentLoad, components]);
   useEffect(() => {
+    const prevComponents = prevComponentsRef.current;
+    const changedComponents: ComponentState[] = [];
+    const newComponents: ComponentState[] = [];
+
     components.forEach((comp) => {
-      if (hasComponentPropsChanged(comp)) {
-        handleComponentLoad(comp);
+      const prevComp = prevComponents.find((p) => p.id === comp.id);
+      if (!prevComp) {
+        newComponents.push(comp);
+      } else if (hasComponentPropsChanged(comp)) {
+        changedComponents.push(comp);
       }
     });
+
+    const componentsToLoad = [...newComponents, ...changedComponents];
+    if (componentsToLoad.length > 0) {
+      const loadComponents = async (): Promise<void> => {
+        const loadPromises = componentsToLoad.map(handleComponentLoad);
+        await Promise.allSettled(loadPromises);
+      };
+      loadComponents();
+    }
+
+    prevComponentsRef.current = [...components];
   }, [components, hasComponentPropsChanged, handleComponentLoad]);
 
   const retryComponent = useCallback(

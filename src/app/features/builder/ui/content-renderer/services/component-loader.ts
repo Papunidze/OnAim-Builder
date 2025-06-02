@@ -20,7 +20,6 @@ let globalCacheVersion = 0;
 
 export function invalidateComponentCache(componentId: string): void {
   componentCacheInvalidation.set(componentId, Date.now());
-  globalCacheVersion++;
 }
 
 export function clearAllComponentCache(): void {
