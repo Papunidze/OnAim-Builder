@@ -32,10 +32,11 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
   archive.on("error", (err) => {
     throw err;
   });
-
   archive.pipe(res);
+
   const processedComponents = [];
   const componentInstanceMap = new Map();
+  const componentFilesAdded = new Set(); // Track which base components already have files copied
 
   for (const componentName of componentNames) {
     // Extract base component name (remove instance suffix like _2, _3)
@@ -61,16 +62,12 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
       continue;
     }
 
-    // Track instances for unique naming
+    // Track instances for settings file naming
     if (!componentInstanceMap.has(folder)) {
       componentInstanceMap.set(folder, 0);
     }
     const instanceCount = componentInstanceMap.get(folder) + 1;
     componentInstanceMap.set(folder, instanceCount);
-
-    // Create concise unique folder name
-    const uniqueComponentName =
-      instanceCount === 1 ? folder : `${folder}_${instanceCount}`;
 
     const componentProps = componentPropsMap[componentName] || {};
     const settingsConfig = await loadSettingsConfig(
@@ -78,39 +75,45 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
       folder,
       componentProps
     );
+
     const pageFolder = `page`;
 
-    // Copy all files except settings.ts and existing settings.json
-    for (const file of files) {
-      if (
-        file.toLowerCase() === "settings.ts" ||
-        file.toLowerCase() === "settings.json"
-      ) {
-        continue;
-      }
+    // Copy component files only once per base component
+    if (!componentFilesAdded.has(folder)) {
+      componentFilesAdded.add(folder);
 
-      const filePath = path.join(dir, file);
-      const stats = await fs.stat(filePath);
+      // Copy all component files except settings files
+      for (const file of files) {
+        if (
+          file.toLowerCase() === "settings.ts" ||
+          file.toLowerCase() === "settings.json"
+        ) {
+          continue;
+        }
 
-      if (stats.isFile()) {
-        let fileContent = await fs.readFile(filePath, "utf-8");
+        const filePath = path.join(dir, file);
+        const stats = await fs.stat(filePath);
 
-        archive.append(fileContent, {
-          name: `${pageFolder}/${uniqueComponentName}/${file}`,
-        });
+        if (stats.isFile()) {
+          let fileContent = await fs.readFile(filePath, "utf-8");
+
+          archive.append(fileContent, {
+            name: `${pageFolder}/${folder}/${file}`,
+          });
+        }
       }
     }
 
-    // Add single settings.json file with merged props
+    // Add settings file for this instance in settings subfolder
     if (settingsConfig) {
+      const settingsFileName = `${folder}_${instanceCount}settings.json`;
       archive.append(JSON.stringify(settingsConfig, null, 2), {
-        name: `${pageFolder}/${uniqueComponentName}/settings.json`,
+        name: `${pageFolder}/${folder}/settings/${settingsFileName}`,
       });
     }
 
     processedComponents.push({
       componentName: folder,
-      uniqueName: uniqueComponentName,
       instanceNumber: instanceCount,
       files: files.filter(
         (f) => !["settings.ts", "settings.json"].includes(f.toLowerCase())
@@ -124,17 +127,16 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
   const mainManifest = {
     components: processedComponents.map((comp) => ({
       name: comp.componentName,
-      uniqueName: comp.uniqueName,
       instanceNumber: comp.instanceNumber,
       files: comp.files,
     })),
     componentInstances: Object.fromEntries(componentInstanceMap),
     exportTimestamp: new Date().toISOString(),
-    generatedBy: "OnAim Builder Enhanced - Multiple Components",
-    structure: "page/[component]",
+    generatedBy: "OnAim Builder Enhanced - Optimized Structure",
+    structure: "page/[component]/settings/[component]_[instance]settings.json",
     mainPage: "page/page.tsx",
     totalComponents: processedComponents.length,
-    settingsFormat: "Single settings.json per component",
+    settingsFormat: "Multiple settings files in settings subfolder",
   };
 
   archive.append(JSON.stringify(mainManifest, null, 2), {
@@ -144,6 +146,80 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
   await archive.finalize();
 });
 
+const downloadComponentZip = catchAsync(async (req, res, next) => {
+  const componentName = req.params.name || req.body?.componentName;
+  const componentProps = req.body?.componentProps || {};
+
+  if (!componentName) {
+    return next(new AppError(ERROR_MESSAGES.INVALID_COMPONENT_NAME, 400));
+  }
+
+  const folder = sanitizeName(componentName);
+  const dir = path.join(__dirname, "../../config/uploads", folder);
+
+  try {
+    await fs.access(dir);
+  } catch (err) {
+    return next(new AppError(`Component "${componentName}" not found`, 404));
+  }
+
+  let files;
+  try {
+    files = await fs.readdir(dir);
+  } catch (err) {
+    return next(new AppError("Unable to read component files", 500));
+  }
+
+  const zipFilename = `${componentName}_component_${Date.now()}.zip`;
+  res.setHeader("Content-Type", "application/zip");
+  res.setHeader("Content-Disposition", `attachment; filename="${zipFilename}"`);
+
+  const archive = archiver("zip", { zlib: { level: 9 } });
+
+  archive.on("warning", (err) => {
+    if (err.code === "ENOENT") {
+      console.warn("Archive warning:", err);
+    } else {
+      throw err;
+    }
+  });
+
+  archive.on("error", (err) => {
+    throw err;
+  });
+
+  archive.pipe(res);
+
+  // Copy all files except settings.ts and existing settings.json
+  for (const file of files) {
+    if (
+      file.toLowerCase() === "settings.ts" ||
+      file.toLowerCase() === "settings.json"
+    ) {
+      continue;
+    }
+
+    const filePath = path.join(dir, file);
+    const stats = await fs.stat(filePath);
+
+    if (stats.isFile()) {
+      let fileContent = await fs.readFile(filePath, "utf-8");
+      archive.append(fileContent, { name: file });
+    }
+  }
+
+  // Add settings.json with merged props
+  const settingsConfig = await loadSettingsConfig(dir, folder, componentProps);
+  if (settingsConfig) {
+    archive.append(JSON.stringify(settingsConfig, null, 2), {
+      name: "settings.json",
+    });
+  }
+
+  await archive.finalize();
+});
+
 module.exports = {
+  downloadComponentZip,
   downloadMultipleComponentsZip,
 };

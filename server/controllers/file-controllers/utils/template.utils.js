@@ -1,40 +1,51 @@
 const generateMultipleComponentsPageTsx = (componentData) => {
-  const imports = componentData
-    .map((comp) => {
-      const capitalizedName =
-        comp.componentName.charAt(0).toUpperCase() +
-        comp.componentName.slice(1);
-      const settingsVarName = `${comp.uniqueName.replace(/[^a-zA-Z0-9]/g, "")}Settings`;
-      return `import ${capitalizedName}Component from './${comp.uniqueName}';
-import ${settingsVarName} from './${comp.uniqueName}/settings.json';`;
-    })
-    .join("\n");
+  // Group components by their base name
+  const componentGroups = {};
+  componentData.forEach((comp) => {
+    if (!componentGroups[comp.componentName]) {
+      componentGroups[comp.componentName] = [];
+    }
+    componentGroups[comp.componentName].push(comp);
+  });
 
-  const components = componentData
-    .map((comp) => {
-      const capitalizedName =
-        comp.componentName.charAt(0).toUpperCase() +
-        comp.componentName.slice(1);
-      const settingsVarName = `${comp.uniqueName.replace(/[^a-zA-Z0-9]/g, "")}Settings`;
+  const imports = [];
+  const componentElements = [];
+
+  Object.entries(componentGroups).forEach(([baseComponentName, instances]) => {
+    const componentClassName = `${baseComponentName.charAt(0).toUpperCase() + baseComponentName.slice(1)}Component`;
+
+    imports.push(`import ${componentClassName} from './${baseComponentName}';`);
+
+    instances.forEach((comp) => {
+      const settingsVarName = `${baseComponentName}_${comp.instanceNumber}settings`;
+      imports.push(
+        `import ${settingsVarName} from './${baseComponentName}/settings/${baseComponentName}_${comp.instanceNumber}settings.json';`
+      );
+    });
+
+    instances.forEach((comp) => {
+      const settingsVarName = `${baseComponentName}_${comp.instanceNumber}settings`;
       const displayName =
-        comp.instanceNumber > 1
-          ? `${capitalizedName} ${comp.instanceNumber}`
-          : `${capitalizedName} Component`;
-      return `      <div className="${comp.uniqueName}-container">
+        comp.instanceNumber === 1
+          ? baseComponentName.charAt(0).toUpperCase() +
+            baseComponentName.slice(1)
+          : `${baseComponentName.charAt(0).toUpperCase() + baseComponentName.slice(1)} ${comp.instanceNumber}`;
+
+      componentElements.push(`      <div className="${baseComponentName}-${comp.instanceNumber}-container">
         <h3>${displayName}</h3>
-        <${capitalizedName}Component {...${settingsVarName}} />
-      </div>`;
-    })
-    .join("\n");
+        <${componentClassName} {...${settingsVarName}} />
+      </div>`);
+    });
+  });
 
   return `import React from 'react';
-${imports}
+${imports.join("\n")}
 
 const MultipleComponentsPage: React.FC = () => {
   return (
     <div className="page-container">
       <h1>Multiple Components</h1>
-${components}
+${componentElements.join("\n")}
     </div>
   );
 };
