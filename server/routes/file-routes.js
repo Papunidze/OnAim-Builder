@@ -5,7 +5,7 @@ const {
   fetchFolders,
   fetchFilesInFolder,
   fetchCompiledFilesInFolder,
-  downloadComponentZip,
+
   downloadMultipleComponentsZip,
   checkComponentExists,
 } = require("../controllers/file-controllers");
@@ -27,10 +27,6 @@ router.get("/folders", fetchFolders);
 router.get("/folders/:name/files", fetchFilesInFolder);
 
 router.get("/folders/:name", fetchCompiledFilesInFolder);
-
-router.get("/download/:name", downloadComponentZip);
-
-router.post("/download/:name", downloadComponentZip);
 
 router.post("/download-multiple", downloadMultipleComponentsZip);
 

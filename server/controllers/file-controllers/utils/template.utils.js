@@ -4,8 +4,9 @@ const generateMultipleComponentsPageTsx = (componentData) => {
       const capitalizedName =
         comp.componentName.charAt(0).toUpperCase() +
         comp.componentName.slice(1);
+      const settingsVarName = `${comp.uniqueName.replace(/[^a-zA-Z0-9]/g, "")}Settings`;
       return `import ${capitalizedName}Component from './${comp.uniqueName}';
-import ${comp.settingsVarName} from './${comp.uniqueName}/${comp.settingsFileName}';`;
+import ${settingsVarName} from './${comp.uniqueName}/settings.json';`;
     })
     .join("\n");
 
@@ -14,13 +15,14 @@ import ${comp.settingsVarName} from './${comp.uniqueName}/${comp.settingsFileNam
       const capitalizedName =
         comp.componentName.charAt(0).toUpperCase() +
         comp.componentName.slice(1);
+      const settingsVarName = `${comp.uniqueName.replace(/[^a-zA-Z0-9]/g, "")}Settings`;
       const displayName =
         comp.instanceNumber > 1
           ? `${capitalizedName} ${comp.instanceNumber}`
           : `${capitalizedName} Component`;
       return `      <div className="${comp.uniqueName}-container">
         <h3>${displayName}</h3>
-        <${capitalizedName}Component {...${comp.settingsVarName}} />
+        <${capitalizedName}Component {...${settingsVarName}} />
       </div>`;
     })
     .join("\n");

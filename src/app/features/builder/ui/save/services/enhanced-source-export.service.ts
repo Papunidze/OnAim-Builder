@@ -21,34 +21,51 @@ export class EnhancedSourceExportService {
       if (potentialNames.length === 0) {
         alert("No potential server components found.");
         return;
-      }
+      } // Create a mapping of components with their instances
+      const componentInstanceMap = new Map<string, number>();
+      const validComponents: {
+        name: string;
+        originalComponent: ComponentState;
+      }[] = [];
 
-      const existingComponents: string[] = [];
+      // Check each potential component and track instances
       for (const name of potentialNames) {
         const checkResult = await checkComponentExists(name);
         if (checkResult.exists && checkResult.hasSettings) {
-          existingComponents.push(name);
+          // Find the original component for this name
+          const originalComponent = components.find(
+            (comp) => this.extractBaseComponentName(comp) === name
+          );
+
+          if (originalComponent) {
+            const currentCount = componentInstanceMap.get(name) || 0;
+            componentInstanceMap.set(name, currentCount + 1);
+
+            // Create unique identifier for this instance
+            const instanceId =
+              currentCount === 0 ? name : `${name}_${currentCount + 1}`;
+            validComponents.push({
+              name: instanceId,
+              originalComponent,
+            });
+          }
         }
       }
 
-      if (existingComponents.length === 0) {
+      if (validComponents.length === 0) {
         alert(
           "No matching server components found. Make sure your components match uploaded folder names (like 'lb', 'lb2', etc.)."
         );
         return;
       }
+
+      const existingComponents = validComponents.map((comp) => comp.name);
       const componentPropsMap: Record<string, Record<string, unknown>> = {};
 
-      components.forEach((component) => {
-        const componentName = this.extractBaseComponentName(component);
-        if (componentName && existingComponents.includes(componentName)) {
-          const componentProps = component.props || {};
-          if (componentProps && Object.keys(componentProps).length > 0) {
-            componentPropsMap[componentName] = componentProps as Record<
-              string,
-              unknown
-            >;
-          }
+      validComponents.forEach(({ name, originalComponent }) => {
+        const componentProps = originalComponent.props || {};
+        if (componentProps && Object.keys(componentProps).length > 0) {
+          componentPropsMap[name] = componentProps as Record<string, unknown>;
         }
       });
 
@@ -66,17 +83,17 @@ export class EnhancedSourceExportService {
   private static extractServerComponentNames(
     components: ComponentState[]
   ): string[] {
-    const serverComponentNames = new Set<string>();
+    const serverComponentNames: string[] = [];
 
     components.forEach((component) => {
       const componentName = this.extractBaseComponentName(component);
 
       if (componentName && this.hasValidSettings(component)) {
-        serverComponentNames.add(componentName);
+        serverComponentNames.push(componentName);
       }
     });
 
-    return Array.from(serverComponentNames);
+    return serverComponentNames;
   }
 
   private static extractBaseComponentName(
