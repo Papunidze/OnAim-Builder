@@ -37,9 +37,7 @@ export const checkComponentExists = async (
       throw new Error(`API error: ${response.status}`);
     }
 
-    return response.data;
-  } catch (error) {
-    console.error("Component check failed:", error);
+    return response.data;  } catch {
     return {
       exists: false,
       componentName,
@@ -69,9 +67,7 @@ export const downloadMultipleComponentsSources = async (
         componentPropsMap: componentPropsMap || {},
         viewMode: viewMode || "desktop",
       },
-    });
-  } catch (error) {
-    console.error("Multiple downloads failed:", error);
+    });  } catch (error) {
     throw new Error(
       error instanceof Error
         ? error.message

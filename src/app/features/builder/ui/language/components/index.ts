@@ -1,3 +1,3 @@
-export { LanguageEditor } from "./language-editor";
-export { LanguageConfigButton } from "./language-config-button";
-export { LanguageConfig } from "./language-config";
+export { LanguageEditor } from "./language-editor/language-editor";
+export { LanguageConfigButton } from "./language-config/language-config-button";
+export { LanguageConfig } from "./language-config/language-config";

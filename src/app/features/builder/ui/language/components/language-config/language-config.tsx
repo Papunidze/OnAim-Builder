@@ -1,19 +1,13 @@
 import type { JSX } from "react";
 import { useState, useEffect, useMemo } from "react";
 import { useBuilder } from "@app-shared/services/builder/useBuilder.service";
-import { compileLanguageObject } from "..";
+import { compileLanguageObject } from "../../compiler/language-compiler";
 import { Image } from "@app-shared/components";
+import type {
+  LanguageConfigProps,
+  LanguageEntry,
+} from "../../types/language.types";
 import styles from "./language-config.module.css";
-
-interface LanguageConfigProps {
-  onClose?: () => void;
-}
-
-interface LanguageEntry {
-  code: string;
-  name: string;
-  translations: Record<string, string>;
-}
 
 export function LanguageConfig({
   onClose,
@@ -32,15 +26,10 @@ export function LanguageConfig({
   const [editTranslations, setEditTranslations] = useState<
     Record<string, string>
   >({});
-  const selectedComponent = getSelectedComponent();
-  const languageObject = useMemo(() => {
-    if (selectedComponent?.compiledData?.files) {
-      const fileNames = selectedComponent.compiledData.files.map(
-        (f: { file: string }) => f.file
-      );
-      console.warn("Available files:", fileNames);
-    }
 
+  const selectedComponent = getSelectedComponent();
+
+  const languageObject = useMemo(() => {
     if (!selectedComponent?.compiledData?.files) {
       return null;
     }
@@ -49,36 +38,14 @@ export function LanguageConfig({
       (file: { file: string }) => file.file === "language.ts"
     );
 
-    console.warn("Language file found:", !!languageFile);
-    if (languageFile) {
-      console.warn(
-        "Language file content length:",
-        languageFile.content?.length
-      );
-      console.warn(
-        "Language file content preview:",
-        languageFile.content?.substring(0, 200)
-      );
-    }
-
     if (!languageFile?.content) {
-      console.warn("No language file content");
       return null;
     }
+
     const compiled = compileLanguageObject(
       languageFile.content,
       selectedComponent.name
     );
-    console.warn("Compiled language object:", !!compiled);
-
-    if (compiled) {
-      try {
-        console.warn("Available languages:", compiled.getAvailableLanguages());
-        console.warn("Current language:", compiled.getCurrentLanguage());
-      } catch (error) {
-        console.error("Error getting language info:", error);
-      }
-    }
 
     return compiled;
   }, [selectedComponent]);
@@ -91,7 +58,7 @@ export function LanguageConfig({
       const translations = languageObject.getTranslations(currentLang);
       return Object.keys(translations);
     } catch (error) {
-      console.warn("Failed to get translation keys:", error);
+      console.error("Error getting translation keys:", error);
       return [];
     }
   }, [languageObject]);
@@ -119,7 +86,7 @@ export function LanguageConfig({
           );
         }
       } catch (error) {
-        console.warn("Failed to load languages:", error);
+        console.error("Error updating language:", error);
       }
     }
   }, [languageObject, selectedLanguage]);
@@ -131,34 +98,18 @@ export function LanguageConfig({
     });
     setNewTranslations(initialTranslations);
   }, [translationKeys]);
+
   const handleAddLanguage = async (): Promise<void> => {
     if (!newLanguageCode.trim() || !languageObject || !selectedComponent) {
-      console.warn("Missing requirements for adding language:", {
-        hasCode: !!newLanguageCode.trim(),
-        hasLanguageObject: !!languageObject,
-        hasSelectedComponent: !!selectedComponent,
-      });
       return;
     }
 
     try {
-      console.warn(
-        "Adding language:",
+      languageObject.addLanguage(
         newLanguageCode.toLowerCase(),
         newTranslations
       );
 
-      console.warn("Testing language object before add:", {
-        hasSetLanguage: typeof languageObject.setLanguage === "function",
-        hasAddLanguage: typeof languageObject.addLanguage === "function",
-        currentLanguages: languageObject.getAvailableLanguages(),
-      });
-
-      // Add language to runtime object
-      languageObject.addLanguage(
-        newLanguageCode.toLowerCase(),
-        newTranslations
-      ); // Get updated content and persist it back to the component
       const updatedContent = languageObject.getUpdatedContent();
       const updatedFiles = selectedComponent.compiledData.files.map(
         (file: { file: string; content: string }) => {
@@ -168,6 +119,7 @@ export function LanguageConfig({
           return file;
         }
       );
+
       updateComponent(selectedComponent.id, {
         compiledData: {
           ...selectedComponent.compiledData,
@@ -180,7 +132,6 @@ export function LanguageConfig({
       setNewLanguageName("");
       setNewTranslations({});
 
-      // Force UI re-render by updating the language state
       setTimeout(() => {
         const updatedLanguageObject = compileLanguageObject(
           updatedContent,
@@ -203,35 +154,19 @@ export function LanguageConfig({
         }
       }, 100);
     } catch (error) {
-      console.error("Failed to add language:", error);
+      console.error("Error adding language:", error);
+      // Handle error silently
     }
   };
+
   const handleUpdateLanguage = async (): Promise<void> => {
     if (!selectedLanguage || !languageObject || !selectedComponent) {
-      console.warn("Missing requirements for updating language:", {
-        hasSelectedLanguage: !!selectedLanguage,
-        hasLanguageObject: !!languageObject,
-        hasSelectedComponent: !!selectedComponent,
-      });
       return;
     }
 
     try {
-      console.warn("Updating language:", selectedLanguage, editTranslations);
-
-      console.warn("Testing language object before update:", {
-        hasUpdateTranslations:
-          typeof languageObject.updateTranslations === "function",
-        currentLanguages: languageObject.getAvailableLanguages(),
-        selectedLanguageExists: languageObject
-          .getAvailableLanguages()
-          .includes(selectedLanguage),
-      });
-
-      // Update language in runtime object
       languageObject.updateTranslations(selectedLanguage, editTranslations);
 
-      // Get updated content and persist it back to the component
       const updatedContent = languageObject.getUpdatedContent();
       const updatedFiles = selectedComponent.compiledData.files.map(
         (file: { file: string; content: string }) => {
@@ -241,6 +176,7 @@ export function LanguageConfig({
           return file;
         }
       );
+
       updateComponent(selectedComponent.id, {
         compiledData: {
           ...selectedComponent.compiledData,
@@ -249,7 +185,6 @@ export function LanguageConfig({
         timestamp: Date.now(),
       });
 
-      // Force UI re-render by updating the language state
       setTimeout(() => {
         const updatedLanguageObject = compileLanguageObject(
           updatedContent,
@@ -258,7 +193,6 @@ export function LanguageConfig({
         if (updatedLanguageObject) {
           const availableLanguages =
             updatedLanguageObject.getAvailableLanguages();
-          console.warn("Available languages after update:", availableLanguages);
 
           const languageEntries: LanguageEntry[] = availableLanguages.map(
             (code) => {
@@ -274,7 +208,8 @@ export function LanguageConfig({
         }
       }, 100);
     } catch (error) {
-      console.error("Failed to update language:", error);
+      console.error("Error updating language:", error);
+      // Handle error silently
     }
   };
 
@@ -285,7 +220,9 @@ export function LanguageConfig({
         const translations = languageObject.getTranslations(languageCode);
         setEditTranslations(translations);
       } catch (error) {
-        console.warn("Failed to load translations for language:", error);
+        console.error("Error updating language:", error);
+
+        // Handle error silently
       }
     }
   };

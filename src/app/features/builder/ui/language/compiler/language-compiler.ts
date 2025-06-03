@@ -1,25 +1,5 @@
-// Clean version of language compiler
 import { SetLanguage } from "language-management-lib";
-
-export interface LanguageObject {
-  setLanguage: (language: string, updateURL?: boolean) => void;
-  translate: (key: string) => string;
-  getCurrentLanguage: () => string;
-  getAvailableLanguages: () => string[];
-  addTranslations: (
-    language: string,
-    translations: Record<string, string>
-  ) => void;
-  getLanguageData: () => Record<string, Record<string, string>>;
-  getTranslations: (language: string) => Record<string, string>;
-  addLanguage: (language: string, translations: Record<string, string>) => void;
-  updateTranslations: (
-    language: string,
-    translations: Record<string, string>
-  ) => void;
-  // Add method to get updated content
-  getUpdatedContent: () => string;
-}
+import type { LanguageObject } from "../types/language.types";
 
 function createMockRequire(): (moduleName: string) => unknown {
   return (moduleName: string): unknown => {
@@ -37,7 +17,6 @@ function createMockRequire(): (moduleName: string) => unknown {
 function createModuleContext(
   tsContent: string
 ): (exports: unknown, require: (moduleName: string) => unknown) => unknown {
-  // Transform ES6 imports to CommonJS requires
   const transformedContent = tsContent
     .replace(
       /import\s+(?:(?:(\w+),?\s*)?(?:\{([^}]+)\})?\s*)?from\s+["']([^"']+)["'];?/g,
@@ -45,16 +24,12 @@ function createModuleContext(
         let result = "";
 
         if (defaultImport && namedImports) {
-          // import SetLanguage, { Language } from "module"
           result = `const { default: ${defaultImport}, ${namedImports} } = require("${moduleName}");`;
         } else if (defaultImport) {
-          // import SetLanguage from "module"
           result = `const ${defaultImport} = require("${moduleName}").default || require("${moduleName}");`;
         } else if (namedImports) {
-          // import { Language } from "module"
           result = `const { ${namedImports} } = require("${moduleName}");`;
         } else {
-          // import "module"
           result = `require("${moduleName}");`;
         }
 
@@ -71,13 +46,12 @@ function createModuleContext(
       const module = { exports: {} };
       
       ${transformedContent}      
-      // Export the lng variable if it exists
+      
       if (typeof lng !== 'undefined') {
         module.exports.lng = lng;
         module.exports.default = lng;
       }
       
-      // Export lngObject if it exists (for the lb2 format)
       if (typeof lngObject !== 'undefined') {
         const SetLanguage = require("language-management-lib").default || require("language-management-lib");
         const lngInstance = new SetLanguage(lngObject, "en");
@@ -181,7 +155,6 @@ export function compileLanguageObject(
         translations: Record<string, string>
       ): void => setLanguageInstance.addTranslations(language, translations),
       getUpdatedContent: (): string => {
-        // Generate updated TypeScript content with current language data
         const languageData = setLanguageInstance.getLanguageData();
         const currentLanguage = setLanguageInstance.getCurrentLanguage();
         const dataString = JSON.stringify(languageData, null, 2);
@@ -194,8 +167,7 @@ export const lng = new SetLanguage(languageData, "${currentLanguage}");
 export default lng;`;
       },
     };
-  } catch (error) {
-    console.error("Error compiling language object:", error);
+  } catch {
     return null;
   }
 }

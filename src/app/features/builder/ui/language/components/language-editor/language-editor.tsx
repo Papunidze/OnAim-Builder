@@ -1,31 +1,14 @@
 import type { JSX } from "react";
 import { useState, useEffect, useMemo } from "react";
 import { useBuilder } from "@app-shared/services/builder/useBuilder.service";
-import { compileLanguageObject } from "..";
+import { compileLanguageObject } from "../../compiler/language-compiler";
 import { Image } from "@app-shared/components";
+import {
+  LANGUAGE_FLAGS,
+  FALLBACK_FLAG,
+} from "../../constants/language.constants";
+import type { LanguageEditorProps } from "../../types/language.types";
 import styles from "./language-editor.module.css";
-
-interface LanguageFlag {
-  flag: string;
-  name: string;
-}
-
-const languageFlags: Record<string, LanguageFlag> = {
-  en: { flag: "🇺🇸", name: "English" },
-  ka: { flag: "🇬🇪", name: "Georgian" },
-  ru: { flag: "🇷🇺", name: "Russian" },
-  de: { flag: "🇩🇪", name: "German" },
-  fr: { flag: "🇫🇷", name: "French" },
-  es: { flag: "🇪🇸", name: "Spanish" },
-  it: { flag: "🇮🇹", name: "Italian" },
-  ja: { flag: "🇯🇵", name: "Japanese" },
-  zh: { flag: "🇨🇳", name: "Chinese" },
-  ar: { flag: "🇸🇦", name: "Arabic" },
-};
-
-interface LanguageEditorProps {
-  onLanguageChange?: (language: string) => void;
-}
 
 export function LanguageEditor({
   onLanguageChange,
@@ -60,7 +43,8 @@ export function LanguageEditor({
     try {
       return languageObject.getAvailableLanguages();
     } catch (error) {
-      console.warn("Failed to get available languages:", error);
+      console.error("Error getting available languages:", error);
+
       return [];
     }
   }, [languageObject]);
@@ -71,20 +55,19 @@ export function LanguageEditor({
         const current = languageObject.getCurrentLanguage();
         setCurrentLanguage(current);
       } catch (error) {
-        console.warn("Failed to get current language:", error);
+        console.error("Error getting available languages:", error);
       }
     }
   }, [languageObject]);
+
   const handleLanguageChange = (language: string): void => {
     if (languageObject && selectedComponent) {
       try {
-        // Update the language in the runtime object
         languageObject.setLanguage(language, false);
         setCurrentLanguage(language);
         onLanguageChange?.(language);
         setIsOpen(false);
 
-        // Get updated content with the new current language and persist it
         const updatedContent = languageObject.getUpdatedContent();
         const updatedFiles = selectedComponent.compiledData.files.map(
           (file: { file: string; content: string }) => {
@@ -95,7 +78,6 @@ export function LanguageEditor({
           }
         );
 
-        // Trigger component re-render by updating both content and timestamp
         updateComponent(selectedComponent.id, {
           compiledData: {
             ...selectedComponent.compiledData,
@@ -104,13 +86,13 @@ export function LanguageEditor({
           timestamp: Date.now(),
         });
       } catch (error) {
-        console.warn("Failed to set language:", error);
+        console.error("Error getting available languages:", error);
       }
     }
   };
 
-  const currentFlag = languageFlags[currentLanguage] || {
-    flag: "🌐",
+  const currentFlag = LANGUAGE_FLAGS[currentLanguage] || {
+    flag: FALLBACK_FLAG.flag,
     name: currentLanguage.toUpperCase(),
   };
 
@@ -146,8 +128,8 @@ export function LanguageEditor({
 
           <div className={styles.languageList}>
             {availableLanguages.map((language) => {
-              const langInfo = languageFlags[language] || {
-                flag: "🌐",
+              const langInfo = LANGUAGE_FLAGS[language] || {
+                flag: FALLBACK_FLAG.flag,
                 name: language.toUpperCase(),
               };
 

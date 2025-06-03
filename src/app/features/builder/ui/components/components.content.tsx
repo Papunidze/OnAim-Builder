@@ -6,7 +6,14 @@ import type { ComponentsContentProps } from "./types";
 export default function ComponentsContent({
   folders,
   addComponent,
-}: ComponentsContentProps): JSX.Element {
+}: ComponentsContentProps): JSX.Element {  const handleAddComponent = async (name: string): Promise<void> => {
+    try {
+      await addComponent(name);
+    } catch {
+      // Handle error silently
+    }
+  };
+
   return (
     <div className={styles.builderPropertyComponents} role="menu">
       <div className={styles.builderPropertyComponentsContent}>
@@ -16,13 +23,7 @@ export default function ComponentsContent({
             type="button"
             role="menuitem"
             className={styles.builderPropertyComponentsItem}
-            onClick={async () => {
-              try {
-                await addComponent(name);
-              } catch (error) {
-                console.error(`Failed to add component ${name}:`, error);
-              }
-            }}
+            onClick={() => handleAddComponent(name)}
           >
             <span className={styles.builderPropertyComponentsItemLabel}>
               {name}

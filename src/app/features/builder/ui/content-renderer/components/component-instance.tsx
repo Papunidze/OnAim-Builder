@@ -5,7 +5,7 @@ import styles from "./component-instance.module.css";
 import { ErrorBoundary } from "@app-shared/components";
 import { useBuilder } from "@app-shared/services/builder";
 import { getCompiledSettings } from "@app-features/builder/ui/property-adjustments/services";
-import { compileLanguageObject } from "@app-features/builder/ui/language/language-compiler";
+import { compileLanguageObject } from "@app-features/builder/ui/language/compiler/language-compiler";
 
 export function ComponentInstance({
   instance,
@@ -15,7 +15,6 @@ export function ComponentInstance({
 
   const component = getComponent(instance.id);
 
-  // Create a more specific key that includes component content hash for proper re-rendering
   const componentContentKey = useMemo(() => {
     if (!component?.compiledData?.files) return instance.id;
 
@@ -26,7 +25,6 @@ export function ComponentInstance({
       (file: { file: string }) => file.file === "settings.ts"
     );
 
-    // Create a hash of the content to detect changes
     const contentHash = [
       languageFile?.content || "",
       settingsFile?.content || "",
