@@ -28,7 +28,7 @@ const Leaderboard: React.FC<LeaderboardProps> = (props) => {
         width: `${leaderboardSettings.width}px`,
       }}
     >
-      <Button>{props.language.button}</Button>
+      <Button>test</Button>
       <h2 className="leaderboard-title">{props.language.title}</h2>
 
       <ul className="leaderboard-list">

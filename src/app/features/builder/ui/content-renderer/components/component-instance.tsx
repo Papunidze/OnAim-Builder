@@ -6,20 +6,38 @@ import { ErrorBoundary } from "@app-shared/components";
 import { useBuilder } from "@app-shared/services/builder";
 import { getCompiledSettings } from "@app-features/builder/ui/property-adjustments/services";
 import { compileLanguageObject } from "@app-features/builder/ui/language/language-compiler";
-import { useLanguageState } from "@app-features/builder/ui/language/language-state-manager";
 
 export function ComponentInstance({
   instance,
   onRetry,
 }: ComponentRenderProps): JSX.Element {
   const { selectComponent, selectedComponentId, getComponent } = useBuilder();
-  const key = `${instance.id}-${instance.name}`;
-  const isSelected = selectedComponentId === instance.id;
-
-  // Use shared language state for this component
-  const [currentLanguage] = useLanguageState(instance.name);
 
   const component = getComponent(instance.id);
+
+  // Create a more specific key that includes component content hash for proper re-rendering
+  const componentContentKey = useMemo(() => {
+    if (!component?.compiledData?.files) return instance.id;
+
+    const languageFile = component.compiledData.files.find(
+      (file: { file: string }) => file.file === "language.ts"
+    );
+    const settingsFile = component.compiledData.files.find(
+      (file: { file: string }) => file.file === "settings.ts"
+    );
+
+    // Create a hash of the content to detect changes
+    const contentHash = [
+      languageFile?.content || "",
+      settingsFile?.content || "",
+      component.timestamp || 0,
+    ].join("|");
+
+    return `${instance.id}-${contentHash.length}-${component.timestamp}`;
+  }, [instance.id, component?.compiledData?.files, component?.timestamp]);
+
+  const key = componentContentKey;
+  const isSelected = selectedComponentId === instance.id;
   const getComponentProps = useMemo((): Record<string, unknown> => {
     if (!component?.compiledData?.files) {
       console.error("No component or compiled data for", instance.name);
@@ -42,15 +60,6 @@ export function ComponentInstance({
       component.name
     );
 
-    // Apply the shared language state if available
-    if (languageObject && currentLanguage) {
-      try {
-        languageObject.setLanguage(currentLanguage, false);
-      } catch (error) {
-        console.warn("Failed to set language from shared state:", error);
-      }
-    }
-
     const settingsObject = getCompiledSettings(
       component.name,
       settingsFile.content
@@ -63,15 +72,14 @@ export function ComponentInstance({
     const settingsValue = settingsObject.getValues() || {};
     const languageValue =
       languageObject?.getLanguageData()[languageObject.getCurrentLanguage()];
-    return { settings: settingsValue, language: languageValue };
+    return {
+      settings: settingsValue,
+      language: languageValue,
+      // Include the language object itself so components can use it
+      languageObject,
+    };
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [
-    component,
-    instance.name,
-    component?.props,
-    component?.timestamp,
-    currentLanguage,
-  ]);
+  }, [component, instance.name, component?.props, component?.timestamp]);
 
   const wrapperClassName = useMemo(() => {
     return isSelected

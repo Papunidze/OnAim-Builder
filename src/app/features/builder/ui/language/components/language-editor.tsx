@@ -2,7 +2,6 @@ import type { JSX } from "react";
 import { useState, useEffect, useMemo } from "react";
 import { useBuilder } from "@app-shared/services/builder/useBuilder.service";
 import { compileLanguageObject } from "..";
-import { languageStateManager } from "../language-state-manager";
 import { Image } from "@app-shared/components";
 import styles from "./language-editor.module.css";
 
@@ -79,16 +78,29 @@ export function LanguageEditor({
   const handleLanguageChange = (language: string): void => {
     if (languageObject && selectedComponent) {
       try {
+        // Update the language in the runtime object
         languageObject.setLanguage(language, false);
         setCurrentLanguage(language);
         onLanguageChange?.(language);
         setIsOpen(false);
 
-        // Update the shared language state for this component
-        languageStateManager.setLanguage(selectedComponent.name, language);
+        // Get updated content with the new current language and persist it
+        const updatedContent = languageObject.getUpdatedContent();
+        const updatedFiles = selectedComponent.compiledData.files.map(
+          (file: { file: string; content: string }) => {
+            if (file.file === "language.ts") {
+              return { ...file, content: updatedContent };
+            }
+            return file;
+          }
+        );
 
-        // Trigger component re-render by updating timestamp
+        // Trigger component re-render by updating both content and timestamp
         updateComponent(selectedComponent.id, {
+          compiledData: {
+            ...selectedComponent.compiledData,
+            files: updatedFiles,
+          },
           timestamp: Date.now(),
         });
       } catch (error) {

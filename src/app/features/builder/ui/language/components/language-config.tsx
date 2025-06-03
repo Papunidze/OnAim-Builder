@@ -34,10 +34,6 @@ export function LanguageConfig({
   >({});
   const selectedComponent = getSelectedComponent();
   const languageObject = useMemo(() => {
-    console.warn("=== Language Config Debug ===");
-    console.warn("Selected component:", selectedComponent?.name);
-    console.warn("Has compiled data:", !!selectedComponent?.compiledData);
-    console.warn("Has files:", !!selectedComponent?.compiledData?.files);
     if (selectedComponent?.compiledData?.files) {
       const fileNames = selectedComponent.compiledData.files.map(
         (f: { file: string }) => f.file
@@ -152,49 +148,62 @@ export function LanguageConfig({
         newTranslations
       );
 
-      // Test if the language object is still valid
       console.warn("Testing language object before add:", {
         hasSetLanguage: typeof languageObject.setLanguage === "function",
         hasAddLanguage: typeof languageObject.addLanguage === "function",
         currentLanguages: languageObject.getAvailableLanguages(),
       });
 
+      // Add language to runtime object
       languageObject.addLanguage(
         newLanguageCode.toLowerCase(),
         newTranslations
+      ); // Get updated content and persist it back to the component
+      const updatedContent = languageObject.getUpdatedContent();
+      const updatedFiles = selectedComponent.compiledData.files.map(
+        (file: { file: string; content: string }) => {
+          if (file.file === "language.ts") {
+            return { ...file, content: updatedContent };
+          }
+          return file;
+        }
       );
-
-      // Force component update
       updateComponent(selectedComponent.id, {
+        compiledData: {
+          ...selectedComponent.compiledData,
+          files: updatedFiles,
+        },
         timestamp: Date.now(),
       });
 
-      // Clear form
       setNewLanguageCode("");
       setNewLanguageName("");
       setNewTranslations({});
 
-      // Refresh languages list
-      const availableLanguages = languageObject.getAvailableLanguages();
-      console.warn("Available languages after add:", availableLanguages);
-
-      const languageEntries: LanguageEntry[] = availableLanguages.map(
-        (code) => {
-          const translations = languageObject.getTranslations(code);
-          return {
-            code,
-            name: code.toUpperCase(),
-            translations,
-          };
+      // Force UI re-render by updating the language state
+      setTimeout(() => {
+        const updatedLanguageObject = compileLanguageObject(
+          updatedContent,
+          selectedComponent.name
+        );
+        if (updatedLanguageObject) {
+          const availableLanguages =
+            updatedLanguageObject.getAvailableLanguages();
+          const languageEntries: LanguageEntry[] = availableLanguages.map(
+            (code) => {
+              const translations = updatedLanguageObject.getTranslations(code);
+              return {
+                code,
+                name: code.toUpperCase(),
+                translations,
+              };
+            }
+          );
+          setLanguages(languageEntries);
         }
-      );
-      setLanguages(languageEntries);
-
-      // Close popup after successful addition
-      onClose?.();
+      }, 100);
     } catch (error) {
       console.error("Failed to add language:", error);
-      // Don't close the popup on error so user can try again
     }
   };
   const handleUpdateLanguage = async (): Promise<void> => {
@@ -210,7 +219,6 @@ export function LanguageConfig({
     try {
       console.warn("Updating language:", selectedLanguage, editTranslations);
 
-      // Test if the language object is still valid
       console.warn("Testing language object before update:", {
         hasUpdateTranslations:
           typeof languageObject.updateTranslations === "function",
@@ -220,33 +228,53 @@ export function LanguageConfig({
           .includes(selectedLanguage),
       });
 
+      // Update language in runtime object
       languageObject.updateTranslations(selectedLanguage, editTranslations);
 
+      // Get updated content and persist it back to the component
+      const updatedContent = languageObject.getUpdatedContent();
+      const updatedFiles = selectedComponent.compiledData.files.map(
+        (file: { file: string; content: string }) => {
+          if (file.file === "language.ts") {
+            return { ...file, content: updatedContent };
+          }
+          return file;
+        }
+      );
       updateComponent(selectedComponent.id, {
+        compiledData: {
+          ...selectedComponent.compiledData,
+          files: updatedFiles,
+        },
         timestamp: Date.now(),
       });
 
-      // Refresh languages list
-      const availableLanguages = languageObject.getAvailableLanguages();
-      console.warn("Available languages after update:", availableLanguages);
+      // Force UI re-render by updating the language state
+      setTimeout(() => {
+        const updatedLanguageObject = compileLanguageObject(
+          updatedContent,
+          selectedComponent.name
+        );
+        if (updatedLanguageObject) {
+          const availableLanguages =
+            updatedLanguageObject.getAvailableLanguages();
+          console.warn("Available languages after update:", availableLanguages);
 
-      const languageEntries: LanguageEntry[] = availableLanguages.map(
-        (code) => {
-          const translations = languageObject.getTranslations(code);
-          return {
-            code,
-            name: code.toUpperCase(),
-            translations,
-          };
+          const languageEntries: LanguageEntry[] = availableLanguages.map(
+            (code) => {
+              const translations = updatedLanguageObject.getTranslations(code);
+              return {
+                code,
+                name: code.toUpperCase(),
+                translations,
+              };
+            }
+          );
+          setLanguages(languageEntries);
         }
-      );
-      setLanguages(languageEntries);
-
-      // Close popup after successful update
-      onClose?.();
+      }, 100);
     } catch (error) {
       console.error("Failed to update language:", error);
-      // Don't close the popup on error so user can try again
     }
   };
 

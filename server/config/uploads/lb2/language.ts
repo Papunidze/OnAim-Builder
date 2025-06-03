@@ -3,7 +3,6 @@ import SetLanguage, { Language } from "language-management-lib";
 const lngObject = {
   en: {
     title: "Leaderboards",
-    button: "დაწკაპე",
   },
   ka: {
     title: "ლიდერბორდი",
