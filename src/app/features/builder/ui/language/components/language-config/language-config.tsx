@@ -155,8 +155,8 @@ export function LanguageConfig({
       }, 100);
     } catch (error) {
       console.error("Error adding language:", error);
-      // Handle error silently
     }
+    onClose?.();
   };
 
   const handleUpdateLanguage = async (): Promise<void> => {
@@ -209,8 +209,8 @@ export function LanguageConfig({
       }, 100);
     } catch (error) {
       console.error("Error updating language:", error);
-      // Handle error silently
     }
+    onClose?.();
   };
 
   const handleLanguageSelect = (languageCode: string): void => {
@@ -221,8 +221,6 @@ export function LanguageConfig({
         setEditTranslations(translations);
       } catch (error) {
         console.error("Error updating language:", error);
-
-        // Handle error silently
       }
     }
   };
