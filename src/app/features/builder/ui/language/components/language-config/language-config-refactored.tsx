@@ -1,4 +1,3 @@
-// filepath: c:\Users\Papu\Desktop\OnAim-Builder\src\app\features\builder\ui\language\components\language-config\language-config.tsx
 import type { JSX } from "react";
 import { LanguageConfigHeader } from "./components/LanguageConfigHeader";
 import { LanguageConfigContent } from "./components/LanguageConfigContent";
@@ -8,13 +7,9 @@ import styles from "./language-config.module.css";
 export function LanguageConfig({
   onClose,
 }: LanguageConfigProps): JSX.Element | null {
-  const handleClose = (): void => {
-    onClose?.();
-  };
-
   return (
     <div className={styles.configPopover}>
-      <LanguageConfigHeader onClose={handleClose} />
+      <LanguageConfigHeader onClose={onClose || ((): void => {})} />
       <LanguageConfigContent />
     </div>
   );
