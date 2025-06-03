@@ -25,9 +25,7 @@ export function LanguageDropdown({
       <div className={styles.languageDropdown}>
         <div className={styles.dropdownHeader}>
           <span className={styles.dropdownTitle}>Select Language</span>
-          <span className={styles.componentName}>
-            {selectedComponentName}
-          </span>
+          <span className={styles.componentName}>{selectedComponentName}</span>
         </div>
 
         <div className={styles.languageList}>

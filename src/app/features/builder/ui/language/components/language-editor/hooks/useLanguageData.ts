@@ -24,8 +24,13 @@ interface UseLanguageDataReturn {
   error: string | null;
 }
 
-export function useLanguageData({ selectedComponent }: UseLanguageDataProps): UseLanguageDataReturn {
-  const { languageObject, error } = useMemo<{ languageObject: LanguageObject | null; error: string | null }>(() => {
+export function useLanguageData({
+  selectedComponent,
+}: UseLanguageDataProps): UseLanguageDataReturn {
+  const { languageObject, error } = useMemo<{
+    languageObject: LanguageObject | null;
+    error: string | null;
+  }>(() => {
     if (!selectedComponent?.compiledData?.files) {
       return { languageObject: null, error: "No component files available" };
     }
@@ -39,7 +44,10 @@ export function useLanguageData({ selectedComponent }: UseLanguageDataProps): Us
     }
 
     try {
-      const compiled = compileLanguageObject(languageFile.content, selectedComponent.name);
+      const compiled = compileLanguageObject(
+        languageFile.content,
+        selectedComponent.name
+      );
       return { languageObject: compiled, error: null };
     } catch (err) {
       console.error("Error compiling language object:", err);

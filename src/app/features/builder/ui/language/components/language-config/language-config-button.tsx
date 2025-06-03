@@ -9,7 +9,7 @@ export function LanguageConfigButton(): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent): void => {
       if (
         containerRef.current &&
         !containerRef.current.contains(event.target as Node)
@@ -22,16 +22,16 @@ export function LanguageConfigButton(): JSX.Element {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
-    return () => {
+    return (): void => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
 
-  const handleToggle = () => {
+  const handleToggle = (): void => {
     setIsOpen(!isOpen);
   };
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     setIsOpen(false);
   };
 

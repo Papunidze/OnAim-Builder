@@ -16,16 +16,16 @@ export function LanguageEditor({
   const [isOpen, setIsOpen] = useState(false);
 
   const selectedComponent = getSelectedComponent();
-  
+
   // Custom hooks for cleaner code organization
   const { languageObject, availableLanguages, error } = useLanguageData({
     selectedComponent,
   });
-  
+
   const { currentLanguage, setCurrentLanguage } = useCurrentLanguage({
     languageObject,
   });
-  
+
   const { handleLanguageChange } = useLanguageActions({
     languageObject,
     selectedComponent,
@@ -33,6 +33,7 @@ export function LanguageEditor({
     setCurrentLanguage,
     setIsOpen,
   });
+
   // Event handlers
   const handleToggleDropdown = (): void => {
     setIsOpen(!isOpen);

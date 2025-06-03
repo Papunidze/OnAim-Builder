@@ -10,7 +10,9 @@ interface UseCurrentLanguageReturn {
   setCurrentLanguage: (language: string) => void;
 }
 
-export function useCurrentLanguage({ languageObject }: UseCurrentLanguageProps): UseCurrentLanguageReturn {
+export function useCurrentLanguage({
+  languageObject,
+}: UseCurrentLanguageProps): UseCurrentLanguageReturn {
   const [currentLanguage, setCurrentLanguage] = useState<string>("en");
 
   useEffect(() => {

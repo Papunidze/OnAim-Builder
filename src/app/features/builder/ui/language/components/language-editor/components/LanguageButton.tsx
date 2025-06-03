@@ -1,6 +1,9 @@
 import type { JSX } from "react";
 import { Image } from "@app-shared/components";
-import { LANGUAGE_FLAGS, FALLBACK_FLAG } from "../../../constants/language.constants";
+import {
+  LANGUAGE_FLAGS,
+  FALLBACK_FLAG,
+} from "../../../constants/language.constants";
 import styles from "../language-editor.module.css";
 
 interface LanguageButtonProps {
@@ -9,11 +12,12 @@ interface LanguageButtonProps {
   onClick: () => void;
 }
 
-export function LanguageButton({ 
-  currentLanguage, 
-  availableLanguagesCount, 
-  onClick 
+export function LanguageButton({
+  currentLanguage,
+  availableLanguagesCount,
+  onClick,
 }: LanguageButtonProps): JSX.Element {
+  // Get language display information
   const currentFlag = LANGUAGE_FLAGS[currentLanguage] || {
     flag: FALLBACK_FLAG.flag,
     name: currentLanguage.toUpperCase(),
