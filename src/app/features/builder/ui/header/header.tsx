@@ -4,6 +4,7 @@ import type { JSX } from "react";
 import styles from "./header.module.css";
 import { builderService } from "@app-shared/services/builder";
 import { Save } from "../save";
+import { LanguageEditor, LanguageConfigButton } from "../language";
 
 interface HeaderProps {
   viewMode: "desktop" | "mobile";
@@ -65,8 +66,11 @@ const Header = ({ viewMode, onViewChange }: HeaderProps): JSX.Element => (
           >
             <Image imageKey="icon:redo" />
             <span className={styles.builderHeaderIconButtonLabel}>Redo</span>
-          </button>
-        </div>
+          </button>{" "}
+        </div>{" "}
+        <div className={styles.builderHeaderDivider} />
+        <LanguageEditor />
+        <LanguageConfigButton />
         <div className={styles.builderHeaderDivider} />
         <button
           className={styles.builderHeaderIconButton}

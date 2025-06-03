@@ -5,7 +5,8 @@ import styles from "./component-instance.module.css";
 import { ErrorBoundary } from "@app-shared/components";
 import { useBuilder } from "@app-shared/services/builder";
 import { getCompiledSettings } from "@app-features/builder/ui/property-adjustments/services";
-import { getCompiledLanguage } from "@app-features/builder/ui/language/language-compiler";
+import { compileLanguageObject } from "@app-features/builder/ui/language/language-compiler";
+import { useLanguageState } from "@app-features/builder/ui/language/language-state-manager";
 
 export function ComponentInstance({
   instance,
@@ -14,6 +15,9 @@ export function ComponentInstance({
   const { selectComponent, selectedComponentId, getComponent } = useBuilder();
   const key = `${instance.id}-${instance.name}`;
   const isSelected = selectedComponentId === instance.id;
+
+  // Use shared language state for this component
+  const [currentLanguage] = useLanguageState(instance.name);
 
   const component = getComponent(instance.id);
   const getComponentProps = useMemo((): Record<string, unknown> => {
@@ -33,10 +37,19 @@ export function ComponentInstance({
       console.error("No settings file found for", instance.name);
       return {};
     }
-    const languageObject = getCompiledLanguage(
-      component.name,
-      languageFile?.content
+    const languageObject = compileLanguageObject(
+      languageFile?.content,
+      component.name
     );
+
+    // Apply the shared language state if available
+    if (languageObject && currentLanguage) {
+      try {
+        languageObject.setLanguage(currentLanguage, false);
+      } catch (error) {
+        console.warn("Failed to set language from shared state:", error);
+      }
+    }
 
     const settingsObject = getCompiledSettings(
       component.name,
@@ -52,7 +65,13 @@ export function ComponentInstance({
       languageObject?.getLanguageData()[languageObject.getCurrentLanguage()];
     return { settings: settingsValue, language: languageValue };
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [component, instance.name, component?.props, component?.timestamp]);
+  }, [
+    component,
+    instance.name,
+    component?.props,
+    component?.timestamp,
+    currentLanguage,
+  ]);
 
   const wrapperClassName = useMemo(() => {
     return isSelected

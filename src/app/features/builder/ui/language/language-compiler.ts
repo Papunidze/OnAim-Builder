@@ -1,3 +1,4 @@
+// Clean version of language compiler
 import { SetLanguage } from "language-management-lib";
 
 export interface LanguageObject {
@@ -10,142 +11,89 @@ export interface LanguageObject {
     translations: Record<string, string>
   ) => void;
   getLanguageData: () => Record<string, Record<string, string>>;
+  getTranslations: (language: string) => Record<string, string>;
+  addLanguage: (language: string, translations: Record<string, string>) => void;
+  updateTranslations: (
+    language: string,
+    translations: Record<string, string>
+  ) => void;
 }
-
-class LanguageCache {
-  private cache = new Map<string, LanguageObject | null>();
-
-  private generateCacheKey(componentName: string, content: string): string {
-    return `${componentName}:${content.length}:${this.hashCode(content)}`;
-  }
-
-  private hashCode(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
-    }
-    return hash;
-  }
-
-  get(
-    componentName: string,
-    content: string
-  ): LanguageObject | null | undefined {
-    const key = this.generateCacheKey(componentName, content);
-    return this.cache.get(key);
-  }
-
-  set(
-    componentName: string,
-    content: string,
-    languageObject: LanguageObject | null
-  ): void {
-    const key = this.generateCacheKey(componentName, content);
-    this.cache.set(key, languageObject);
-  }
-
-  clear(): void {
-    this.cache.clear();
-  }
-
-  clearForComponent(componentName: string): void {
-    const keysToDelete: string[] = [];
-    for (const key of this.cache.keys()) {
-      if (key.startsWith(`${componentName}:`)) {
-        keysToDelete.push(key);
-      }
-    }
-    keysToDelete.forEach((key) => this.cache.delete(key));
-  }
-
-  get size(): number {
-    return this.cache.size;
-  }
-}
-
-const languageCache = new LanguageCache();
 
 function createMockRequire(): (moduleName: string) => unknown {
   return (moduleName: string): unknown => {
     if (moduleName === "language-management-lib") {
-      // Return an object that supports both named export and default export
       return {
         SetLanguage,
         default: SetLanguage,
         __esModule: true,
       };
     }
-    throw new Error(`Module ${moduleName} not found in runtime environment`);
+    return {};
   };
 }
 
 function createModuleContext(
   tsContent: string
 ): (exports: unknown, require: (moduleName: string) => unknown) => unknown {
-  return new Function(
+  const fn = new Function(
     "exports",
     "require",
     `
       const module = { exports: {} };
-
+      
       ${tsContent}
-
-      // The compiled code should have created variables and exports
-      // Try to find the language instance from various possible sources
-      let languageInstance = null;
       
-      // Check for exported lng variable (most common case)
+      // Export the lng variable if it exists
       if (typeof lng !== 'undefined') {
-        languageInstance = lng;
         module.exports.lng = lng;
+        module.exports.default = lng;
       }
       
-      // Check for other common variable names
-      if (!languageInstance && typeof languageManager !== 'undefined') {
-        languageInstance = languageManager;
-        module.exports.languageManager = languageManager;
-      }
-      
-      // Set as default export if we found an instance
-      if (languageInstance && !module.exports.default) {
-        module.exports.default = languageInstance;
-      }
-
       return module.exports;
     `
-  ) as (exports: unknown, require: (moduleName: string) => unknown) => unknown;
+  );
+
+  return fn as (
+    exports: unknown,
+    require: (moduleName: string) => unknown
+  ) => unknown;
 }
 
 function extractLanguageObject(
   moduleExports: unknown
 ): SetLanguage<Record<string, Record<string, string>>> | null {
-  if (moduleExports && typeof moduleExports === "object") {
-    const defaultExport = (moduleExports as Record<string, unknown>).default;
-    if (
-      defaultExport &&
-      typeof defaultExport === "object" &&
-      "translate" in defaultExport
-    ) {
-      return defaultExport as SetLanguage<
-        Record<string, Record<string, string>>
-      >;
-    }
+  if (!moduleExports || typeof moduleExports !== "object") {
+    return null;
   }
 
-  if (moduleExports && typeof moduleExports === "object") {
-    const languageObject = Object.values(
-      moduleExports as Record<string, unknown>
-    ).find(
-      (exp: unknown) =>
-        exp && typeof exp === "object" && "translate" in (exp as object)
-    );
+  const exports = moduleExports as Record<string, unknown>;
 
-    if (languageObject) {
-      return languageObject as SetLanguage<
-        Record<string, Record<string, string>>
-      >;
+  if (
+    exports.lng &&
+    typeof exports.lng === "object" &&
+    "translate" in exports.lng
+  ) {
+    return exports.lng as SetLanguage<Record<string, Record<string, string>>>;
+  }
+
+  if (
+    exports.default &&
+    typeof exports.default === "object" &&
+    "translate" in exports.default
+  ) {
+    return exports.default as SetLanguage<
+      Record<string, Record<string, string>>
+    >;
+  }
+
+  for (const value of Object.values(exports)) {
+    if (
+      value &&
+      typeof value === "object" &&
+      "translate" in value &&
+      "setLanguage" in value
+    ) {
+      return value as SetLanguage<Record<string, Record<string, string>>>;
     }
   }
 
@@ -153,7 +101,8 @@ function extractLanguageObject(
 }
 
 export function compileLanguageObject(
-  tsContent: string
+  tsContent: string,
+  _componentName: string = "unknown"
 ): LanguageObject | null {
   if (!tsContent?.trim()) {
     return null;
@@ -163,64 +112,41 @@ export function compileLanguageObject(
     const moduleContext = createModuleContext(tsContent);
     const mockRequire = createMockRequire();
     const moduleExports = moduleContext({}, mockRequire);
-
     const setLanguageInstance = extractLanguageObject(moduleExports);
 
     if (!setLanguageInstance) {
       return null;
     }
 
-    // Return a language object that matches the interface
     return {
-      setLanguage: (language: string, updateURL?: boolean) =>
+      setLanguage: (language: string, updateURL?: boolean): void =>
         setLanguageInstance.setLanguage(language, updateURL),
-      translate: (key: string) => setLanguageInstance.translate(key),
-      getCurrentLanguage: () => setLanguageInstance.getCurrentLanguage(),
-      getAvailableLanguages: () => setLanguageInstance.getAvailableLanguages(),
+      translate: (key: string): string => setLanguageInstance.translate(key),
+      getCurrentLanguage: (): string =>
+        setLanguageInstance.getCurrentLanguage(),
+      getAvailableLanguages: (): string[] =>
+        setLanguageInstance.getAvailableLanguages(),
       addTranslations: (
         language: string,
         translations: Record<string, string>
-      ) => setLanguageInstance.addTranslations(language, translations),
-      getLanguageData: () => setLanguageInstance.getLanguageData(),
+      ): void => setLanguageInstance.addTranslations(language, translations),
+      getLanguageData: (): Record<string, Record<string, string>> =>
+        setLanguageInstance.getLanguageData(),
+      getTranslations: (language: string): Record<string, string> => {
+        const data = setLanguageInstance.getLanguageData();
+        return data[language] || {};
+      },
+      addLanguage: (
+        language: string,
+        translations: Record<string, string>
+      ): void => setLanguageInstance.addTranslations(language, translations),
+      updateTranslations: (
+        language: string,
+        translations: Record<string, string>
+      ): void => setLanguageInstance.addTranslations(language, translations),
     };
   } catch (error) {
-    console.warn("Failed to compile language object:", {
-      error: error instanceof Error ? error.message : String(error),
-      contentPreview: tsContent.substring(0, 100) + "...",
-    });
+    console.error("Error compiling language object:", error);
     return null;
   }
-}
-
-export function getCompiledLanguage(
-  componentName: string,
-  languageContent?: string
-): LanguageObject | null {
-  if (!languageContent?.trim() || !componentName) {
-    return null;
-  }
-
-  const cached = languageCache.get(componentName, languageContent);
-  if (cached !== undefined) {
-    return cached;
-  }
-
-  const compiled = compileLanguageObject(languageContent);
-  languageCache.set(componentName, languageContent, compiled);
-
-  return compiled;
-}
-
-export function clearLanguageCache(): void {
-  languageCache.clear();
-}
-
-export function clearLanguageCacheForComponent(componentName: string): void {
-  languageCache.clearForComponent(componentName);
-}
-
-export function getLanguageCacheStats(): { size: number } {
-  return {
-    size: languageCache.size,
-  };
 }

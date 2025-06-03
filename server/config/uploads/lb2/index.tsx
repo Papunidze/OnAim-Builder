@@ -28,8 +28,9 @@ const Leaderboard: React.FC<LeaderboardProps> = (props) => {
         width: `${leaderboardSettings.width}px`,
       }}
     >
-      <Button />
+      <Button>{props.language.button}</Button>
       <h2 className="leaderboard-title">{props.language.title}</h2>
+
       <ul className="leaderboard-list">
         {leaders.map((leader, idx) => (
           <li key={leader.name} className="leaderboard-item">
