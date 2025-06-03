@@ -2,22 +2,24 @@ import React from "react";
 import "./leaderboard.css";
 import Button from "./button";
 import type { Settings } from "./settings";
-
+import { LngProps } from "./language";
 interface Leader {
   name: string;
   score: number;
 }
-
-const Leaderboard: React.FC<Settings> = (props) => {
+interface LeaderboardProps {
+  settings: Settings;
+  language: LngProps;
+}
+const Leaderboard: React.FC<LeaderboardProps> = (props) => {
   const leaders: Leader[] = [
     { name: "Giga", score: 1200 },
     { name: "Gela", score: 950 },
     { name: "Eve", score: 780 },
     { name: "Mallory", score: 630 },
   ];
-  const leaderboardSettings = props.leaderboard || {};
-  const title = leaderboardSettings.test || "Leaderboard";
-
+  const leaderboardSettings = props.settings.leaderboard || {};
+  // const title = leaderboardSettings.test || "Leaderboard";
   return (
     <div
       className="leaderboard"
@@ -27,7 +29,7 @@ const Leaderboard: React.FC<Settings> = (props) => {
       }}
     >
       <Button />
-      <h2 className="leaderboard-title">{title}</h2>
+      <h2 className="leaderboard-title">{props.language.title}</h2>
       <ul className="leaderboard-list">
         {leaders.map((leader, idx) => (
           <li key={leader.name} className="leaderboard-item">

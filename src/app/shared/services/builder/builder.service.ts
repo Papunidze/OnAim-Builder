@@ -116,7 +116,7 @@ export class BuilderService {
 
     this.state[viewMode].push(initialComponent);
     this.emit("componentAdded", initialComponent);
-    this.notifySubscribers();
+    // this.notifySubscribers();
     try {
       const cacheVersion = `${Date.now()}`;
       const fileData = await loadComponentData(name, componentId, cacheVersion);

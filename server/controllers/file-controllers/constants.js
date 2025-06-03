@@ -23,6 +23,7 @@ const COMPILATION_CONFIG = {
       "react-dom",
       "react/jsx-runtime",
       "builder-settings-types",
+      "language-management-lib",
       "*.css",
       "*.scss",
     ],

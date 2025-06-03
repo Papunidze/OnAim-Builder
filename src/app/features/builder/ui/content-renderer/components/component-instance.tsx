@@ -5,6 +5,7 @@ import styles from "./component-instance.module.css";
 import { ErrorBoundary } from "@app-shared/components";
 import { useBuilder } from "@app-shared/services/builder";
 import { getCompiledSettings } from "@app-features/builder/ui/property-adjustments/services";
+import { getCompiledLanguage } from "@app-features/builder/ui/language/language-compiler";
 
 export function ComponentInstance({
   instance,
@@ -24,11 +25,18 @@ export function ComponentInstance({
     const settingsFile = component.compiledData.files.find(
       (file: { file: string }) => file.file === "settings.ts"
     );
+    const languageFile = component.compiledData.files.find(
+      (file: { file: string }) => file.file === "language.ts"
+    );
 
     if (!settingsFile?.content) {
       console.error("No settings file found for", instance.name);
       return {};
     }
+    const languageObject = getCompiledLanguage(
+      component.name,
+      languageFile?.content
+    );
 
     const settingsObject = getCompiledSettings(
       component.name,
@@ -39,8 +47,10 @@ export function ComponentInstance({
       console.error("Invalid settings object for", instance.name);
       return {};
     }
-    const values = settingsObject.getValues() || {};
-    return values;
+    const settingsValue = settingsObject.getValues() || {};
+    const languageValue =
+      languageObject?.getLanguageData()[languageObject.getCurrentLanguage()];
+    return { settings: settingsValue, language: languageValue };
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [component, instance.name, component?.props, component?.timestamp]);
 
