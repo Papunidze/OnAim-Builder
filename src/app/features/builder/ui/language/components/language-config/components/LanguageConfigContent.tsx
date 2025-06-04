@@ -10,33 +10,38 @@ import { useLanguageActions } from "../hooks/useLanguageActions";
 import { useFormStates } from "../hooks/useFormStates";
 import styles from "../language-config.module.css";
 
-export function LanguageConfigContent(): JSX.Element {
+interface LanguageConfigContentProps {
+  onClose?: () => void;
+}
+
+export function LanguageConfigContent({
+  onClose,
+}: LanguageConfigContentProps): JSX.Element {
   const [activeTab, setActiveTab] = useState<"add" | "edit">("add");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Get selected component
   const { getSelectedComponent } = useBuilder();
   const selectedComponent = getSelectedComponent();
 
-  // Get compiled language data
-  const { languageObject, translationKeys } = useLanguageConfigData({ 
-    selectedComponent 
+  const { languageObject, translationKeys } = useLanguageConfigData({
+    selectedComponent,
   });
-  
-  // Manage language list
-  const { languages, refreshLanguages } = useLanguageManagement({ languageObject });
-  
-  // Handle language operations
-  const { handleAddLanguage: addLanguageAction, handleUpdateLanguage: updateLanguageAction } = useLanguageActions({ 
+
+  const { languages, refreshLanguages } = useLanguageManagement({
+    languageObject,
+  });
+
+  const {
+    handleAddLanguage: addLanguageAction,
+    handleUpdateLanguage: updateLanguageAction,
+  } = useLanguageActions({
     languageObject,
     selectedComponent,
-    refreshLanguages
+    refreshLanguages,
   });
-  
-  // Manage form states
+
   const {
-    // Add form
     newLanguageCode,
     newLanguageName,
     newTranslations,
@@ -45,8 +50,7 @@ export function LanguageConfigContent(): JSX.Element {
     updateNewTranslation,
     resetAddForm,
     canSubmitAdd,
-    
-    // Edit form
+
     editTranslations,
     updateEditTranslation,
     canSubmitEdit,
@@ -62,7 +66,7 @@ export function LanguageConfigContent(): JSX.Element {
   };
   const handleAddLanguage = async (): Promise<void> => {
     if (!canSubmitAdd) return;
-    
+
     setIsSubmitting(true);
     try {
       await addLanguageAction(newLanguageCode.toLowerCase(), newTranslations);
@@ -73,11 +77,12 @@ export function LanguageConfigContent(): JSX.Element {
     } finally {
       setIsSubmitting(false);
     }
+    onClose?.();
   };
 
   const handleUpdateLanguage = async (): Promise<void> => {
     if (!canSubmitEdit) return;
-    
+
     setIsSubmitting(true);
     try {
       await updateLanguageAction(selectedLanguage, editTranslations);
@@ -86,9 +91,9 @@ export function LanguageConfigContent(): JSX.Element {
     } finally {
       setIsSubmitting(false);
     }
+    onClose?.();
   };
 
-  // Show loading state if no language object
   if (!languageObject) {
     return (
       <div className={styles.content}>
@@ -101,10 +106,7 @@ export function LanguageConfigContent(): JSX.Element {
 
   return (
     <div className={styles.content}>
-      <LanguageConfigTabs
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
+      <LanguageConfigTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
       <div className={styles.tabContent}>
         {activeTab === "add" ? (

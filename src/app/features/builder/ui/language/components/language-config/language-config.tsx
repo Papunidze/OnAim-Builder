@@ -1,4 +1,3 @@
-// filepath: c:\Users\Papu\Desktop\OnAim-Builder\src\app\features\builder\ui\language\components\language-config\language-config.tsx
 import type { JSX } from "react";
 import { LanguageConfigHeader } from "./components/LanguageConfigHeader";
 import { LanguageConfigContent } from "./components/LanguageConfigContent";
@@ -15,7 +14,7 @@ export function LanguageConfig({
   return (
     <div className={styles.configPopover}>
       <LanguageConfigHeader onClose={handleClose} />
-      <LanguageConfigContent />
+      <LanguageConfigContent onClose={handleClose} />
     </div>
   );
 }

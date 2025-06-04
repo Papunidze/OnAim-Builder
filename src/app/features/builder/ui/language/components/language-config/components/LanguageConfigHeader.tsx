@@ -18,6 +18,7 @@ export function LanguageConfigHeader({
         type="button"
         aria-label="Close language configuration"
       >
+        X
         <Image imageKey="icon:close" />
       </button>
     </div>
