@@ -1,10 +1,8 @@
-/* Language Configuration Button Container */
 .languageConfigContainer {
   position: relative;
   display: inline-block;
 }
 
-/* Configuration Button */
 .configButton {
   display: flex;
   align-items: center;
@@ -46,13 +44,11 @@
   border-color: var(--primary-hover, #01b26f);
 }
 
-/* Button Label */
 .buttonLabel {
   font-weight: var(--font-weight-medium);
   letter-spacing: 0.3px;
 }
 
-/* Popover Container */
 .popoverContainer {
   position: absolute;
   top: 100%;
@@ -60,7 +56,6 @@
   z-index: 1001;
 }
 
-/* Overlay */
 .overlay {
   position: fixed;
   top: 0;
@@ -71,7 +66,6 @@
   background: transparent;
 }
 
-/* Icon styling */
 .configButton img {
   width: 16px;
   height: 16px;

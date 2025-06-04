@@ -26,7 +26,6 @@
   }
 }
 
-/* Header */
 .header {
   display: flex;
   justify-content: space-between;
@@ -64,7 +63,6 @@
   color: var(--text-color-primary);
 }
 
-/* Tabs */
 .tabs {
   display: flex;
   border-bottom: 1px solid var(--border-color-light);
@@ -95,7 +93,6 @@
   background: var(--background-primary);
 }
 
-/* Content */
 .content {
   padding: var(--spacing-xl);
   max-height: 450px;
@@ -108,7 +105,6 @@
   color: var(--text-color-secondary);
 }
 
-/* Form Elements */
 .formGroup {
   margin-bottom: var(--spacing-lg);
 }
@@ -145,7 +141,6 @@
   color: var(--text-color-secondary);
 }
 
-/* Translations Section */
 .translationsSection {
   margin-top: var(--spacing-lg);
 }
@@ -200,7 +195,6 @@
   box-shadow: 0 0 0 2px rgba(2, 204, 89, 0.1);
 }
 
-/* Actions */
 .actions {
   display: flex;
   justify-content: flex-end;
@@ -255,7 +249,6 @@
   border-color: var(--border-color-primary);
 }
 
-/* Custom Scrollbar */
 .content::-webkit-scrollbar,
 .translationsList::-webkit-scrollbar {
   width: 6px;
@@ -294,4 +287,30 @@
     flex: none;
     align-self: flex-start;
   }
+}
+
+.submitButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-family: var(--font-family-base);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--border-radius-md);
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  background-color: #02cc59;
+  color: var(--text-color-light);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: calc(var(--font-size-sm) - 1px);
+  min-height: 32px;
+  margin-top: 0.5rem;
 }
