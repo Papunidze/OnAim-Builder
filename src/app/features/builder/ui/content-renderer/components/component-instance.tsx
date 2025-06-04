@@ -68,8 +68,27 @@ export function ComponentInstance({
       return {};
     }
     const settingsValue = settingsObject.getValues() || {};
-    const languageValue =
-      languageObject?.getLanguageData()[languageObject.getCurrentLanguage()];
+
+    let languageValue = {};
+    if (languageObject) {
+      const currentLang = languageObject.getCurrentLanguage();
+      if (typeof languageObject.getTranslationsWithFallback === "function") {
+        languageValue = languageObject.getTranslationsWithFallback(
+          currentLang,
+          "en"
+        );
+      } else {
+        const allLanguageData = languageObject.getLanguageData();
+        const currentTranslations = allLanguageData[currentLang] || {};
+        const defaultTranslations = allLanguageData["en"] || {};
+
+        languageValue = {
+          ...defaultTranslations,
+          ...currentTranslations,
+        };
+      }
+    }
+
     return {
       settings: settingsValue,
       language: languageValue,

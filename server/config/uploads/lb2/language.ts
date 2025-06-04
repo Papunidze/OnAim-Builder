@@ -3,6 +3,7 @@ import SetLanguage, { Language } from "language-management-lib";
 const lngObject = {
   en: {
     title: "Leaderboards",
+    button: "button",
   },
   ka: {
     title: "ლიდერბორდი",
@@ -12,9 +13,9 @@ const lngObject = {
   },
 } as const;
 
-type LanguageKeys = keyof typeof lngObject;
+// type LanguageKeys = keyof typeof lngObject;
 
-export type LngProps = (typeof lngObject)[LanguageKeys];
+export type LngProps = typeof lngObject.en;
 
 export type LanguageToProps<T extends Language> = {
   [K in keyof T]: {

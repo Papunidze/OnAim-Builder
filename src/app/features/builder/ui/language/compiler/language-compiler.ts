@@ -127,11 +127,31 @@ export function compileLanguageObject(
     if (!setLanguageInstance) {
       return null;
     }
-
     return {
       setLanguage: (language: string, updateURL?: boolean): void =>
         setLanguageInstance.setLanguage(language, updateURL),
       translate: (key: string): string => setLanguageInstance.translate(key),
+      translateWithFallback: (
+        key: string,
+        fallbackLanguage?: string
+      ): string => {
+        const currentLang = setLanguageInstance.getCurrentLanguage();
+        const allData = setLanguageInstance.getLanguageData();
+        const currentTranslations = allData[currentLang] || {};
+
+        if (currentTranslations[key] !== undefined) {
+          return currentTranslations[key];
+        }
+
+        const fallback = fallbackLanguage || "en";
+        const fallbackTranslations = allData[fallback] || {};
+
+        if (fallbackTranslations[key] !== undefined) {
+          return fallbackTranslations[key];
+        }
+
+        return key;
+      },
       getCurrentLanguage: (): string =>
         setLanguageInstance.getCurrentLanguage(),
       getAvailableLanguages: (): string[] =>
@@ -145,6 +165,20 @@ export function compileLanguageObject(
       getTranslations: (language: string): Record<string, string> => {
         const data = setLanguageInstance.getLanguageData();
         return data[language] || {};
+      },
+      getTranslationsWithFallback: (
+        language: string,
+        fallbackLanguage?: string
+      ): Record<string, string> => {
+        const data = setLanguageInstance.getLanguageData();
+        const fallback = fallbackLanguage || "en";
+        const currentTranslations = data[language] || {};
+        const fallbackTranslations = data[fallback] || {};
+
+        return {
+          ...fallbackTranslations,
+          ...currentTranslations,
+        };
       },
       addLanguage: (
         language: string,

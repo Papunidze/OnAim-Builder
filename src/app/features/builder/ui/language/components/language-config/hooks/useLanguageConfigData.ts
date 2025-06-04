@@ -49,14 +49,20 @@ export function useLanguageConfigData({
     }
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [selectedComponent, selectedComponent?.timestamp]);
-
   const translationKeys = useMemo<string[]>(() => {
     if (!languageObject) return [];
 
     try {
-      const currentLang = languageObject.getCurrentLanguage();
-      const translations = languageObject.getTranslations(currentLang);
-      return Object.keys(translations);
+      const languageData = languageObject.getLanguageData();
+      const allKeys = new Set<string>();
+
+      Object.values(languageData).forEach((translations) => {
+        Object.keys(translations).forEach((key) => allKeys.add(key));
+      });
+
+      const keysArray = Array.from(allKeys).sort();
+
+      return keysArray;
     } catch (error) {
       console.error("Error getting translation keys:", error);
       return [];
