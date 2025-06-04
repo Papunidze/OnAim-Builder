@@ -1,24 +1,16 @@
 import { useCallback } from "react";
 import { useBuilder } from "@app-shared/services/builder/useBuilder.service";
 import type { LanguageObject } from "../../../types/language.types";
+import type { ComponentState } from "@app-shared/services/builder";
 
 interface ComponentFile {
   file: string;
   content: string;
 }
 
-interface SelectedComponent {
-  id: string;
-  name: string;
-  compiledData: {
-    files: ComponentFile[];
-    [key: string]: unknown;
-  };
-}
-
 interface UseLanguageActionsProps {
   languageObject: LanguageObject | null;
-  selectedComponent: SelectedComponent | null;
+  selectedComponent: ComponentState | null;
   onLanguageChange?: (language: string) => void;
   setCurrentLanguage: (language: string) => void;
   setIsOpen: (isOpen: boolean) => void;
@@ -47,19 +39,15 @@ export function useLanguageActions({
       }
 
       try {
-        // Update the language in the language object
         languageObject.setLanguage(language, false);
 
-        // Update local state
         setCurrentLanguage(language);
         setIsOpen(false);
 
-        // Notify parent component
         onLanguageChange?.(language);
 
-        // Get updated content and update component files
         const updatedContent = languageObject.getUpdatedContent();
-        const updatedFiles = selectedComponent.compiledData.files.map(
+        const updatedFiles = selectedComponent.compiledData?.files?.map(
           (file: ComponentFile) => {
             if (file.file === "language.ts") {
               return { ...file, content: updatedContent };
@@ -68,14 +56,15 @@ export function useLanguageActions({
           }
         );
 
-        // Update the component with new files
-        updateComponent(selectedComponent.id, {
-          compiledData: {
-            ...selectedComponent.compiledData,
-            files: updatedFiles,
-          },
-          timestamp: Date.now(),
-        });
+        if (updatedFiles && selectedComponent.compiledData) {
+          updateComponent(selectedComponent.id, {
+            compiledData: {
+              ...selectedComponent.compiledData,
+              files: updatedFiles,
+            },
+            timestamp: Date.now(),
+          });
+        }
       } catch (error) {
         console.error("Error changing language:", error);
       }

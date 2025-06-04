@@ -17,7 +17,6 @@ export function LanguageEditor({
 
   const selectedComponent = getSelectedComponent();
 
-  // Custom hooks for cleaner code organization
   const { languageObject, availableLanguages, error } = useLanguageData({
     selectedComponent,
   });
@@ -34,7 +33,6 @@ export function LanguageEditor({
     setIsOpen,
   });
 
-  // Event handlers
   const handleToggleDropdown = (): void => {
     setIsOpen(!isOpen);
   };
@@ -43,7 +41,6 @@ export function LanguageEditor({
     setIsOpen(false);
   };
 
-  // Early returns for better readability
   if (!selectedComponent) {
     return null;
   }

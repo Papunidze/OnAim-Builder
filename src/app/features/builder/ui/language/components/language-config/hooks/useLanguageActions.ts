@@ -1,24 +1,16 @@
 import { useCallback } from "react";
 import { useBuilder } from "@app-shared/services/builder/useBuilder.service";
 import type { LanguageObject } from "../../../types/language.types";
+import type { ComponentState } from "@app-shared/services/builder";
 
 interface ComponentFile {
   file: string;
   content: string;
 }
 
-interface SelectedComponent {
-  id: string;
-  name: string;
-  compiledData: {
-    files: ComponentFile[];
-    [key: string]: unknown;
-  };
-}
-
 interface UseLanguageActionsProps {
   languageObject: LanguageObject | null;
-  selectedComponent: SelectedComponent | null;
+  selectedComponent: ComponentState | null;
   refreshLanguages: () => void;
   onClose?: () => void;
 }
@@ -41,10 +33,9 @@ export function useLanguageActions({
   onClose,
 }: UseLanguageActionsProps): UseLanguageActionsReturn {
   const { updateComponent } = useBuilder();
-
   const updateComponentFiles = useCallback(
     async (updatedContent: string): Promise<void> => {
-      if (!selectedComponent) return;
+      if (!selectedComponent?.compiledData?.files) return;
 
       const updatedFiles = selectedComponent.compiledData.files.map(
         (file: ComponentFile) => {
@@ -77,7 +68,9 @@ export function useLanguageActions({
       translations: Record<string, string>
     ): Promise<void> => {
       if (!languageObject || !selectedComponent) {
-        console.warn("Cannot add language: missing language object or component");
+        console.warn(
+          "Cannot add language: missing language object or component"
+        );
         return;
       }
 
@@ -99,7 +92,9 @@ export function useLanguageActions({
       translations: Record<string, string>
     ): Promise<void> => {
       if (!languageObject || !selectedComponent) {
-        console.warn("Cannot update language: missing language object or component");
+        console.warn(
+          "Cannot update language: missing language object or component"
+        );
         return;
       }
 

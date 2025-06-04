@@ -1,21 +1,15 @@
 import { useMemo } from "react";
 import { compileLanguageObject } from "../../../compiler/language-compiler";
 import type { LanguageObject } from "../../../types/language.types";
+import type { ComponentState } from "@app-shared/services/builder";
 
 interface ComponentFile {
   file: string;
   content: string;
 }
 
-interface SelectedComponent {
-  compiledData?: {
-    files?: ComponentFile[];
-  };
-  name: string;
-}
-
 interface UseLanguageDataProps {
-  selectedComponent: SelectedComponent | null;
+  selectedComponent: ComponentState | null;
 }
 
 interface UseLanguageDataReturn {
@@ -53,7 +47,7 @@ export function useLanguageData({
       console.error("Error compiling language object:", err);
       return { languageObject: null, error: "Failed to compile language data" };
     }
-  }, [selectedComponent]);
+  }, [selectedComponent, selectedComponent?.timestamp]);
 
   const availableLanguages = useMemo<string[]>(() => {
     if (!languageObject) {
