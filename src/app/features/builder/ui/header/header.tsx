@@ -7,6 +7,7 @@ import { Save } from "../save";
 import { LanguageEditor, LanguageConfigButton } from "../language";
 import { HistoryControl } from "../history-control";
 import { Preview } from "../preview";
+import { CopyComponents } from "../copy-components";
 
 interface HeaderProps {
   viewMode: "desktop" | "mobile";
@@ -66,6 +67,8 @@ const Header = ({ viewMode, onViewChange }: HeaderProps): JSX.Element => {
             <Image imageKey="icon:reset" />
             <label className={styles.builderHeaderIconButtonLabel}>Reset</label>
           </button>
+          <div className={styles.builderHeaderDivider} />
+          <CopyComponents currentViewMode={viewMode} />
           <div className={styles.builderHeaderDivider} />
           <Preview viewMode={viewMode} />
           <Save viewMode={viewMode} />
