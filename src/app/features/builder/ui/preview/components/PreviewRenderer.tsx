@@ -15,7 +15,6 @@ export function PreviewRenderer(): JSX.Element {
     return (
       <div className={styles.previewRenderer}>
         <div className={styles.emptyState}>
-          <div className={styles.emptyStateIcon}>📱</div>
           <h3 className={styles.emptyStateTitle}>No Components</h3>
           <p className={styles.emptyStateMessage}>
             Add components to see the preview
