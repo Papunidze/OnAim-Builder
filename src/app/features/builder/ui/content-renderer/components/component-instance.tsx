@@ -38,7 +38,6 @@ export function ComponentInstance({
   const isSelected = selectedComponentId === instance.id;
   const getComponentProps = useMemo((): Record<string, unknown> => {
     if (!component?.compiledData?.files) {
-      console.error("No component or compiled data for", instance.name);
       return {};
     }
 
@@ -67,7 +66,10 @@ export function ComponentInstance({
       console.error("Invalid settings object for", instance.name);
       return {};
     }
-    const settingsValue = settingsObject.getValues() || {};
+    
+    const defaultValues = settingsObject.getValues() || {};
+    
+    const settingsValue = { ...defaultValues, ...component.props };
 
     let languageValue = {};
     if (languageObject) {

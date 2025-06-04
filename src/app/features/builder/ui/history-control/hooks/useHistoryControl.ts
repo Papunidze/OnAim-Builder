@@ -47,7 +47,7 @@ export const useHistoryControl = (
   useEffect(() => {
     if (!enableKeyboardShortcuts) return;
 
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
       if (event.ctrlKey || event.metaKey) {
         switch (event.key.toLowerCase()) {
           case "z":
@@ -74,7 +74,7 @@ export const useHistoryControl = (
     };
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => {
+    return (): void => {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [enableKeyboardShortcuts, canUndo, canRedo, undo, redo]);
