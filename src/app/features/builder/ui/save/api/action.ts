@@ -37,7 +37,8 @@ export const checkComponentExists = async (
       throw new Error(`API error: ${response.status}`);
     }
 
-    return response.data;  } catch {
+    return response.data;
+  } catch {
     return {
       exists: false,
       componentName,
@@ -48,6 +49,7 @@ export const checkComponentExists = async (
 export const downloadMultipleComponentsSources = async (
   componentNames: string[],
   componentPropsMap?: Record<string, Record<string, unknown>>,
+  componentLanguageMap?: Record<string, Record<string, Record<string, string>>>,
   viewMode?: "desktop" | "mobile"
 ): Promise<void> => {
   try {
@@ -65,9 +67,11 @@ export const downloadMultipleComponentsSources = async (
       body: {
         componentNames,
         componentPropsMap: componentPropsMap || {},
+        componentLanguageMap: componentLanguageMap || {},
         viewMode: viewMode || "desktop",
       },
-    });  } catch (error) {
+    });
+  } catch (error) {
     throw new Error(
       error instanceof Error
         ? error.message

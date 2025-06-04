@@ -62,7 +62,7 @@ const generateViteMainTsx = (componentData, viewMode = "desktop") => {
 
   const imports = [];
   const componentElements = [];
-
+  const languageDataImports = [];
   Object.entries(componentGroups).forEach(([baseComponentName, instances]) => {
     const componentClassName = `${baseComponentName.charAt(0).toUpperCase() + baseComponentName.slice(1)}Component`;
 
@@ -70,36 +70,79 @@ const generateViteMainTsx = (componentData, viewMode = "desktop") => {
       `import ${componentClassName} from './components/${baseComponentName}';`
     );
 
+    // Add language imports - use shared language file for components
+    languageDataImports.push(
+      `import ${baseComponentName}LanguageData from './components/${baseComponentName}/language.json';`
+    );
+
     instances.forEach((comp) => {
       const settingsVarName = `${baseComponentName}_${comp.instanceNumber}settings`;
       imports.push(
         `import ${settingsVarName} from './components/${baseComponentName}/settings/${baseComponentName}_${comp.instanceNumber}settings.json';`
       );
+
+      // Add instance-specific language imports if component has language data
+      if (comp.hasLanguageData) {
+        const languageVarName = `${baseComponentName}_${comp.instanceNumber}language`;
+        imports.push(
+          `import ${languageVarName} from './components/${baseComponentName}/languages/${baseComponentName}_${comp.instanceNumber}language.json';`
+        );
+      }
     });
 
     instances.forEach((comp) => {
       const settingsVarName = `${baseComponentName}_${comp.instanceNumber}settings`;
+      const languageVarName = comp.hasLanguageData
+        ? `${baseComponentName}_${comp.instanceNumber}language`
+        : `${baseComponentName}LanguageData`;
+
       const displayName =
         comp.instanceNumber === 1
           ? baseComponentName.charAt(0).toUpperCase() +
             baseComponentName.slice(1)
           : `${baseComponentName.charAt(0).toUpperCase() + baseComponentName.slice(1)} ${comp.instanceNumber}`;
 
+      const languageProps = comp.hasLanguageData
+        ? `language={(${languageVarName}[currentLanguage] || ${languageVarName}['en'] || {})}`
+        : `language={(${baseComponentName}LanguageData[currentLanguage] || ${baseComponentName}LanguageData['en'] || {})}`;
+
       componentElements.push(`        <div className="component-wrapper">
           <div className="component-title">${displayName}</div>
-          <${componentClassName} {...${settingsVarName}} />
+          <${componentClassName} 
+            settings={${settingsVarName}}
+            ${languageProps}
+          />
         </div>`);
     });
   });
-
-  return `import React from 'react'
+  return `import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
 ${imports.join("\n")}
+${languageDataImports.join("\n")}
 
 function App() {
+  const [currentLanguage, setCurrentLanguage] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('lng') || 'en';
+  });
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('lng', currentLanguage);
+    window.history.replaceState({}, '', url.toString());
+  }, [currentLanguage]);
+
   return (
     <div className="app">
+      <div className="app-header">
+        <h1>OnAim Builder Components</h1>
+        <select value={currentLanguage} onChange={(e) => setCurrentLanguage(e.target.value)}>
+          <option value="en">EN</option>
+          <option value="ka">KA</option>
+          <option value="ru">RU</option>
+        </select>
+      </div>
       <div className="${viewMode}-frame">
         <div className="${viewMode}-content">
           <div className="components-container">
@@ -134,6 +177,7 @@ const generateVitePackageJson = () => {
       dependencies: {
         react: "^18.3.1",
         "react-dom": "^18.3.1",
+        "language-management-lib": "^1.0.1",
       },
       devDependencies: {
         "@eslint/js": "^9.13.0",
@@ -221,18 +265,72 @@ const generateIndexCss = () => {
   --spacing-5xl: 40px;
   --background-primary: #ffffff;
   --border-radius-md: 8px;
+  --primary-color: #02cc59;
+  --text-color: #333;
+  --border-color: #ddd;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   line-height: 1.6;
-  color: #333;
+  color: var(--text-color);
   background-color: #f5f5f5;
 }
 
 .app {
   min-height: 100vh;
   padding: 20px;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 20px;
+  background: var(--background-primary);
+  border-radius: var(--border-radius-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.app-header h1 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.language-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.language-selector label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.language-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: white;
+  font-size: 14px;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.language-select:hover {
+  border-color: var(--primary-color);
+}
+
+.language-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(2, 204, 89, 0.1);
 }
 
 /* Desktop Frame Styles */
@@ -286,7 +384,7 @@ body {
 }
 
 .component-wrapper {
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 20px;
   background: white;
@@ -297,7 +395,7 @@ body {
   margin-bottom: 15px;
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-color);
 }
 
 @media (max-width: 768px) {
@@ -312,6 +410,16 @@ body {
   
   .app {
     padding: 10px;
+  }
+
+  .app-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .app-header h1 {
+    font-size: 20px;
   }
 }`;
 };

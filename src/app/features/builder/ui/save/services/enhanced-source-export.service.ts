@@ -4,6 +4,7 @@ import {
   downloadMultipleComponentsSources,
   checkComponentExists,
 } from "../api/action";
+import { compileLanguageObject } from "../../language/compiler/language-compiler";
 
 export class EnhancedSourceExportService {
   static async downloadServerSources(
@@ -21,14 +22,13 @@ export class EnhancedSourceExportService {
       if (potentialNames.length === 0) {
         alert("No potential server components found.");
         return;
-      } // Create a mapping to track which components we've processed
+      }
       const componentInstanceMap = new Map<string, number>();
       const validComponents: {
         name: string;
         originalComponent: ComponentState;
       }[] = [];
 
-      // Process each component individually to maintain proper mapping
       const usedComponentIndices = new Set<number>();
 
       for (let i = 0; i < potentialNames.length; i++) {
@@ -36,7 +36,6 @@ export class EnhancedSourceExportService {
         const checkResult = await checkComponentExists(name);
 
         if (checkResult.exists && checkResult.hasSettings) {
-          // Find the specific component for this instance (not just the first match)
           const originalComponentIndex = components.findIndex(
             (comp, index) =>
               this.extractBaseComponentName(comp) === name &&
@@ -50,7 +49,6 @@ export class EnhancedSourceExportService {
             const currentCount = componentInstanceMap.get(name) || 0;
             componentInstanceMap.set(name, currentCount + 1);
 
-            // Create unique identifier for this instance
             const instanceId =
               currentCount === 0 ? name : `${name}_${currentCount + 1}`;
             validComponents.push({
@@ -67,19 +65,31 @@ export class EnhancedSourceExportService {
         );
         return;
       }
-
       const existingComponents = validComponents.map((comp) => comp.name);
       const componentPropsMap: Record<string, Record<string, unknown>> = {};
+      const componentLanguageMap: Record<
+        string,
+        Record<string, Record<string, string>>
+      > = {};
 
       validComponents.forEach(({ name, originalComponent }) => {
         const componentProps = originalComponent.props || {};
         if (componentProps && Object.keys(componentProps).length > 0) {
           componentPropsMap[name] = componentProps as Record<string, unknown>;
         }
+
+        // Extract current language data from the component
+        const languageData =
+          this.extractComponentLanguageData(originalComponent);
+        if (languageData) {
+          componentLanguageMap[name] = languageData;
+        }
       });
+
       await downloadMultipleComponentsSources(
         existingComponents,
         componentPropsMap,
+        componentLanguageMap,
         viewMode
       );
     } catch (error) {
@@ -130,6 +140,40 @@ export class EnhancedSourceExportService {
       (component.styles && Object.keys(component.styles).length > 0) ||
       component.compiledData?.files
     );
+  }
+
+  private static extractComponentLanguageData(
+    component: ComponentState
+  ): Record<string, Record<string, string>> | null {
+    try {
+      // Find the language.ts file in the component's compiled data
+      const languageFile = component.compiledData?.files?.find(
+        (file) => file.file === "language.ts"
+      );
+
+      if (!languageFile?.content) {
+        return null;
+      }
+
+      // Compile the language object to get the current state
+      const languageObject = compileLanguageObject(
+        languageFile.content,
+        component.name
+      );
+
+      if (!languageObject) {
+        return null;
+      }
+
+      // Extract the current language data (includes any user modifications)
+      return languageObject.getLanguageData();
+    } catch (error) {
+      console.error(
+        `Error extracting language data for component ${component.name}:`,
+        error
+      );
+      return null;
+    }
   }
 
   static getComponentInfo(viewMode: "desktop" | "mobile"): {
