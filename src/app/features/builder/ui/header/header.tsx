@@ -6,71 +6,73 @@ import { builderService } from "@app-shared/services/builder";
 import { Save } from "../save";
 import { LanguageEditor, LanguageConfigButton } from "../language";
 import { HistoryControl } from "../history-control";
+import { Preview } from "../preview";
 
 interface HeaderProps {
   viewMode: "desktop" | "mobile";
   onViewChange: (mode: "desktop" | "mobile") => void;
 }
 
-const Header = ({ viewMode, onViewChange }: HeaderProps): JSX.Element => (
-  <header className={styles.builderHeader}>
-    <div className={styles.builderHeaderContent}>
-      <div className={styles.builderHeaderLeft}>
-        <div className={styles.builderHeaderLogo}>
-          <Image imageKey="logo:primary" alt="Logo" />
+const Header = ({ viewMode, onViewChange }: HeaderProps): JSX.Element => {
+  const handleViewModeChange = (mode: "desktop" | "mobile"): void => {
+    builderService.selectComponent(null);
+    onViewChange(mode);
+  };
+
+  return (
+    <header className={styles.builderHeader}>
+      <div className={styles.builderHeaderContent}>
+        <div className={styles.builderHeaderLeft}>
+          <div className={styles.builderHeaderLogo}>
+            <Image imageKey="logo:primary" alt="Logo" />
+          </div>
+          <div className={styles.builderHeaderDivider} />
+          <div className={styles.builderHeaderViewSwitch}>
+            <button
+              type="button"
+              className={
+                styles.builderHeaderViewButton +
+                (viewMode === "desktop" ? ` ${styles.isActive}` : "")
+              }
+              aria-label="Desktop view"
+              onClick={() => handleViewModeChange("desktop")}
+            >
+              <Image imageKey="icon:desktop" />
+            </button>
+            <button
+              type="button"
+              className={
+                styles.builderHeaderViewButton +
+                (viewMode === "mobile" ? ` ${styles.isActive}` : "")
+              }
+              aria-label="Mobile view"
+              onClick={() => handleViewModeChange("mobile")}
+            >
+              <Image imageKey="icon:mobile" />
+            </button>
+          </div>
         </div>
-        <div className={styles.builderHeaderDivider} />
-        <div className={styles.builderHeaderViewSwitch}>
+        <div className={styles.builderHeaderActions}>
+          <HistoryControl className={styles.builderHeaderHistory} />
+          <div className={styles.builderHeaderDivider} />
+          <LanguageEditor />
+          <LanguageConfigButton />
+          <div className={styles.builderHeaderDivider} />
           <button
-            type="button"
-            className={
-              styles.builderHeaderViewButton +
-              (viewMode === "desktop" ? ` ${styles.isActive}` : "")
-            }
-            aria-label="Desktop view"
-            onClick={() => onViewChange("desktop")}
+            className={styles.builderHeaderIconButton}
+            aria-label="Custom"
+            onClick={() => builderService.clear()}
           >
-            <Image imageKey="icon:desktop" />
+            <Image imageKey="icon:reset" />
+            <label className={styles.builderHeaderIconButtonLabel}>Reset</label>
           </button>
-          <button
-            type="button"
-            className={
-              styles.builderHeaderViewButton +
-              (viewMode === "mobile" ? ` ${styles.isActive}` : "")
-            }
-            aria-label="Mobile view"
-            onClick={() => onViewChange("mobile")}
-          >
-            {" "}
-            <Image imageKey="icon:mobile" />
-          </button>
+          <div className={styles.builderHeaderDivider} />
+          <Preview viewMode={viewMode} />
+          <Save viewMode={viewMode} />
         </div>
       </div>
-      <div className={styles.builderHeaderActions}>
-        <HistoryControl className={styles.builderHeaderHistory} />
-        <div className={styles.builderHeaderDivider} />
-        <LanguageEditor />
-        <LanguageConfigButton />
-        <div className={styles.builderHeaderDivider} />
-        <button
-          className={styles.builderHeaderIconButton}
-          aria-label="Custom"
-          onClick={() => builderService.clear()}
-        >
-          <Image imageKey="icon:reset" />
-          <label className={styles.builderHeaderIconButtonLabel}>Reset</label>
-        </button>
-        <div className={styles.builderHeaderDivider} />
-        <button
-          className={styles.builderHeaderPreviewLabel}
-          aria-label="Preview"
-        >
-          Preview
-        </button>
-        <Save viewMode={viewMode} />
-      </div>
-    </div>
-  </header>
-);
+    </header>
+  );
+};
 
 export default Header;

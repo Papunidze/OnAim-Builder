@@ -1,0 +1,79 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(2px);
+}
+
+.modalContainer {
+  background: white;
+  border-radius: 12px;
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 1200px;
+  height: 800px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.modalCloseButton {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.modalCloseButton:hover {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.modalContent {
+  flex: 1;
+  overflow: auto;
+  background: #f5f5f5;
+}
+
+/* Global CSS for preview mode */
+:global(body.preview-mode) [data-component-id] {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+:global(body.preview-mode) [data-component-id]:hover {
+  cursor: default !important;
+  border-color: transparent !important;
+}
+
+:global(body.preview-mode) .componentWrapper {
+  pointer-events: none !important;
+} 
