@@ -28,7 +28,6 @@ export function useLanguageActions({
   setIsOpen,
 }: UseLanguageActionsProps): UseLanguageActionsReturn {
   const { updateComponent } = useBuilder();
-
   const handleLanguageChange = useCallback(
     (language: string): void => {
       if (!languageObject || !selectedComponent) {

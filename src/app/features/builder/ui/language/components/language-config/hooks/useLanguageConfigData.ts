@@ -47,6 +47,7 @@ export function useLanguageConfigData({
       console.error("Error compiling language object:", err);
       return { languageObject: null, error: "Failed to compile language data" };
     }
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [selectedComponent, selectedComponent?.timestamp]);
 
   const translationKeys = useMemo<string[]>(() => {
