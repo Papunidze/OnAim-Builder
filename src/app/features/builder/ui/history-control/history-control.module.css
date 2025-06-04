@@ -1,0 +1,48 @@
+.historyControl {
+  display: flex;
+  gap: 0;
+}
+
+.historyButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  color: var(--text-color-primary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.historyButton:hover:not(.disabled) {
+  background-color: var(--background-secondary);
+}
+
+.historyButton:active:not(.disabled) {
+  background-color: #e6e6e6;
+}
+
+.historyButton.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.historyButton.disabled:hover {
+  background: transparent;
+}
+
+.historyButtonLabel {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+  color: var(--text-color-secondary);
+}
+
+.historyButton img {
+  width: 16px;
+  height: 16px;
+}

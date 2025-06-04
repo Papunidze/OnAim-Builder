@@ -5,6 +5,7 @@ import styles from "./header.module.css";
 import { builderService } from "@app-shared/services/builder";
 import { Save } from "../save";
 import { LanguageEditor, LanguageConfigButton } from "../language";
+import { HistoryControl } from "../history-control";
 
 interface HeaderProps {
   viewMode: "desktop" | "mobile";
@@ -40,34 +41,13 @@ const Header = ({ viewMode, onViewChange }: HeaderProps): JSX.Element => (
             aria-label="Mobile view"
             onClick={() => onViewChange("mobile")}
           >
+            {" "}
             <Image imageKey="icon:mobile" />
           </button>
         </div>
       </div>
       <div className={styles.builderHeaderActions}>
-        <div className={styles.builderHeaderHistory}>
-          <button
-            className={styles.builderHeaderIconButton}
-            aria-label="Undo"
-            onClick={() => builderService.undo()}
-          >
-            <Image imageKey="icon:undo" />
-            <label className={styles.builderHeaderIconButtonLabel}>Undo</label>
-          </button>
-          <button
-            className={
-              styles.builderHeaderIconButton +
-              " " +
-              styles.builderHeaderIconButtonDisabled
-            }
-            disabled
-            aria-label="Redo"
-            onClick={() => builderService.redo()}
-          >
-            <Image imageKey="icon:redo" />
-            <span className={styles.builderHeaderIconButtonLabel}>Redo</span>
-          </button>{" "}
-        </div>{" "}
+        <HistoryControl className={styles.builderHeaderHistory} />
         <div className={styles.builderHeaderDivider} />
         <LanguageEditor />
         <LanguageConfigButton />
