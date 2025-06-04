@@ -59,20 +59,15 @@ const generateViteMainTsx = (componentData, viewMode = "desktop") => {
     }
     componentGroups[comp.componentName].push(comp);
   });
-
   const imports = [];
   const componentElements = [];
-  const languageDataImports = [];
+  // Note: Removed shared language data imports - only using instance-specific language files
+
   Object.entries(componentGroups).forEach(([baseComponentName, instances]) => {
     const componentClassName = `${baseComponentName.charAt(0).toUpperCase() + baseComponentName.slice(1)}Component`;
 
     imports.push(
       `import ${componentClassName} from './components/${baseComponentName}';`
-    );
-
-    // Add language imports - use shared language file for components
-    languageDataImports.push(
-      `import ${baseComponentName}LanguageData from './components/${baseComponentName}/language.json';`
     );
 
     instances.forEach((comp) => {
@@ -94,7 +89,7 @@ const generateViteMainTsx = (componentData, viewMode = "desktop") => {
       const settingsVarName = `${baseComponentName}_${comp.instanceNumber}settings`;
       const languageVarName = comp.hasLanguageData
         ? `${baseComponentName}_${comp.instanceNumber}language`
-        : `${baseComponentName}LanguageData`;
+        : null;
 
       const displayName =
         comp.instanceNumber === 1
@@ -102,24 +97,33 @@ const generateViteMainTsx = (componentData, viewMode = "desktop") => {
             baseComponentName.slice(1)
           : `${baseComponentName.charAt(0).toUpperCase() + baseComponentName.slice(1)} ${comp.instanceNumber}`;
 
-      const languageProps = comp.hasLanguageData
-        ? `language={(${languageVarName}[currentLanguage] || ${languageVarName}['en'] || {})}`
-        : `language={(${baseComponentName}LanguageData[currentLanguage] || ${baseComponentName}LanguageData['en'] || {})}`;
+      // Only render components that have language data (since we removed shared language files)
+      if (comp.hasLanguageData) {
+        const languageProps = `language={(${languageVarName}[currentLanguage] || ${languageVarName}['en'] || {})}`;
 
-      componentElements.push(`        <div className="component-wrapper">
+        componentElements.push(`        <div className="component-wrapper">
           <div className="component-title">${displayName}</div>
           <${componentClassName} 
             settings={${settingsVarName}}
             ${languageProps}
           />
         </div>`);
+      } else {
+        // For components without language data, use empty language object
+        componentElements.push(`        <div className="component-wrapper">
+          <div className="component-title">${displayName}</div>
+          <${componentClassName} 
+            settings={${settingsVarName}}
+            language={{}}
+          />
+        </div>`);
+      }
     });
   });
   return `import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
 ${imports.join("\n")}
-${languageDataImports.join("\n")}
 
 function App() {
   const [currentLanguage, setCurrentLanguage] = useState(() => {

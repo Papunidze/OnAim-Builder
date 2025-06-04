@@ -106,83 +106,43 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
             name: `src/components/${folder}/${file}`,
           });
         }
-      }
-
-      // Add language.json file with current language data from client
-      // Check all component instances for this base component
-      let hasLanguageData = false;
-      for (const [compName, languageData] of Object.entries(
-        componentLanguageMap
-      )) {
-        const baseCompName = compName.includes("_")
-          ? compName.split("_")[0]
-          : compName;
-        if (
-          baseCompName === folder &&
-          languageData &&
-          Object.keys(languageData).length > 0
-        ) {
-          archive.append(JSON.stringify(languageData, null, 2), {
-            name: `src/components/${folder}/language.json`,
-          });
-          hasLanguageData = true;
-          break; // Use the first available language data for this base component
-        }
-      }
-
-      // Fallback: If no language data from client, try to extract from static file
-      if (!hasLanguageData) {
-        const languageFile = files.find(
-          (f) => f.toLowerCase() === "language.ts"
-        );
-        if (languageFile) {
-          const filePath = path.join(dir, languageFile);
-          try {
-            const fileContent = await fs.readFile(filePath, "utf-8");
-            const languageMatch = fileContent.match(
-              /const lngObject = ({[\s\S]*?}) as const;/
-            );
-            if (languageMatch) {
-              const languageDataStr = languageMatch[1];
-              const cleanedData = languageDataStr
-                .replace(/(\w+):/g, '"$1":')
-                .replace(/'/g, '"');
-
-              try {
-                const languageData = JSON.parse(cleanedData);
-                archive.append(JSON.stringify(languageData, null, 2), {
-                  name: `src/components/${folder}/language.json`,
-                });
-              } catch (parseError) {
-                console.warn(
-                  `Failed to parse static language data for ${folder}:`,
-                  parseError
-                );
-              }
-            }
-          } catch (error) {
-            console.warn(
-              `Error processing static language file for ${folder}:`,
-              error
-            );
-          }
-        }
-      }
+      } // Note: Removed main language.json generation - only using instance-specific language files
     } // Add settings file for this instance in settings subfolder
     if (settingsConfig) {
       const settingsFileName = `${folder}_${instanceCount}settings.json`;
       archive.append(JSON.stringify(settingsConfig, null, 2), {
         name: `src/components/${folder}/settings/${settingsFileName}`,
       });
-    }
-
+    } // Add instance-specific language file with fallback logic
     const componentLanguageData = componentLanguageMap[componentName];
     if (
       componentLanguageData &&
       Object.keys(componentLanguageData).length > 0
     ) {
+      // Add fallback logic: ensure all languages have all keys from English
+      const processedLanguageData = {};
+      const englishKeys = componentLanguageData.en || {};
+
+      for (const [langCode, langData] of Object.entries(
+        componentLanguageData
+      )) {
+        processedLanguageData[langCode] = {};
+
+        // For each English key, use the language-specific value or fallback to English
+        for (const [key, englishValue] of Object.entries(englishKeys)) {
+          processedLanguageData[langCode][key] = langData[key] || englishValue;
+        }
+
+        // Also include any additional keys that might exist in this language
+        for (const [key, value] of Object.entries(langData)) {
+          if (!(key in englishKeys)) {
+            processedLanguageData[langCode][key] = value;
+          }
+        }
+      }
+
       const languageFileName = `${folder}_${instanceCount}language.json`;
-      archive.append(JSON.stringify(componentLanguageData, null, 2), {
+      archive.append(JSON.stringify(processedLanguageData, null, 2), {
         name: `src/components/${folder}/languages/${languageFileName}`,
       });
     }
@@ -259,8 +219,8 @@ You can set the initial language by adding \`?lng=<language_code>\` to the URL:
 ### Adding New Languages
 To add support for additional languages:
 
-1. Edit the \`language.json\` file in each component folder
-2. Add your language code and translations:
+1. Edit the instance-specific language files in \`src/components/[component]/languages/\` folder
+2. Add your language code and translations to each \`[component]_[instance]language.json\` file:
 \`\`\`json
 {
   "en": {
@@ -273,6 +233,8 @@ To add support for additional languages:
   }
 }
 \`\`\`
+
+Note: Missing keys automatically fall back to English values.
 
 ### Component Props Structure
 Each component receives props in the following structure:
@@ -338,8 +300,10 @@ dist-ssr
       enabled: true,
       urlParameter: "lng",
       fallbackLanguage: "en",
-      languageFiles: "language.json in each component folder",
+      languageFiles: "Instance-specific language files in languages subfolder",
       propsStructure: "{ settings: {}, language: {} }",
+      fallbackBehavior:
+        "Missing keys automatically fall back to English values",
     },
     instructions:
       "Run 'npm install' then 'npm run dev' to start the development server. Use ?lng=<code> to set language.",
