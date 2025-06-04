@@ -156,20 +156,6 @@ export function ComponentInstance({
   if (instance.status === "loaded" && instance.component) {
     const Component = instance.component;
 
-    const componentProps = getComponentProps;
-    const hasValidProps = componentProps && 
-      typeof componentProps === 'object' && 
-      componentProps.settings && 
-      typeof componentProps.settings === 'object';
-
-    if (!hasValidProps) {
-      return (
-        <div key={key} className={styles.componentPreparing}>
-          Initializing {instance.name}...
-        </div>
-      );
-    }
-
     return (
       <ErrorBoundary
         key={key}
@@ -187,7 +173,7 @@ export function ComponentInstance({
           <div className={styles.componentLabel}>
             {instance.name} - Prefix: {instance.prefix || "N/A"}
           </div>
-          <Component {...componentProps} />
+          <Component {...getComponentProps} />
         </div>
       </ErrorBoundary>
     );

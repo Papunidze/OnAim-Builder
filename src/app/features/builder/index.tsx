@@ -6,14 +6,12 @@ import { Components } from "./ui/components";
 import Property from "./ui/property-adjustments/property-adjustment";
 
 import { useBuilder } from "@app-shared/services/builder/useBuilder.service";
-import { useCopy } from "./ui/copy-components/hooks/useCopy.hooks";
 
 import styles from "./builder.module.css";
 
 const Builder = (): JSX.Element => {
   const [viewMode, setViewMode] = useState<"desktop" | "mobile">("desktop");
   const { getComponents } = useBuilder();
-  const { isCopying } = useCopy();
 
   const currentComponents = getComponents(viewMode);
 
@@ -29,11 +27,6 @@ const Builder = (): JSX.Element => {
               components={currentComponents}
               viewMode={viewMode}
             />
-          ) : isCopying ? (
-            <div className={styles.copyingState}>
-              <div className={styles.copyingSpinner}>⟳</div>
-              Copying components...
-            </div>
           ) : (
             <div>No components selected. Add components from the panel.</div>
           )}
