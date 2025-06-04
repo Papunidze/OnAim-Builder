@@ -1,4 +1,4 @@
-import type { ComponentState, useBuilder } from "@app-shared/services/builder";
+import type { ComponentState } from "@app-shared/services/builder";
 
 export interface PreviewOptions {
   viewMode: "desktop" | "mobile";
@@ -45,10 +45,10 @@ export interface PreviewState {
 export interface UsePreviewReturn {
   isOpen: boolean;
   mode: PreviewMode;
-  options: PreviewState["options"];
+  options: PreviewOptions;
   openPreview: (mode?: PreviewMode, viewMode?: "desktop" | "mobile") => void;
   closePreview: () => void;
-  components: ReturnType<ReturnType<typeof useBuilder>["getComponents"]>;
+  components: ComponentState[];
 }
 
 export interface UsePreviewModalReturn {
