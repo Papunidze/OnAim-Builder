@@ -16,14 +16,14 @@ const Save = ({ viewMode }: SaveProps): JSX.Element => {
       id: "json",
       label: "Download JSON",
       description: "Export project data",
-      icon: "📄",
+      icon: "",
       onClick: () => handleExport(() => JSONExportService.export(viewMode)),
     },
     {
       id: "enhanced-source",
       label: "Download Server Sources (ZIP)",
       description: "Get full source code with correct elements and settings",
-      icon: "🗜️",
+      icon: "",
       onClick: () =>
         handleExport(() =>
           EnhancedSourceExportService.downloadServerSources(viewMode)
