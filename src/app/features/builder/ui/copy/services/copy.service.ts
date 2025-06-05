@@ -49,7 +49,8 @@ export class CopyService {
       cloned.settings = JSON.parse(JSON.stringify(component.settings));
     }
 
-    if (targetViewMode === "mobile" && component.compiledData?.files) {
+    // Apply view mode specific values during copy
+    if (component.compiledData?.files) {
       try {
         const settingsFile = component.compiledData.files.find(
           (file: { file: string; content: string }) =>
@@ -62,39 +63,63 @@ export class CopyService {
             settingsFile.content
           );
 
-          if (
-            settingsObject &&
-            typeof settingsObject.getMobileValues === "function"
-          ) {
-            try {
-              const result = MobileValuesService.getFilteredMobileValues(settingsObject);
-              
-              if (result.success && result.data && Object.keys(result.data).length > 0) {
-                const deepMerge = (target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> => {
-                  const result = { ...target };
-                  for (const key in source) {
-                    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-                      result[key] = deepMerge(target[key] as Record<string, unknown> || {}, source[key] as Record<string, unknown>);
-                    } else {
-                      result[key] = source[key];
-                    }
-                  }
-                  return result;
-                };
-                
-                cloned.props = deepMerge(cloned.props as Record<string, unknown>, result.data as Record<string, unknown>);
+          if (settingsObject) {
+            const deepMerge = (target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> => {
+              const result = { ...target };
+              for (const key in source) {
+                if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                  result[key] = deepMerge(target[key] as Record<string, unknown> || {}, source[key] as Record<string, unknown>);
+                } else {
+                  result[key] = source[key];
+                }
               }
-            } catch (error) {
-              console.warn(
-                `Failed to apply mobile values for component ${component.name}:`,
-                error
-              );
+              return result;
+            };
+
+            if (targetViewMode === "mobile") {
+              // Copying TO mobile: apply mobile values
+              if (typeof settingsObject.getMobileValues === "function") {
+                try {
+                  const result = MobileValuesService.getFilteredMobileValues(settingsObject);
+                  
+                  if (result.success && result.data && Object.keys(result.data).length > 0) {
+                    cloned.props = deepMerge(cloned.props as Record<string, unknown>, result.data as Record<string, unknown>);
+                  }
+                } catch (error) {
+                  console.warn(
+                    `Failed to apply mobile values for component ${component.name}:`,
+                    error
+                  );
+                }
+              }
+            } else if (targetViewMode === "desktop") {
+              // Copying TO desktop: use desktop defaults (remove mobile overrides)
+              if (typeof settingsObject.getValues === "function") {
+                try {
+                  // Reset to defaults first to get clean desktop values
+                  const resetDefault = (settingsObject as unknown as Record<string, unknown>).resetDefault;
+                  if (typeof resetDefault === "function") {
+                    resetDefault.call(settingsObject);
+                  }
+                  
+                  // Get the clean desktop values
+                  const desktopValues = settingsObject.getValues();
+                  
+                  // Merge desktop values over mobile values (desktop takes priority)
+                  cloned.props = deepMerge(cloned.props as Record<string, unknown>, desktopValues as Record<string, unknown>);
+                } catch (error) {
+                  console.warn(
+                    `Failed to apply desktop values for component ${component.name}:`,
+                    error
+                  );
+                }
+              }
             }
           }
         }
       } catch (error) {
         console.warn(
-          `Failed to process mobile values during copy for component ${component.name}:`,
+          `Failed to process view mode values during copy for component ${component.name}:`,
           error
         );
       }
