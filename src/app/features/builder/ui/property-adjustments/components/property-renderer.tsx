@@ -56,14 +56,23 @@ class SettingsRenderer {
     id: string,
     updates: { props: PropertyValue }
   ) => void;
+  private readonly viewMode: "desktop" | "mobile";
+  private readonly onSettingsObjectChange: (
+    settingsObject: SettingsObject | null
+  ) => void;
+
   constructor(
     hostElement: HTMLDivElement,
     onError: (error: string) => void,
-    onUpdate: (id: string, updates: { props: PropertyValue }) => void
+    onUpdate: (id: string, updates: { props: PropertyValue }) => void,
+    viewMode: "desktop" | "mobile",
+    onSettingsObjectChange: (settingsObject: SettingsObject | null) => void
   ) {
     this.hostElement = hostElement;
     this.onError = onError;
     this.onUpdate = onUpdate;
+    this.viewMode = viewMode;
+    this.onSettingsObjectChange = onSettingsObjectChange;
   }
 
   private clearHost(): void {
@@ -99,8 +108,30 @@ class SettingsRenderer {
     _componentId: string,
     currentProps?: PropertyValue
   ): void {
-    if ((!currentProps || Object.keys(currentProps).length === 0) && 
-        typeof settingsObject.getValues === "function") {
+    if (
+      this.viewMode === "mobile" &&
+      typeof settingsObject.getMobileValues === "function"
+    ) {
+      try {
+        const mobileValues = settingsObject.getMobileValues();
+        if (mobileValues && Object.keys(mobileValues).length > 0) {
+          const mergedProps = { ...(currentProps || {}), ...mobileValues };
+          this.onUpdate(_componentId, { props: mergedProps });
+
+          if (typeof settingsObject.setValue === "function") {
+            settingsObject.setValue(mergedProps);
+          }
+          return;
+        }
+      } catch (error) {
+        console.warn("Failed to apply mobile values:", error);
+      }
+    }
+
+    if (
+      (!currentProps || Object.keys(currentProps).length === 0) &&
+      typeof settingsObject.getValues === "function"
+    ) {
       const defaultValues = settingsObject.getValues();
       this.onUpdate(_componentId, { props: { ...defaultValues } });
     }
@@ -108,6 +139,38 @@ class SettingsRenderer {
     if (currentProps && typeof settingsObject.setValue === "function") {
       settingsObject.setValue(currentProps);
     }
+  }
+
+  getMobileValues(
+    settingsObject: SettingsObject
+  ): Record<string, unknown> | null {
+    if (typeof settingsObject.getMobileValues === "function") {
+      try {
+        return settingsObject.getMobileValues();
+      } catch (error) {
+        console.error("Error getting mobile values:", error);
+        this.onError("Failed to get mobile values");
+        return null;
+      }
+    }
+    return null;
+  }
+
+  setMobileValues(
+    settingsObject: SettingsObject,
+    values: Record<string, unknown>
+  ): boolean {
+    if (typeof settingsObject.setMobileValues === "function") {
+      try {
+        settingsObject.setMobileValues(values);
+        return true;
+      } catch (error) {
+        console.error("Error setting mobile values:", error);
+        this.onError("Failed to set mobile values");
+        return false;
+      }
+    }
+    return false;
   }
 
   async render(component: {
@@ -124,6 +187,7 @@ class SettingsRenderer {
       );
       if (!settingsContent) {
         this.onError("No settings available for this component");
+        this.onSettingsObjectChange(null);
         return;
       }
 
@@ -134,6 +198,7 @@ class SettingsRenderer {
 
       if (!this.validateSettingsObject(settingsObject)) {
         this.onError("Invalid settings configuration for this component");
+        this.onSettingsObjectChange(null);
         return;
       }
 
@@ -151,15 +216,18 @@ class SettingsRenderer {
       }
 
       this.onError("");
+      this.onSettingsObjectChange(settingsObject);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to render settings";
       this.onError(errorMessage);
+      this.onSettingsObjectChange(null);
     }
   }
 
   clear(): void {
     this.clearHost();
+    this.onSettingsObjectChange(null);
   }
 }
 
@@ -200,11 +268,16 @@ function Header({ componentName }: HeaderProps): JSX.Element {
   );
 }
 
-export function PropertyRenderer(): JSX.Element {
+export function PropertyRenderer({
+  viewMode,
+}: {
+  viewMode: "desktop" | "mobile";
+}): JSX.Element {
   const { getSelectedComponent, updateComponent } = useBuilder();
   const { error, setError, clearError } = useComponentState();
   const settingsHost = useRef<HTMLDivElement>(null);
   const settingsRenderer = useRef<SettingsRenderer | null>(null);
+  const [, setCurrentSettingsObject] = useState<SettingsObject | null>(null);
 
   const selectedComponent = getSelectedComponent();
 
@@ -213,10 +286,12 @@ export function PropertyRenderer(): JSX.Element {
       settingsRenderer.current = new SettingsRenderer(
         settingsHost.current,
         setError,
-        updateComponent
+        updateComponent,
+        viewMode,
+        setCurrentSettingsObject
       );
     }
-  }, [setError, updateComponent]);
+  }, [setError, updateComponent, viewMode, setCurrentSettingsObject]);
 
   useEffect(() => {
     const renderer = settingsRenderer.current;

@@ -4,7 +4,11 @@ import { useBuilder } from "@app-shared/services/builder/useBuilder.service";
 import styles from "./property-adjustment.module.css";
 import { PropertyRenderer } from "./components/property-renderer";
 
-const Property = (): JSX.Element => {
+interface PropertyProps {
+  viewMode: "desktop" | "mobile";
+}
+
+const Property = ({ viewMode }: PropertyProps): JSX.Element => {
   const { getSelectedComponent } = useBuilder();
   const selectedComponent = getSelectedComponent();
 
@@ -12,7 +16,7 @@ const Property = (): JSX.Element => {
     <div className={styles.builderPropertyAdjustment}>
       <div className={styles.builderPropertyAdjustmentContent}>
         {selectedComponent ? (
-          <PropertyRenderer />
+          <PropertyRenderer viewMode={viewMode} />
         ) : (
           <div className={styles.noComponentSelected}>
             <p>Select a component to view its properties</p>

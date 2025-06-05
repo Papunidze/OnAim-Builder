@@ -32,7 +32,7 @@ const Builder = (): JSX.Element => {
           )}
         </div>
 
-        <Property />
+        <Property viewMode={viewMode} />
       </div>
     </div>
   );

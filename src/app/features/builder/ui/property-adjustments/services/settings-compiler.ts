@@ -16,6 +16,8 @@ export interface SettingsObject {
   setValue?: (values: Record<string, unknown>) => void;
   getValues?: () => Record<string, unknown>;
   getJson?: () => Record<string, unknown>;
+  getMobileValues?: () => Record<string, unknown>;
+  setMobileValues?: (values: Record<string, unknown>) => void;
   title?: string;
 }
 
