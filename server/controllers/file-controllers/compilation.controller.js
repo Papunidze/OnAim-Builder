@@ -133,7 +133,6 @@ const fetchCompiledFilesInFolder = catchAsync(async (req, res, next) => {
 
       let result = { file };
       try {
-        // Process different file types
         if (FILE_EXTENSIONS.SCRIPTS.includes(ext)) {
           result = {
             ...result,

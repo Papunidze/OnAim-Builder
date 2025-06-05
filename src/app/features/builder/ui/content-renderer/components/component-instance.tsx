@@ -79,15 +79,26 @@ export function ComponentInstance({
       typeof settingsObject.getMobileValues === "function"
     ) {
       try {
-        const mobileResult = MobileValuesService.getFilteredMobileValues(settingsObject);
+        const mobileResult =
+          MobileValuesService.getFilteredMobileValues(settingsObject);
         const mobileValues = mobileResult.success ? mobileResult.data : {};
-        
+
         if (mobileValues && Object.keys(mobileValues).length > 0) {
-          const deepMerge = (target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> => {
+          const deepMerge = (
+            target: Record<string, unknown>,
+            source: Record<string, unknown>
+          ): Record<string, unknown> => {
             const result = { ...target };
             for (const key in source) {
-              if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-                result[key] = deepMerge(target[key] as Record<string, unknown> || {}, source[key] as Record<string, unknown>);
+              if (
+                source[key] &&
+                typeof source[key] === "object" &&
+                !Array.isArray(source[key])
+              ) {
+                result[key] = deepMerge(
+                  (target[key] as Record<string, unknown>) || {},
+                  source[key] as Record<string, unknown>
+                );
               } else {
                 result[key] = source[key];
               }
@@ -96,13 +107,22 @@ export function ComponentInstance({
           };
 
           if (hasExistingProps) {
-            const merged = deepMerge(settingsObject.getValues() as Record<string, unknown>, component.props as Record<string, unknown>);
-            defaultValues = deepMerge(merged, mobileValues as Record<string, unknown>);
+            const merged = deepMerge(
+              settingsObject.getValues() as Record<string, unknown>,
+              component.props as Record<string, unknown>
+            );
+            defaultValues = deepMerge(
+              merged,
+              mobileValues as Record<string, unknown>
+            );
           } else {
-            defaultValues = deepMerge(settingsObject.getValues() as Record<string, unknown>, mobileValues as Record<string, unknown>);
+            defaultValues = deepMerge(
+              settingsObject.getValues() as Record<string, unknown>,
+              mobileValues as Record<string, unknown>
+            );
           }
         } else {
-          defaultValues = hasExistingProps 
+          defaultValues = hasExistingProps
             ? { ...settingsObject.getValues(), ...component.props }
             : settingsObject.getValues() || {};
         }
@@ -119,11 +139,10 @@ export function ComponentInstance({
       defaultValues = settingsObject.getValues() || {};
     }
 
-    // For mobile view, defaultValues already includes the merged props and mobile values
-    // For desktop view, we need to merge existing props with defaults
-    const settingsValue = component.viewMode === "mobile" || !hasExistingProps
-      ? { ...defaultValues }
-      : { ...defaultValues, ...component.props };
+    const settingsValue =
+      component.viewMode === "mobile" || !hasExistingProps
+        ? { ...defaultValues }
+        : { ...defaultValues, ...component.props };
 
     let languageValue = {};
     if (languageObject) {

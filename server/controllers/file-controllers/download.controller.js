@@ -47,10 +47,9 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
 
   const processedComponents = [];
   const componentInstanceMap = new Map();
-  const componentFilesAdded = new Set(); // Track which base components already have files copied
+  const componentFilesAdded = new Set();
 
   for (const componentName of componentNames) {
-    // Extract base component name (remove instance suffix like _2, _3)
     const baseComponentName = componentName.includes("_")
       ? componentName.split("_")[0]
       : componentName;
@@ -73,7 +72,6 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
       continue;
     }
 
-    // Track instances for settings file naming
     if (!componentInstanceMap.has(folder)) {
       componentInstanceMap.set(folder, 0);
     }
@@ -84,16 +82,15 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
       dir,
       folder,
       componentProps
-    ); // Copy component files only once per base component
+    );
     if (!componentFilesAdded.has(folder)) {
-      componentFilesAdded.add(folder); // Copy all component files except settings and language files
+      componentFilesAdded.add(folder);
       for (const file of files) {
         if (
           file.toLowerCase() === "settings.ts" ||
           file.toLowerCase() === "settings.json" ||
           file.toLowerCase() === "language.ts"
         ) {
-          // Skip these files - language data will be handled separately
           continue;
         }
 
@@ -106,20 +103,19 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
             name: `src/components/${folder}/${file}`,
           });
         }
-      } // Note: Removed main language.json generation - only using instance-specific language files
-    } // Add settings file for this instance in settings subfolder
+      }
+    }
     if (settingsConfig) {
       const settingsFileName = `${folder}_${instanceCount}settings.json`;
       archive.append(JSON.stringify(settingsConfig, null, 2), {
         name: `src/components/${folder}/settings/${settingsFileName}`,
       });
-    } // Add instance-specific language file with fallback logic
+    }
     const componentLanguageData = componentLanguageMap[componentName];
     if (
       componentLanguageData &&
       Object.keys(componentLanguageData).length > 0
     ) {
-      // Add fallback logic: ensure all languages have all keys from English
       const processedLanguageData = {};
       const englishKeys = componentLanguageData.en || {};
 
@@ -128,12 +124,10 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
       )) {
         processedLanguageData[langCode] = {};
 
-        // For each English key, use the language-specific value or fallback to English
         for (const [key, englishValue] of Object.entries(englishKeys)) {
           processedLanguageData[langCode][key] = langData[key] || englishValue;
         }
 
-        // Also include any additional keys that might exist in this language
         for (const [key, value] of Object.entries(langData)) {
           if (!(key in englishKeys)) {
             processedLanguageData[langCode][key] = value;
@@ -253,7 +247,6 @@ Generated on: ${new Date().toISOString()}
 `;
   archive.append(readmeContent, { name: `README.md` });
 
-  // Generate .gitignore
   const gitignoreContent = `# Logs
 logs
 *.log
@@ -359,7 +352,6 @@ const downloadComponentZip = catchAsync(async (req, res, next) => {
   });
 
   archive.pipe(res);
-  // Copy all files except settings.ts and existing settings.json
   for (const file of files) {
     if (
       file.toLowerCase() === "settings.ts" ||
@@ -374,19 +366,16 @@ const downloadComponentZip = catchAsync(async (req, res, next) => {
     if (stats.isFile()) {
       let fileContent = await fs.readFile(filePath, "utf-8");
 
-      // Special handling for language.ts files - include language data
       if (file.toLowerCase() === "language.ts") {
-        // Extract language data for language.json
         try {
           const languageMatch = fileContent.match(
             /const lngObject = ({[\s\S]*?}) as const;/
           );
           if (languageMatch) {
             const languageDataStr = languageMatch[1];
-            // Convert to valid JSON by removing 'as const' and cleaning up
             const cleanedData = languageDataStr
-              .replace(/(\w+):/g, '"$1":') // Quote keys
-              .replace(/'/g, '"'); // Convert single quotes to double quotes
+              .replace(/(\w+):/g, '"$1":')
+              .replace(/'/g, '"');
 
             try {
               const languageData = JSON.parse(cleanedData);
@@ -412,7 +401,6 @@ const downloadComponentZip = catchAsync(async (req, res, next) => {
     }
   }
 
-  // Add settings.json with merged props
   const settingsConfig = await loadSettingsConfig(dir, folder, componentProps);
   if (settingsConfig) {
     archive.append(JSON.stringify(settingsConfig, null, 2), {

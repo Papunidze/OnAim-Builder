@@ -19,7 +19,6 @@ const Leaderboard: React.FC<LeaderboardProps> = (props) => {
     { name: "Mallory", score: 630 },
   ];
   const leaderboardSettings = props.settings.leaderboard || {};
-  // const title = leaderboardSettings.test || "Leaderboard";
   return (
     <div
       className="leaderboard"

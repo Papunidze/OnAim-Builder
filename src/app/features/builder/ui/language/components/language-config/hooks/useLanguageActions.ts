@@ -54,7 +54,6 @@ export function useLanguageActions({
         timestamp: Date.now(),
       });
 
-      // Refresh language list after a short delay
       setTimeout(() => {
         refreshLanguages();
       }, 100);

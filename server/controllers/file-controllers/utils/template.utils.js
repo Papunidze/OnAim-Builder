@@ -61,7 +61,6 @@ const generateViteMainTsx = (componentData, viewMode = "desktop") => {
   });
   const imports = [];
   const componentElements = [];
-  // Note: Removed shared language data imports - only using instance-specific language files
 
   Object.entries(componentGroups).forEach(([baseComponentName, instances]) => {
     const componentClassName = `${baseComponentName.charAt(0).toUpperCase() + baseComponentName.slice(1)}Component`;
@@ -76,7 +75,6 @@ const generateViteMainTsx = (componentData, viewMode = "desktop") => {
         `import ${settingsVarName} from './components/${baseComponentName}/settings/${baseComponentName}_${comp.instanceNumber}settings.json';`
       );
 
-      // Add instance-specific language imports if component has language data
       if (comp.hasLanguageData) {
         const languageVarName = `${baseComponentName}_${comp.instanceNumber}language`;
         imports.push(
@@ -97,7 +95,6 @@ const generateViteMainTsx = (componentData, viewMode = "desktop") => {
             baseComponentName.slice(1)
           : `${baseComponentName.charAt(0).toUpperCase() + baseComponentName.slice(1)} ${comp.instanceNumber}`;
 
-      // Only render components that have language data (since we removed shared language files)
       if (comp.hasLanguageData) {
         const languageProps = `language={(${languageVarName}[currentLanguage] || ${languageVarName}['en'] || {})}`;
 
@@ -109,7 +106,6 @@ const generateViteMainTsx = (componentData, viewMode = "desktop") => {
           />
         </div>`);
       } else {
-        // For components without language data, use empty language object
         componentElements.push(`        <div className="component-wrapper">
           <div className="component-title">${displayName}</div>
           <${componentClassName} 
@@ -337,7 +333,7 @@ body {
   box-shadow: 0 0 0 3px rgba(2, 204, 89, 0.1);
 }
 
-/* Desktop Frame Styles */
+
 .desktop-frame {
   width: 100%;
   max-width: 1200px;
@@ -364,7 +360,6 @@ body {
   display: none;
 }
 
-/* Mobile Frame Styles */
 .mobile-frame {
   width: 375px;
   max-width: 100%;

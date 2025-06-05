@@ -206,10 +206,6 @@ export class MobileValuesService {
     };
   }
 
-  /**
-   * Gets only the mobile values for properties that actually have mobile variants,
-   * preserving desktop values for properties without mobile variants
-   */
   static getFilteredMobileValues(
     settingsObject: SettingsObject
   ): MobileValuesResult {
@@ -236,39 +232,40 @@ export class MobileValuesService {
         };
       }
 
-      // Get desktop defaults to compare against
-      const desktopDefaults = typeof settingsObject.getValues === "function" 
-        ? settingsObject.getValues() 
-        : {};
+      const desktopDefaults =
+        typeof settingsObject.getValues === "function"
+          ? settingsObject.getValues()
+          : {};
 
       const filteredMobileValues: Record<string, unknown> = {};
 
-      // Filter mobile values to only include properties that differ from desktop defaults
       for (const [topKey, topValue] of Object.entries(mobileValues)) {
-        if (typeof topValue === 'object' && topValue !== null && !Array.isArray(topValue)) {
+        if (
+          typeof topValue === "object" &&
+          topValue !== null &&
+          !Array.isArray(topValue)
+        ) {
           const desktopGroup = desktopDefaults[topKey];
-          if (typeof desktopGroup === 'object' && desktopGroup !== null) {
+          if (typeof desktopGroup === "object" && desktopGroup !== null) {
             const filteredGroup: Record<string, unknown> = {};
-            
+
             for (const [key, mobileValue] of Object.entries(topValue)) {
-              const desktopValue = (desktopGroup as Record<string, unknown>)[key];
-              
-              // Only include if mobile value is different from desktop default
+              const desktopValue = (desktopGroup as Record<string, unknown>)[
+                key
+              ];
+
               if (desktopValue !== mobileValue) {
                 filteredGroup[key] = mobileValue;
               }
             }
-            
-            // Only add the group if it has mobile-specific properties
+
             if (Object.keys(filteredGroup).length > 0) {
               filteredMobileValues[topKey] = filteredGroup;
             }
           } else {
-            // If desktop doesn't have this group, include the whole mobile group
             filteredMobileValues[topKey] = topValue;
           }
         } else {
-          // For non-object values, compare directly
           if (desktopDefaults[topKey] !== topValue) {
             filteredMobileValues[topKey] = topValue;
           }

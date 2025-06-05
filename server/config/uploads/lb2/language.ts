@@ -13,8 +13,6 @@ const lngObject = {
   },
 } as const;
 
-// type LanguageKeys = keyof typeof lngObject;
-
 export type LngProps = typeof lngObject.en;
 
 export type LanguageToProps<T extends Language> = {

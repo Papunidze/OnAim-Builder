@@ -8,7 +8,6 @@ const uploadFile = catchAsync(async (req, res, next) => {
   const tsFiles = req.files?.tsFiles || [];
   const cssFiles = req.files?.cssFile || [];
 
-  // Validate file extensions
   for (const file of [...tsFiles, ...cssFiles]) {
     const ext = path.extname(file.originalname).toLowerCase();
     if (!ALLOWED_EXTENSIONS.includes(ext)) {

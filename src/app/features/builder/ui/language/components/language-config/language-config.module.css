@@ -270,7 +270,6 @@
   background: var(--border-color-primary);
 }
 
-/* Responsive */
 @media (max-width: 600px) {
   .configPopover {
     width: 90vw;

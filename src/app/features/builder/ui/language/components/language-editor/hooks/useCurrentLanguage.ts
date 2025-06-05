@@ -18,8 +18,6 @@ export function useCurrentLanguage({
     if (languageObject) {
       try {
         const current = languageObject.getCurrentLanguage();
-        // Only update if the current language from the object is different from our state
-        // This prevents unnecessary resets when the language object is recompiled
         setCurrentLanguage((prev) => {
           if (prev !== current) {
             return current;
@@ -28,7 +26,7 @@ export function useCurrentLanguage({
         });
       } catch (error) {
         console.error("Error getting current language:", error);
-        setCurrentLanguage("en"); // fallback
+        setCurrentLanguage("en");
       }
     }
   }, [languageObject]);

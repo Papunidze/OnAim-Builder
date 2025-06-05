@@ -78,7 +78,6 @@ export class EnhancedSourceExportService {
           componentPropsMap[name] = componentProps as Record<string, unknown>;
         }
 
-        // Extract current language data from the component
         const languageData =
           this.extractComponentLanguageData(originalComponent);
         if (languageData) {
@@ -146,7 +145,6 @@ export class EnhancedSourceExportService {
     component: ComponentState
   ): Record<string, Record<string, string>> | null {
     try {
-      // Find the language.ts file in the component's compiled data
       const languageFile = component.compiledData?.files?.find(
         (file) => file.file === "language.ts"
       );
@@ -155,7 +153,6 @@ export class EnhancedSourceExportService {
         return null;
       }
 
-      // Compile the language object to get the current state
       const languageObject = compileLanguageObject(
         languageFile.content,
         component.name
@@ -165,7 +162,6 @@ export class EnhancedSourceExportService {
         return null;
       }
 
-      // Extract the current language data (includes any user modifications)
       return languageObject.getLanguageData();
     } catch (error) {
       console.error(

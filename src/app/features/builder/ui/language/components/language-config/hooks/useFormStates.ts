@@ -12,7 +12,6 @@ interface UseFormStatesProps {
 }
 
 interface UseFormStatesReturn {
-  // Add form states
   newLanguageCode: string;
   newLanguageName: string;
   newTranslations: Record<string, string>;
@@ -22,12 +21,10 @@ interface UseFormStatesReturn {
   updateNewTranslation: (key: string, value: string) => void;
   resetAddForm: () => void;
 
-  // Edit form states
   editTranslations: Record<string, string>;
   setEditTranslations: (translations: Record<string, string>) => void;
   updateEditTranslation: (key: string, value: string) => void;
 
-  // Form validation
   canSubmitAdd: boolean;
   canSubmitEdit: boolean;
 }
@@ -38,14 +35,12 @@ export function useFormStates({
   languages,
   languageObject,
 }: UseFormStatesProps): UseFormStatesReturn {
-  // Add form states
   const [newLanguageCode, setNewLanguageCode] = useState("");
   const [newLanguageName, setNewLanguageName] = useState("");
   const [newTranslations, setNewTranslations] = useState<
     Record<string, string>
   >({});
 
-  // Edit form states
   const [editTranslations, setEditTranslations] = useState<
     Record<string, string>
   >({});
@@ -82,7 +77,6 @@ export function useFormStates({
     }
   }, [selectedLanguage, languageObject, translationKeys]);
 
-  // Helper functions
   const updateNewTranslation = (key: string, value: string): void => {
     setNewTranslations((prev) => ({
       ...prev,
@@ -107,7 +101,6 @@ export function useFormStates({
     setNewTranslations(initialTranslations);
   };
 
-  // Form validation
   const canSubmitAdd = useMemo(() => {
     return (
       newLanguageCode.trim() !== "" &&
@@ -121,7 +114,6 @@ export function useFormStates({
   }, [selectedLanguage]);
 
   return {
-    // Add form states
     newLanguageCode,
     newLanguageName,
     newTranslations,
@@ -131,12 +123,10 @@ export function useFormStates({
     updateNewTranslation,
     resetAddForm,
 
-    // Edit form states
     editTranslations,
     setEditTranslations,
     updateEditTranslation,
 
-    // Form validation
     canSubmitAdd,
     canSubmitEdit,
   };

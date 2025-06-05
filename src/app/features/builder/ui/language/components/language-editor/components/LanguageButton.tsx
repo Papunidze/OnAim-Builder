@@ -17,7 +17,6 @@ export function LanguageButton({
   availableLanguagesCount,
   onClick,
 }: LanguageButtonProps): JSX.Element {
-  // Get language display information
   const currentFlag = LANGUAGE_FLAGS[currentLanguage] || {
     flag: FALLBACK_FLAG.flag,
     name: currentLanguage.toUpperCase(),

@@ -1,9 +1,5 @@
 import type { LanguageObject } from "../types/language.types";
 
-/**
- * Creates a language object with fallback functionality
- * This wrapper ensures all translation calls fall back to a default language
- */
 export function createLanguageWithFallback(
   languageObject: LanguageObject | null,
   defaultLanguage: string = "en"
@@ -13,12 +9,10 @@ export function createLanguageWithFallback(
   return {
     ...languageObject,
     translate: (key: string): string => {
-      // Use the new fallback method if available
       if (typeof languageObject.translateWithFallback === "function") {
         return languageObject.translateWithFallback(key, defaultLanguage);
       }
 
-      // Fallback for older implementations
       const currentLang = languageObject.getCurrentLanguage();
       const allData = languageObject.getLanguageData();
       const currentTranslations = allData[currentLang] || {};
@@ -32,14 +26,11 @@ export function createLanguageWithFallback(
         return defaultTranslations[key];
       }
 
-      return key; // Return key as last fallback
+      return key;
     },
   };
 }
 
-/**
- * Gets translations for a language with fallback values
- */
 export function getTranslationsWithFallback(
   languageObject: LanguageObject | null,
   targetLanguage: string,
@@ -47,7 +38,6 @@ export function getTranslationsWithFallback(
 ): Record<string, string> {
   if (!languageObject) return {};
 
-  // Use the new method if available
   if (typeof languageObject.getTranslationsWithFallback === "function") {
     return languageObject.getTranslationsWithFallback(
       targetLanguage,
@@ -55,7 +45,6 @@ export function getTranslationsWithFallback(
     );
   }
 
-  // Manual fallback
   const allData = languageObject.getLanguageData();
   const targetTranslations = allData[targetLanguage] || {};
   const fallbackTranslations = allData[fallbackLanguage] || {};
@@ -66,10 +55,6 @@ export function getTranslationsWithFallback(
   };
 }
 
-/**
- * Validates that all required translation keys exist across languages
- * Returns missing keys per language
- */
 export function validateTranslationKeys(
   languageObject: LanguageObject | null,
   requiredKeys: string[],
@@ -87,7 +72,6 @@ export function validateTranslationKeys(
     const missing: string[] = [];
 
     requiredKeys.forEach((key) => {
-      // Key is missing if it doesn't exist in current language AND fallback language
       if (!translations[key] && !fallbackTranslations[key]) {
         missing.push(key);
       }

@@ -1,4 +1,3 @@
-// Constants for file processing
 const FILE_EXTENSIONS = {
   SCRIPTS: [".tsx", ".ts", ".jsx", ".js"],
   STYLES: [".css", ".scss"],

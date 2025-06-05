@@ -39,10 +39,6 @@ export function useLanguageManagement({
           }
         );
         setLanguages(languageEntries);
-
-        if (availableLanguages.length > 0) {
-          // This will be handled by the parent component
-        }
       } catch (error) {
         console.error("Error refreshing languages:", error);
         setLanguages([]);

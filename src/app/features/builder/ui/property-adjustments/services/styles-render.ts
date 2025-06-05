@@ -191,9 +191,6 @@ export class StylesRenderer {
     return !hasUnits;
   }
 
-  /**
-   * Process compound CSS properties like border, box-shadow, etc.
-   */
   private static processCompoundProperty(key: string, value: string): string {
     switch (key) {
       case "border":
@@ -226,11 +223,8 @@ export class StylesRenderer {
 
     return `${processedWidth} ${style} ${processedColor}`;
   }
-  /**
-   * Process shadow values (basic implementation)
-   */
+
   private static processShadowValue(value: string): string {
-    // For now, return as-is. Can be enhanced later for RGB color support in shadows
     return value;
   }
   private static consolidateBorderProperties(rules: CSSRule[]): CSSRule[] {

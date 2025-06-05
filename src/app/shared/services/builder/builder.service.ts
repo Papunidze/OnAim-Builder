@@ -447,7 +447,6 @@ export class BuilderService {
     if (this.undoStack.length === 0) {
       return false;
     }
-    // console.log(this.undoStack);
     const previousState = this.undoStack.pop()!;
     this.redoStack.push(JSON.parse(JSON.stringify(this.state)));
     this.state = previousState;

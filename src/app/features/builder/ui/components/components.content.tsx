@@ -6,11 +6,12 @@ import type { ComponentsContentProps } from "./types";
 export default function ComponentsContent({
   folders,
   addComponent,
-}: ComponentsContentProps): JSX.Element {  const handleAddComponent = async (name: string): Promise<void> => {
+}: ComponentsContentProps): JSX.Element {
+  const handleAddComponent = async (name: string): Promise<void> => {
     try {
       await addComponent(name);
     } catch {
-      // Handle error silently
+      console.error(`Failed to add component: ${name}`);
     }
   };
 

@@ -54,7 +54,6 @@
   font-size: 14px;
 }
 
-/* Override builder-settings-types styles to match our design */
 .settingsHost :global(.setting-group) {
   background: transparent;
   border: none;
