@@ -205,6 +205,90 @@ export class MobileValuesService {
       error: "Failed to refresh mobile values",
     };
   }
+
+  /**
+   * Gets only the mobile values for properties that actually have mobile variants,
+   * preserving desktop values for properties without mobile variants
+   */
+  static getFilteredMobileValues(
+    settingsObject: SettingsObject
+  ): MobileValuesResult {
+    if (!settingsObject) {
+      return {
+        success: false,
+        error: "Settings object is required",
+      };
+    }
+
+    if (typeof settingsObject.getMobileValues !== "function") {
+      return {
+        success: false,
+        error: "Settings object does not support mobile values",
+      };
+    }
+
+    try {
+      const mobileValues = settingsObject.getMobileValues();
+      if (!mobileValues || Object.keys(mobileValues).length === 0) {
+        return {
+          success: true,
+          data: {},
+        };
+      }
+
+      // Get desktop defaults to compare against
+      const desktopDefaults = typeof settingsObject.getValues === "function" 
+        ? settingsObject.getValues() 
+        : {};
+
+      const filteredMobileValues: Record<string, unknown> = {};
+
+      // Filter mobile values to only include properties that differ from desktop defaults
+      for (const [topKey, topValue] of Object.entries(mobileValues)) {
+        if (typeof topValue === 'object' && topValue !== null && !Array.isArray(topValue)) {
+          const desktopGroup = desktopDefaults[topKey];
+          if (typeof desktopGroup === 'object' && desktopGroup !== null) {
+            const filteredGroup: Record<string, unknown> = {};
+            
+            for (const [key, mobileValue] of Object.entries(topValue)) {
+              const desktopValue = (desktopGroup as Record<string, unknown>)[key];
+              
+              // Only include if mobile value is different from desktop default
+              if (desktopValue !== mobileValue) {
+                filteredGroup[key] = mobileValue;
+              }
+            }
+            
+            // Only add the group if it has mobile-specific properties
+            if (Object.keys(filteredGroup).length > 0) {
+              filteredMobileValues[topKey] = filteredGroup;
+            }
+          } else {
+            // If desktop doesn't have this group, include the whole mobile group
+            filteredMobileValues[topKey] = topValue;
+          }
+        } else {
+          // For non-object values, compare directly
+          if (desktopDefaults[topKey] !== topValue) {
+            filteredMobileValues[topKey] = topValue;
+          }
+        }
+      }
+
+      return {
+        success: true,
+        data: filteredMobileValues,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to get mobile values",
+      };
+    }
+  }
 }
 
 export default MobileValuesService;

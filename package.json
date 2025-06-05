@@ -13,7 +13,7 @@
     "pre-commit": "npm run lint"
   },
   "dependencies": {
-    "builder-settings-types": "^0.0.164",
+    "builder-settings-types": "^0.0.167",
     "language-management-lib": "^1.0.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

@@ -4,7 +4,10 @@ import type { ComponentRenderProps } from "../types";
 import styles from "./component-instance.module.css";
 import { ErrorBoundary } from "@app-shared/components";
 import { useBuilder } from "@app-shared/services/builder";
-import { getCompiledSettings } from "@app-features/builder/ui/property-adjustments/services";
+import {
+  getCompiledSettings,
+  MobileValuesService,
+} from "@app-features/builder/ui/property-adjustments/services";
 import { compileLanguageObject } from "@app-features/builder/ui/language/compiler/language-compiler";
 
 export function ComponentInstance({
@@ -76,11 +79,32 @@ export function ComponentInstance({
       typeof settingsObject.getMobileValues === "function"
     ) {
       try {
-        const mobileValues = settingsObject.getMobileValues();
+        const mobileResult = MobileValuesService.getFilteredMobileValues(settingsObject);
+        const mobileValues = mobileResult.success ? mobileResult.data : {};
+        
         if (mobileValues && Object.keys(mobileValues).length > 0) {
-          defaultValues = mobileValues;
+          const deepMerge = (target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> => {
+            const result = { ...target };
+            for (const key in source) {
+              if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                result[key] = deepMerge(target[key] as Record<string, unknown> || {}, source[key] as Record<string, unknown>);
+              } else {
+                result[key] = source[key];
+              }
+            }
+            return result;
+          };
+
+          if (hasExistingProps) {
+            const merged = deepMerge(settingsObject.getValues() as Record<string, unknown>, component.props as Record<string, unknown>);
+            defaultValues = deepMerge(merged, mobileValues as Record<string, unknown>);
+          } else {
+            defaultValues = deepMerge(settingsObject.getValues() as Record<string, unknown>, mobileValues as Record<string, unknown>);
+          }
         } else {
-          defaultValues = settingsObject.getValues() || {};
+          defaultValues = hasExistingProps 
+            ? { ...settingsObject.getValues(), ...component.props }
+            : settingsObject.getValues() || {};
         }
       } catch (error) {
         console.warn(
@@ -95,9 +119,11 @@ export function ComponentInstance({
       defaultValues = settingsObject.getValues() || {};
     }
 
-    const settingsValue = hasExistingProps
-      ? { ...defaultValues, ...component.props }
-      : { ...defaultValues };
+    // For mobile view, defaultValues already includes the merged props and mobile values
+    // For desktop view, we need to merge existing props with defaults
+    const settingsValue = component.viewMode === "mobile" || !hasExistingProps
+      ? { ...defaultValues }
+      : { ...defaultValues, ...component.props };
 
     let languageValue = {};
     if (languageObject) {

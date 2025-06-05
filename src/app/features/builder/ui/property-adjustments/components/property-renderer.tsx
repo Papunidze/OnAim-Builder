@@ -7,6 +7,7 @@ import {
 } from "../services/settings-compiler";
 import type { ComponentFileData } from "../../content-renderer/types";
 import styles from "./property-renderer.module.css";
+import { MobileValuesService } from "../services/mobile-values.service";
 
 interface PropertyValue {
   [key: string]: unknown;
@@ -113,9 +114,26 @@ class SettingsRenderer {
       typeof settingsObject.getMobileValues === "function"
     ) {
       try {
-        const mobileValues = settingsObject.getMobileValues();
+        const mobileResult = MobileValuesService.getFilteredMobileValues(settingsObject);
+        const mobileValues = mobileResult.success ? mobileResult.data : {};
+        
         if (mobileValues && Object.keys(mobileValues).length > 0) {
-          const mergedProps = { ...(currentProps || {}), ...mobileValues };
+          const deepMerge = (target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> => {
+            const result = { ...target };
+            for (const key in source) {
+              if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                result[key] = deepMerge(target[key] as Record<string, unknown> || {}, source[key] as Record<string, unknown>);
+              } else {
+                result[key] = source[key];
+              }
+            }
+            return result;
+          };
+
+          const desktopDefaults = typeof settingsObject.getValues === "function" ? settingsObject.getValues() : {};
+          const merged = deepMerge(desktopDefaults as Record<string, unknown>, currentProps as Record<string, unknown> || {});
+          const mergedProps = deepMerge(merged, mobileValues as Record<string, unknown>);
+          
           this.onUpdate(_componentId, { props: mergedProps });
 
           if (typeof settingsObject.setValue === "function") {

@@ -1,5 +1,6 @@
 import type { ComponentState } from "@app-shared/services/builder/buiilder.interfaces";
-import { getCompiledSettings } from "@app-features/builder/ui/property-adjustments/services";
+import { getCompiledSettings, MobileValuesService } from "@app-features/builder/ui/property-adjustments/services";
+import { extractComponentSettings } from "@app-features/builder/ui/save/utils/save.utils";
 
 export interface CopyOptions {
   preserveSelection?: boolean;
@@ -24,6 +25,9 @@ export class CopyService {
     if (component.props) {
       cloned.props = JSON.parse(JSON.stringify(component.props));
     }
+
+    const currentSettings = extractComponentSettings(component);
+    cloned.props = JSON.parse(JSON.stringify(currentSettings));
 
     if (component.styles) {
       cloned.styles = JSON.parse(JSON.stringify(component.styles));
@@ -63,9 +67,22 @@ export class CopyService {
             typeof settingsObject.getMobileValues === "function"
           ) {
             try {
-              const mobileValues = settingsObject.getMobileValues();
-              if (mobileValues && Object.keys(mobileValues).length > 0) {
-                cloned.props = { ...cloned.props, ...mobileValues };
+              const result = MobileValuesService.getFilteredMobileValues(settingsObject);
+              
+              if (result.success && result.data && Object.keys(result.data).length > 0) {
+                const deepMerge = (target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> => {
+                  const result = { ...target };
+                  for (const key in source) {
+                    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                      result[key] = deepMerge(target[key] as Record<string, unknown> || {}, source[key] as Record<string, unknown>);
+                    } else {
+                      result[key] = source[key];
+                    }
+                  }
+                  return result;
+                };
+                
+                cloned.props = deepMerge(cloned.props as Record<string, unknown>, result.data as Record<string, unknown>);
               }
             } catch (error) {
               console.warn(
