@@ -66,10 +66,38 @@ export function ComponentInstance({
       console.error("Invalid settings object for", instance.name);
       return {};
     }
-    
-    const defaultValues = settingsObject.getValues() || {};
-    
-    const settingsValue = { ...defaultValues, ...component.props };
+
+    let defaultValues = {};
+    const hasExistingProps =
+      component.props && Object.keys(component.props).length > 0;
+
+    if (
+      component.viewMode === "mobile" &&
+      typeof settingsObject.getMobileValues === "function"
+    ) {
+      try {
+        const mobileValues = settingsObject.getMobileValues();
+        if (mobileValues && Object.keys(mobileValues).length > 0) {
+          defaultValues = mobileValues;
+        } else {
+          defaultValues = settingsObject.getValues() || {};
+        }
+      } catch (error) {
+        console.warn(
+          "Failed to get mobile values for",
+          instance.name,
+          ":",
+          error
+        );
+        defaultValues = settingsObject.getValues() || {};
+      }
+    } else {
+      defaultValues = settingsObject.getValues() || {};
+    }
+
+    const settingsValue = hasExistingProps
+      ? { ...defaultValues, ...component.props }
+      : { ...defaultValues };
 
     let languageValue = {};
     if (languageObject) {
@@ -94,7 +122,6 @@ export function ComponentInstance({
     return {
       settings: settingsValue,
       language: languageValue,
-      // Include the language object itself so components can use it
       languageObject,
     };
     /* eslint-disable-next-line react-hooks/exhaustive-deps */

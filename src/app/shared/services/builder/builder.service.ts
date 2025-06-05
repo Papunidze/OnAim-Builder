@@ -245,7 +245,7 @@ export class BuilderService {
     return removed;
   }
   updateComponent(id: string, updates: Partial<ComponentState>): boolean {
-    this.saveHistory();
+    // this.saveHistory();
 
     for (const mode of ["desktop", "mobile"] as const) {
       const component = this.state[mode].find((comp) => comp.id === id);

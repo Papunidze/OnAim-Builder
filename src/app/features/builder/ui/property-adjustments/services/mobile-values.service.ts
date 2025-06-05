@@ -11,6 +11,19 @@ export interface SetMobileValuesResult {
   error?: string;
 }
 
+export interface ComponentWithProps {
+  props: Record<string, unknown>;
+  viewMode?: "desktop" | "mobile";
+  id?: string;
+  type?: string;
+}
+
+export interface ComponentUpdateResult {
+  success: boolean;
+  updatedProps?: Record<string, unknown>;
+  error?: string;
+}
+
 export class MobileValuesService {
   static getMobileValues(settingsObject: SettingsObject): MobileValuesResult {
     if (!settingsObject) {
@@ -131,6 +144,66 @@ export class MobileValuesService {
       typeof settingsObject.getMobileValues === "function" &&
       typeof settingsObject.setMobileValues === "function"
     );
+  }
+
+  static updateComponentPropsForViewMode(
+    component: ComponentWithProps,
+    viewMode: "desktop" | "mobile",
+    settingsObject: SettingsObject
+  ): Record<string, unknown> | null {
+    if (viewMode === "mobile" && this.supportsMobileValues(settingsObject)) {
+      const result = this.getMobileValues(settingsObject);
+      if (result.success && result.data) {
+        return { ...component.props, ...result.data };
+      }
+    }
+
+    if (typeof settingsObject.getValues === "function") {
+      try {
+        const regularValues = settingsObject.getValues();
+        return { ...component.props, ...regularValues };
+      } catch (error) {
+        console.warn("Failed to get regular values:", error);
+      }
+    }
+
+    return null;
+  }
+
+  static refreshComponentMobileValues(
+    component: ComponentWithProps,
+    settingsObject: SettingsObject
+  ): ComponentUpdateResult {
+    if (!component || !settingsObject) {
+      return {
+        success: false,
+        error: "Component and settings object are required",
+      };
+    }
+
+    if (component.viewMode !== "mobile") {
+      return {
+        success: false,
+        error: "Component is not in mobile view mode",
+      };
+    }
+
+    const updatedProps = this.updateComponentPropsForViewMode(
+      component,
+      "mobile",
+      settingsObject
+    );
+    if (updatedProps) {
+      return {
+        success: true,
+        updatedProps,
+      };
+    }
+
+    return {
+      success: false,
+      error: "Failed to refresh mobile values",
+    };
   }
 }
 

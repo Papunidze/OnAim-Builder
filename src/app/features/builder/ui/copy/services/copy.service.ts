@@ -1,4 +1,5 @@
 import type { ComponentState } from "@app-shared/services/builder/buiilder.interfaces";
+import { getCompiledSettings } from "@app-features/builder/ui/property-adjustments/services";
 
 export interface CopyOptions {
   preserveSelection?: boolean;
@@ -42,6 +43,44 @@ export class CopyService {
 
     if (component.settings) {
       cloned.settings = JSON.parse(JSON.stringify(component.settings));
+    }
+
+    if (targetViewMode === "mobile" && component.compiledData?.files) {
+      try {
+        const settingsFile = component.compiledData.files.find(
+          (file: { file: string; content: string }) =>
+            file.file === "settings.ts"
+        );
+
+        if (settingsFile?.content) {
+          const settingsObject = getCompiledSettings(
+            component.name,
+            settingsFile.content
+          );
+
+          if (
+            settingsObject &&
+            typeof settingsObject.getMobileValues === "function"
+          ) {
+            try {
+              const mobileValues = settingsObject.getMobileValues();
+              if (mobileValues && Object.keys(mobileValues).length > 0) {
+                cloned.props = { ...cloned.props, ...mobileValues };
+              }
+            } catch (error) {
+              console.warn(
+                `Failed to apply mobile values for component ${component.name}:`,
+                error
+              );
+            }
+          }
+        }
+      } catch (error) {
+        console.warn(
+          `Failed to process mobile values during copy for component ${component.name}:`,
+          error
+        );
+      }
     }
 
     return cloned;
