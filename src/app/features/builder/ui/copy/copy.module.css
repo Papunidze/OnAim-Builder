@@ -1,0 +1,48 @@
+.copyButton {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: var(--spacing-xs);
+  cursor: pointer;
+  gap: var(--spacing-xs);
+  flex-direction: column;
+  transition: opacity 0.2s ease;
+}
+
+.copyButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.copyButton:hover:not(:disabled) {
+  background: rgba(2, 204, 89, 0.05);
+  border-radius: 4px;
+}
+
+.copyButtonLabel {
+  color: var(--text-color-secondary);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-xs);
+  text-align: center;
+  font-style: normal;
+  font-weight: var(--font-weight-regular);
+  line-height: normal;
+}
+
+.copyButtonIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.copyButtonLoading {
+  opacity: 0.7;
+}
+
+.copyButtonSuccess {
+  color: var(--success-color, #02cc59);
+}
+
+.copyButtonError {
+  color: var(--error-color, #ff4757);
+} 

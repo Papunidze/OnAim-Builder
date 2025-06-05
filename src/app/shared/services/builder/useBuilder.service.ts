@@ -37,6 +37,7 @@ export interface UseBuilderReturn {
   clear: () => void;
   exportState: () => string;
   importState: (stateJson: string) => boolean;
+  copyComponents: (fromMode: "desktop" | "mobile", toMode: "desktop" | "mobile") => void;
 
   canUndo: boolean;
   canRedo: boolean;
@@ -169,6 +170,10 @@ export function useBuilder(): UseBuilderReturn {
     return builderService.getSelectedComponent();
   }, []);
 
+  const copyComponents = useCallback((fromMode: "desktop" | "mobile", toMode: "desktop" | "mobile") => {
+    builderService.copyComponents(fromMode, toMode);
+  }, []);
+
   const stats = builderService.getStats();
   const projectName = builderService.getProjectName();
   return {
@@ -187,6 +192,7 @@ export function useBuilder(): UseBuilderReturn {
     findComponentsByName,
     exportState,
     importState,
+    copyComponents,
     canUndo,
     canRedo,
     undo,

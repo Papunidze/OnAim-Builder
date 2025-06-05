@@ -7,6 +7,7 @@ import { Save } from "../save";
 import { LanguageEditor, LanguageConfigButton } from "../language";
 import { HistoryControl } from "../history-control";
 import { Preview } from "../preview";
+import { CopyButton } from "../copy";
 
 interface HeaderProps {
   viewMode: "desktop" | "mobile";
@@ -17,6 +18,15 @@ const Header = ({ viewMode, onViewChange }: HeaderProps): JSX.Element => {
   const handleViewModeChange = (mode: "desktop" | "mobile"): void => {
     builderService.selectComponent(null);
     onViewChange(mode);
+  };
+
+  const handleCopyComplete = (
+    success: boolean,
+    componentCount: number
+  ): void => {
+    if (success) {
+      console.warn(`Successfully copied ${componentCount} components`);
+    }
   };
 
   return (
@@ -51,6 +61,12 @@ const Header = ({ viewMode, onViewChange }: HeaderProps): JSX.Element => {
               <Image imageKey="icon:mobile" />
             </button>
           </div>
+          <div className={styles.builderHeaderDivider} />
+          <CopyButton
+            currentViewMode={viewMode}
+            className={styles.builderHeaderIconButton}
+            onCopyComplete={handleCopyComplete}
+          />
         </div>
         <div className={styles.builderHeaderActions}>
           <HistoryControl className={styles.builderHeaderHistory} />

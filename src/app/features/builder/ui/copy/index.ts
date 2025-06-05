@@ -1,0 +1,7 @@
+export { default as CopyButton } from "./components/CopyButton";
+export { copyService } from "./services/copy.service";
+export { componentUpdateService } from "./services/component-update.service";
+export { useCopy } from "./hooks/useCopy";
+export type { CopyOptions } from "./services/copy.service";
+export type { SafeUpdateOptions } from "./services/component-update.service";
+export type { UseCopyReturn } from "./hooks/useCopy"; 

@@ -87,8 +87,9 @@ class SettingsRenderer {
   ): void {
     if (typeof settingsObject.setOnChange === "function") {
       settingsObject.setOnChange((newValues: PropertyValue) => {
+        const mergedProps = { ...(currentProps || {}), ...newValues };
         this.onUpdate(componentId, {
-          props: { ...currentProps, ...newValues },
+          props: mergedProps,
         });
       });
     }
@@ -98,9 +99,10 @@ class SettingsRenderer {
     _componentId: string,
     currentProps?: PropertyValue
   ): void {
-    if (typeof settingsObject.getValues === "function") {
-      const values = settingsObject.getValues();
-      this.onUpdate(_componentId, { props: { ...currentProps, ...values } });
+    if ((!currentProps || Object.keys(currentProps).length === 0) && 
+        typeof settingsObject.getValues === "function") {
+      const defaultValues = settingsObject.getValues();
+      this.onUpdate(_componentId, { props: { ...defaultValues } });
     }
 
     if (currentProps && typeof settingsObject.setValue === "function") {

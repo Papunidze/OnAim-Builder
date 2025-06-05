@@ -9,6 +9,7 @@ import {
   type SettingsObject,
 } from "@app-features/builder/ui/property-adjustments/services";
 import { loadComponentData } from "@app-features/builder/ui/content-renderer/services";
+import { copyService } from "@app-features/builder/ui/copy/services/copy.service";
 
 export class BuilderService {
   private state: BuilderState = {
@@ -117,7 +118,7 @@ export class BuilderService {
     this.state[viewMode].push(initialComponent);
     this.emit("componentAdded", initialComponent);
     this.notifySubscribers();
-    
+
     try {
       const cacheVersion = `${Date.now()}`;
       const fileData = await loadComponentData(name, componentId, cacheVersion);
@@ -249,8 +250,20 @@ export class BuilderService {
     for (const mode of ["desktop", "mobile"] as const) {
       const component = this.state[mode].find((comp) => comp.id === id);
       if (component) {
-        const updatedComponent = { ...component, ...updates, id };
+        const updatedComponent = {
+          ...component,
+          ...updates,
+          id,
+          props: updates.props
+            ? { ...component.props, ...updates.props }
+            : component.props,
+          styles: updates.styles
+            ? { ...component.styles, ...updates.styles }
+            : component.styles,
+        };
+
         Object.assign(component, updatedComponent);
+
         if (updates.props || updates.styles) {
           import(
             "../../../features/builder/ui/content-renderer/services/component-loader"
@@ -342,7 +355,7 @@ export class BuilderService {
     const prevSelectedId = this.state.selectedComponentId;
 
     if (prevSelectedId === componentId) {
-      return; // No change
+      return;
     }
 
     this.state.selectedComponentId = componentId || undefined;
@@ -434,7 +447,7 @@ export class BuilderService {
     if (this.undoStack.length === 0) {
       return false;
     }
-
+    // console.log(this.undoStack);
     const previousState = this.undoStack.pop()!;
     this.redoStack.push(JSON.parse(JSON.stringify(this.state)));
     this.state = previousState;
@@ -452,6 +465,44 @@ export class BuilderService {
     this.state = nextState;
     this.notifySubscribers();
     return true;
+  }
+
+  copyComponents(
+    fromMode: "desktop" | "mobile",
+    toMode: "desktop" | "mobile"
+  ): void {
+    if (fromMode === toMode) {
+      return;
+    }
+
+    this.saveHistory();
+
+    const sourceComponents = this.state[fromMode];
+    if (sourceComponents.length === 0) {
+      return;
+    }
+
+    const copyResult = copyService.copyComponents(
+      sourceComponents,
+      fromMode,
+      toMode,
+      {
+        clearTarget: true,
+        preserveSelection: false,
+        validateSource: true,
+      }
+    );
+
+    if (copyResult.success) {
+      this.state[toMode] = copyResult.copiedComponents;
+
+      this.state.selectedComponentId = undefined;
+
+      this.emit("stateLoaded", this.state);
+      this.notifySubscribers();
+    } else {
+      console.warn("Copy operation failed:", copyResult.error);
+    }
   }
 }
 
