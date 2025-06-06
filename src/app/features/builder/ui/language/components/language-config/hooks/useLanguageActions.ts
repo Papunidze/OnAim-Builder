@@ -45,7 +45,6 @@ export function useLanguageActions({
           return file;
         }
       );
-
       updateComponent(selectedComponent.id, {
         compiledData: {
           ...selectedComponent.compiledData,

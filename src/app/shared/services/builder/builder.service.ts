@@ -10,6 +10,7 @@ import {
 } from "@app-features/builder/ui/property-adjustments/services";
 import { loadComponentData } from "@app-features/builder/ui/content-renderer/services";
 import { copyService } from "@app-features/builder/ui/copy/services/copy.service";
+import { isEqual } from "lodash";
 
 export class BuilderService {
   private state: BuilderState = {
@@ -244,43 +245,56 @@ export class BuilderService {
 
     return removed;
   }
+
   updateComponent(id: string, updates: Partial<ComponentState>): boolean {
-    // this.saveHistory();
+    try {
+      for (const mode of ["desktop", "mobile"] as const) {
+        const component = this.state[mode].find((comp) => comp.id === id);
 
-    for (const mode of ["desktop", "mobile"] as const) {
-      const component = this.state[mode].find((comp) => comp.id === id);
-      if (component) {
-        const updatedComponent = {
-          ...component,
-          ...updates,
-          id,
-          props: updates.props
+        if (component) {
+          const updatedProps = updates.props
             ? { ...component.props, ...updates.props }
-            : component.props,
-          styles: updates.styles
+            : component.props;
+          const updatedStyles = updates.styles
             ? { ...component.styles, ...updates.styles }
-            : component.styles,
-        };
+            : component.styles;
 
-        Object.assign(component, updatedComponent);
+          if (
+            isEqual(updatedProps, component.props) &&
+            isEqual(updatedStyles, component.styles)
+          ) {
+            return false;
+          }
 
-        if (updates.props || updates.styles) {
-          import(
-            "../../../features/builder/ui/content-renderer/services/component-loader"
-          )
-            .then((module) => {
-              module.invalidateComponentCache(id);
-            })
-            .catch(() => {});
+          this.saveHistory();
+
+          Object.assign(component, updates, {
+            props: updatedProps,
+            styles: updatedStyles,
+          });
+
+          if (updates.props || updates.styles) {
+            import(
+              "../../../features/builder/ui/content-renderer/services/component-loader"
+            )
+              .then((module) => module.invalidateComponentCache(id))
+              .catch((error) =>
+                console.error("Component cache invalidation error:", error)
+              );
+          }
+
+          this.emit("componentUpdated", component);
+          this.notifySubscribers();
+
+          return true;
         }
-
-        this.emit("componentUpdated", component);
-        this.notifySubscribers();
-        return true;
       }
-    }
 
-    return false;
+      return false;
+    } catch (error) {
+      console.error("Error updating component:", error);
+      return false;
+    }
   }
 
   getComponent(id: string): ComponentState | undefined {
