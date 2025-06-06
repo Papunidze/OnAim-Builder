@@ -139,10 +139,10 @@ export function ComponentInstance({
       defaultValues = settingsObject.getValues() || {};
     }
 
-    const settingsValue =
-      component.viewMode === "mobile" || !hasExistingProps
-        ? { ...defaultValues }
-        : { ...defaultValues, ...component.props };
+    const settingsValue = {
+      ...defaultValues,
+      ...(component.props || {}),
+    };
 
     let languageValue = {};
     if (languageObject) {

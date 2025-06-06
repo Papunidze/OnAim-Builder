@@ -3,7 +3,7 @@ import type { JSX } from "react";
 
 import styles from "./header.module.css";
 import { builderService } from "@app-shared/services/builder";
-import { Save } from "../save";
+import { Save, Import } from "../save";
 import { LanguageEditor, LanguageConfigButton } from "../language";
 import { HistoryControl } from "../history-control";
 import { Preview } from "../preview";
@@ -26,6 +26,14 @@ const Header = ({ viewMode, onViewChange }: HeaderProps): JSX.Element => {
   ): void => {
     if (success) {
       console.warn(`Successfully copied ${componentCount} components`);
+    }
+  };
+
+  const handleImportComplete = (success: boolean, message: string): void => {
+    if (success) {
+      console.warn(message);
+    } else {
+      console.warn(message);
     }
   };
 
@@ -84,6 +92,7 @@ const Header = ({ viewMode, onViewChange }: HeaderProps): JSX.Element => {
           </button>
           <div className={styles.builderHeaderDivider} />
           <Preview viewMode={viewMode} />
+          <Import onImportComplete={handleImportComplete} />
           <Save viewMode={viewMode} />
         </div>
       </div>

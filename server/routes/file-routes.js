@@ -8,6 +8,10 @@ const {
 
   downloadMultipleComponentsZip,
   checkComponentExists,
+  
+  importProject,
+  importProjectFromFile,
+  getImportStatus,
 } = require("../controllers/file-controllers");
 const { upload } = require("../config/storage");
 
@@ -31,5 +35,16 @@ router.get("/folders/:name", fetchCompiledFilesInFolder);
 router.post("/download-multiple", downloadMultipleComponentsZip);
 
 router.get("/check/:name", checkComponentExists);
+
+// Import routes
+router.post("/import", importProject);
+
+router.post(
+  "/import/file",
+  upload.single("projectFile"),
+  importProjectFromFile
+);
+
+router.get("/import/status", getImportStatus);
 
 module.exports = router;

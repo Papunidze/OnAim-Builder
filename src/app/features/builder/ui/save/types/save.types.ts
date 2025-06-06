@@ -24,6 +24,11 @@ export interface ComponentExportData {
     styles: Record<string, unknown>;
     elementSpecificCSS: string;
   };
+  language?: {
+    currentLanguage: string;
+    languageData: Record<string, Record<string, string>>;
+    content: string;
+  };
 }
 
 export interface SaveData {
@@ -43,6 +48,10 @@ export interface SaveData {
         uniqueTypes: number;
         breakdown: { name: string; count: number }[];
       };
+    };
+    language?: {
+      globalState: Record<string, Record<string, string>>;
+      lastActiveLanguage: string;
     };
   };
   components: ComponentExportData[];
