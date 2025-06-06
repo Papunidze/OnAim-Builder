@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 import type { ComponentRenderProps } from "../types";
 import styles from "./component-instance.module.css";
 import { ErrorBoundary } from "@app-shared/components";
@@ -10,9 +10,10 @@ import {
 } from "@app-features/builder/ui/property-adjustments/services";
 import { compileLanguageObject } from "@app-features/builder/ui/language/compiler/language-compiler";
 
-export function ComponentInstance({
+export const ComponentInstance = memo(function ComponentInstance({
   instance,
   onRetry,
+  viewMode,
 }: ComponentRenderProps): JSX.Element {
   const { selectComponent, selectedComponentId, getComponent } = useBuilder();
 
@@ -75,12 +76,11 @@ export function ComponentInstance({
       component.props && Object.keys(component.props).length > 0;
 
     if (
-      component.viewMode === "mobile" &&
+      viewMode === "mobile" &&
       typeof settingsObject.getMobileValues === "function"
     ) {
       try {
-        const mobileResult =
-          MobileValuesService.getFilteredMobileValues(settingsObject);
+        const mobileResult = MobileValuesService.getMobileValues(settingsObject);
         const mobileValues = mobileResult.success ? mobileResult.data : {};
 
         if (mobileValues && Object.keys(mobileValues).length > 0) {
@@ -140,7 +140,7 @@ export function ComponentInstance({
     }
 
     const settingsValue =
-      component.viewMode === "mobile" || !hasExistingProps
+      viewMode === "mobile" || !hasExistingProps
         ? { ...defaultValues }
         : { ...defaultValues, ...component.props };
 
@@ -169,8 +169,7 @@ export function ComponentInstance({
       language: languageValue,
       languageObject,
     };
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [component, instance.name, component?.props, component?.timestamp]);
+  }, [component?.props, component?.timestamp, viewMode, instance.name]);
 
   const wrapperClassName = useMemo(() => {
     return isSelected
@@ -256,4 +255,4 @@ export function ComponentInstance({
       Preparing {instance.name}...
     </div>
   );
-}
+});

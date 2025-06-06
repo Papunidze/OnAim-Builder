@@ -96,11 +96,48 @@ class SettingsRenderer {
     currentProps?: PropertyValue
   ): void {
     if (typeof settingsObject.setOnChange === "function") {
+      let isUpdating = false;
+
       settingsObject.setOnChange((newValues: PropertyValue) => {
+        if (isUpdating) return;
+
+        isUpdating = true;
         const mergedProps = { ...(currentProps || {}), ...newValues };
+
         this.onUpdate(componentId, {
           props: mergedProps,
         });
+
+        if (
+          this.viewMode === "mobile" &&
+          typeof settingsObject.setMobileValues === "function"
+        ) {
+          try {
+            const currentMobileValues =
+              typeof settingsObject.getMobileValues === "function"
+                ? settingsObject.getMobileValues() || {}
+                : {};
+            const updatedMobileValues = {
+              ...currentMobileValues,
+              ...newValues,
+            };
+
+            settingsObject.setMobileValues(updatedMobileValues);
+
+            setTimeout(() => {
+              isUpdating = false;
+            }, 10);
+          } catch (error) {
+            console.warn("Failed to persist mobile values:", error);
+            setTimeout(() => {
+              isUpdating = false;
+            }, 10);
+          }
+        } else {
+          setTimeout(() => {
+            isUpdating = false;
+          }, 0);
+        }
       });
     }
   }
@@ -157,7 +194,9 @@ class SettingsRenderer {
           this.onUpdate(_componentId, { props: mergedProps });
 
           if (typeof settingsObject.setValue === "function") {
-            settingsObject.setValue(mergedProps);
+            const valuesToShow =
+              this.viewMode === "mobile" ? mobileValues : mergedProps;
+            settingsObject.setValue(valuesToShow);
           }
           return;
         }
@@ -166,16 +205,45 @@ class SettingsRenderer {
       }
     }
 
-    if (
-      (!currentProps || Object.keys(currentProps).length === 0) &&
-      typeof settingsObject.getValues === "function"
-    ) {
-      const defaultValues = settingsObject.getValues();
-      this.onUpdate(_componentId, { props: { ...defaultValues } });
-    }
+    if (this.viewMode === "mobile") {
+      if (typeof settingsObject.getMobileValues === "function") {
+        const existingMobileValues = settingsObject.getMobileValues();
+        if (
+          !existingMobileValues ||
+          Object.keys(existingMobileValues).length === 0
+        ) {
+          const valuesToSet =
+            currentProps && Object.keys(currentProps).length > 0
+              ? currentProps
+              : typeof settingsObject.getValues === "function"
+                ? settingsObject.getValues()
+                : {};
 
-    if (currentProps && typeof settingsObject.setValue === "function") {
-      settingsObject.setValue(currentProps);
+          if (typeof settingsObject.setMobileValues === "function") {
+            settingsObject.setMobileValues(valuesToSet);
+          }
+
+          if (typeof settingsObject.setValue === "function") {
+            settingsObject.setValue(valuesToSet);
+          }
+        } else {
+          if (typeof settingsObject.setValue === "function") {
+            settingsObject.setValue(existingMobileValues);
+          }
+        }
+      }
+    } else {
+      if (
+        (!currentProps || Object.keys(currentProps).length === 0) &&
+        typeof settingsObject.getValues === "function"
+      ) {
+        const defaultValues = settingsObject.getValues();
+        this.onUpdate(_componentId, { props: { ...defaultValues } });
+      }
+
+      if (currentProps && typeof settingsObject.setValue === "function") {
+        settingsObject.setValue(currentProps);
+      }
     }
   }
 

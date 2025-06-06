@@ -271,6 +271,7 @@ export class BuilderService {
           Object.assign(component, updates, {
             props: updatedProps,
             styles: updatedStyles,
+            timestamp: Date.now(),
           });
 
           if (updates.props || updates.styles) {
