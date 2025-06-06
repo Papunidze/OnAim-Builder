@@ -245,7 +245,6 @@ export class BuilderService {
 
     return removed;
   }
-
   updateComponent(id: string, updates: Partial<ComponentState>): boolean {
     try {
       for (const mode of ["desktop", "mobile"] as const) {
@@ -259,9 +258,26 @@ export class BuilderService {
             ? { ...component.styles, ...updates.styles }
             : component.styles;
 
+          const hasPropsChanges = !isEqual(updatedProps, component.props);
+          const hasStylesChanges = !isEqual(updatedStyles, component.styles);
+          const hasCompiledDataChanges =
+            updates.compiledData &&
+            !isEqual(updates.compiledData, component.compiledData);
+          const hasOtherChanges = Object.keys(updates).some(
+            (key) =>
+              key !== "props" &&
+              key !== "styles" &&
+              key !== "compiledData" &&
+              key !== "timestamp" &&
+              updates[key as keyof ComponentState] !==
+                component[key as keyof ComponentState]
+          );
+
           if (
-            isEqual(updatedProps, component.props) &&
-            isEqual(updatedStyles, component.styles)
+            !hasPropsChanges &&
+            !hasStylesChanges &&
+            !hasCompiledDataChanges &&
+            !hasOtherChanges
           ) {
             return false;
           }
@@ -274,7 +290,7 @@ export class BuilderService {
             timestamp: Date.now(),
           });
 
-          if (updates.props || updates.styles) {
+          if (updates.props || updates.styles || updates.compiledData) {
             import(
               "../../../features/builder/ui/content-renderer/services/component-loader"
             )

@@ -56,13 +56,22 @@ export function useLanguageActions({
         );
 
         if (updatedFiles && selectedComponent.compiledData) {
+          // Force a timestamp update to ensure re-rendering
+          const now = Date.now();
           updateComponent(selectedComponent.id, {
             compiledData: {
               ...selectedComponent.compiledData,
               files: updatedFiles,
             },
-            timestamp: Date.now(),
+            timestamp: now,
           });
+
+          // Additional update to ensure visual refresh
+          setTimeout(() => {
+            updateComponent(selectedComponent.id, {
+              timestamp: now + 1,
+            });
+          }, 50);
         }
       } catch (error) {
         console.error("Error changing language:", error);

@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import { useMemo, memo } from "react";
+import { useMemo } from "react";
 import type { ComponentRenderProps } from "../types";
 import styles from "./component-instance.module.css";
 import { ErrorBoundary } from "@app-shared/components";
@@ -10,10 +10,9 @@ import {
 } from "@app-features/builder/ui/property-adjustments/services";
 import { compileLanguageObject } from "@app-features/builder/ui/language/compiler/language-compiler";
 
-export const ComponentInstance = memo(function ComponentInstance({
+export function ComponentInstance({
   instance,
   onRetry,
-  viewMode,
 }: ComponentRenderProps): JSX.Element {
   const { selectComponent, selectedComponentId, getComponent } = useBuilder();
 
@@ -76,11 +75,12 @@ export const ComponentInstance = memo(function ComponentInstance({
       component.props && Object.keys(component.props).length > 0;
 
     if (
-      viewMode === "mobile" &&
+      component.viewMode === "mobile" &&
       typeof settingsObject.getMobileValues === "function"
     ) {
       try {
-        const mobileResult = MobileValuesService.getMobileValues(settingsObject);
+        const mobileResult =
+          MobileValuesService.getFilteredMobileValues(settingsObject);
         const mobileValues = mobileResult.success ? mobileResult.data : {};
 
         if (mobileValues && Object.keys(mobileValues).length > 0) {
@@ -140,7 +140,7 @@ export const ComponentInstance = memo(function ComponentInstance({
     }
 
     const settingsValue =
-      viewMode === "mobile" || !hasExistingProps
+      component.viewMode === "mobile" || !hasExistingProps
         ? { ...defaultValues }
         : { ...defaultValues, ...component.props };
 
@@ -169,7 +169,8 @@ export const ComponentInstance = memo(function ComponentInstance({
       language: languageValue,
       languageObject,
     };
-  }, [component?.props, component?.timestamp, viewMode, instance.name]);
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [component, instance.name, component?.props, component?.timestamp]);
 
   const wrapperClassName = useMemo(() => {
     return isSelected
@@ -255,4 +256,4 @@ export const ComponentInstance = memo(function ComponentInstance({
       Preparing {instance.name}...
     </div>
   );
-});
+}

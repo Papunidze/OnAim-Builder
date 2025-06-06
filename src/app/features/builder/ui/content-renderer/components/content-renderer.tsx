@@ -60,10 +60,9 @@ export function ContentRenderer({
       <div className={componentsListClassName}>
         {instances.map((instance) => (
           <ComponentInstance
-            key={`${instance.id}-${instance.name}-${viewMode}`}
+            key={`${instance.id}-${instance.name}`}
             instance={instance}
             onRetry={retryComponent}
-            viewMode={viewMode}
           />
         ))}
       </div>

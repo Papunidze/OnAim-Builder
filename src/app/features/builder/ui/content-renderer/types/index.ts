@@ -52,7 +52,6 @@ export interface UseComponentInstancesOptions {
 export interface ComponentRenderProps {
   instance: ComponentInstanceState;
   onRetry: (instanceId: string) => void;
-  viewMode: ViewMode;
 }
 
 export type ComponentPromise = Promise<ComponentFetchResult>;
