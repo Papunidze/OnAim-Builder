@@ -61,6 +61,8 @@ class SettingsRenderer {
   private readonly onSettingsObjectChange: (
     settingsObject: SettingsObject | null
   ) => void;
+  private isApplyingValues = false;
+  private currentSettingsObject: SettingsObject | null = null;
 
   constructor(
     hostElement: HTMLDivElement,
@@ -92,51 +94,43 @@ class SettingsRenderer {
   }
   private setupSettingsHandlers(
     settingsObject: SettingsObject,
-    componentId: string,
-    currentProps?: PropertyValue
+    componentId: string
   ): void {
     if (typeof settingsObject.setOnChange === "function") {
-      let isUpdating = false;
-
       settingsObject.setOnChange((newValues: PropertyValue) => {
-        if (isUpdating) return;
+        if (this.isApplyingValues) {
+          return;
+        }
 
-        isUpdating = true;
-        const mergedProps = { ...(currentProps || {}), ...newValues };
+        const mergedProps = { ...newValues };
 
         this.onUpdate(componentId, {
           props: mergedProps,
         });
-
         if (
           this.viewMode === "mobile" &&
-          typeof settingsObject.setMobileValues === "function"
+          typeof settingsObject.setMobileValues === "function" &&
+          typeof settingsObject.getMobileValues === "function"
         ) {
           try {
-            const currentMobileValues =
-              typeof settingsObject.getMobileValues === "function"
-                ? settingsObject.getMobileValues() || {}
-                : {};
-            const updatedMobileValues = {
-              ...currentMobileValues,
-              ...newValues,
-            };
+            const isPartialUpdate = Object.keys(newValues).length < 5;
 
-            settingsObject.setMobileValues(updatedMobileValues);
+            if (isPartialUpdate) {
+              const currentMobileValues =
+                settingsObject.getMobileValues() || {};
+              const updatedMobileValues = {
+                ...currentMobileValues,
+                ...newValues,
+              };
 
-            setTimeout(() => {
-              isUpdating = false;
-            }, 10);
+              this.isApplyingValues = true;
+              settingsObject.setMobileValues(updatedMobileValues);
+              this.isApplyingValues = false;
+            }
           } catch (error) {
             console.warn("Failed to persist mobile values:", error);
-            setTimeout(() => {
-              isUpdating = false;
-            }, 10);
+            this.isApplyingValues = false;
           }
-        } else {
-          setTimeout(() => {
-            isUpdating = false;
-          }, 0);
         }
       });
     }
@@ -146,104 +140,96 @@ class SettingsRenderer {
     _componentId: string,
     currentProps?: PropertyValue
   ): void {
-    if (
-      this.viewMode === "mobile" &&
-      typeof settingsObject.getMobileValues === "function"
-    ) {
-      try {
-        const mobileResult =
-          MobileValuesService.getFilteredMobileValues(settingsObject);
-        const mobileValues = mobileResult.success ? mobileResult.data : {};
+    this.isApplyingValues = true;
 
-        if (mobileValues && Object.keys(mobileValues).length > 0) {
-          const deepMerge = (
-            target: Record<string, unknown>,
-            source: Record<string, unknown>
-          ): Record<string, unknown> => {
-            const result = { ...target };
-            for (const key in source) {
+    try {
+      if (this.viewMode === "mobile") {
+        if (typeof settingsObject.getMobileValues === "function") {
+          const existingMobileValues = settingsObject.getMobileValues();
+
+          if (
+            existingMobileValues &&
+            Object.keys(existingMobileValues).length > 0
+          ) {
+            if (typeof settingsObject.setValue === "function") {
+              settingsObject.setValue(existingMobileValues);
+            }
+          } else {
+            let valuesToSet: PropertyValue = {};
+
+            try {
+              const mobileResult =
+                MobileValuesService.getFilteredMobileValues(settingsObject);
               if (
-                source[key] &&
-                typeof source[key] === "object" &&
-                !Array.isArray(source[key])
+                mobileResult.success &&
+                mobileResult.data &&
+                Object.keys(mobileResult.data).length > 0
               ) {
-                result[key] = deepMerge(
-                  (target[key] as Record<string, unknown>) || {},
-                  source[key] as Record<string, unknown>
-                );
+                valuesToSet = mobileResult.data;
               } else {
-                result[key] = source[key];
+                if (currentProps && Object.keys(currentProps).length > 0) {
+                  valuesToSet = currentProps;
+                } else {
+                  const desktopDefaults =
+                    typeof settingsObject.getValues === "function"
+                      ? settingsObject.getValues()
+                      : {};
+                  valuesToSet = desktopDefaults;
+                }
+              }
+            } catch (error) {
+              console.warn("Failed to get mobile defaults:", error);
+              if (currentProps && Object.keys(currentProps).length > 0) {
+                valuesToSet = currentProps;
+              } else {
+                valuesToSet =
+                  typeof settingsObject.getValues === "function"
+                    ? settingsObject.getValues()
+                    : {};
               }
             }
-            return result;
-          };
 
-          const desktopDefaults =
-            typeof settingsObject.getValues === "function"
-              ? settingsObject.getValues()
-              : {};
-          const merged = deepMerge(
-            desktopDefaults as Record<string, unknown>,
-            (currentProps as Record<string, unknown>) || {}
-          );
-          const mergedProps = deepMerge(
-            merged,
-            mobileValues as Record<string, unknown>
-          );
+            if (typeof settingsObject.setMobileValues === "function") {
+              settingsObject.setMobileValues(valuesToSet);
+            }
 
-          this.onUpdate(_componentId, { props: mergedProps });
-
-          if (typeof settingsObject.setValue === "function") {
-            const valuesToShow =
-              this.viewMode === "mobile" ? mobileValues : mergedProps;
-            settingsObject.setValue(valuesToShow);
-          }
-          return;
-        }
-      } catch (error) {
-        console.warn("Failed to apply mobile values:", error);
-      }
-    }
-
-    if (this.viewMode === "mobile") {
-      if (typeof settingsObject.getMobileValues === "function") {
-        const existingMobileValues = settingsObject.getMobileValues();
-        if (
-          !existingMobileValues ||
-          Object.keys(existingMobileValues).length === 0
-        ) {
-          const valuesToSet =
-            currentProps && Object.keys(currentProps).length > 0
-              ? currentProps
-              : typeof settingsObject.getValues === "function"
-                ? settingsObject.getValues()
-                : {};
-
-          if (typeof settingsObject.setMobileValues === "function") {
-            settingsObject.setMobileValues(valuesToSet);
-          }
-
-          if (typeof settingsObject.setValue === "function") {
-            settingsObject.setValue(valuesToSet);
+            if (typeof settingsObject.setValue === "function") {
+              settingsObject.setValue(valuesToSet);
+            }
           }
         } else {
-          if (typeof settingsObject.setValue === "function") {
-            settingsObject.setValue(existingMobileValues);
+          if (currentProps && typeof settingsObject.setValue === "function") {
+            settingsObject.setValue(currentProps);
+          } else {
+            try {
+              const mobileResult =
+                MobileValuesService.getFilteredMobileValues(settingsObject);
+              if (
+                mobileResult.success &&
+                mobileResult.data &&
+                Object.keys(mobileResult.data).length > 0
+              ) {
+                if (typeof settingsObject.setValue === "function") {
+                  settingsObject.setValue(mobileResult.data);
+                }
+              }
+            } catch (error) {
+              console.warn("Failed to apply mobile defaults:", error);
+            }
+          }
+        }
+      } else {
+        if (typeof settingsObject.setValue === "function") {
+          if (currentProps && Object.keys(currentProps).length > 0) {
+            settingsObject.setValue(currentProps);
+          } else if (typeof settingsObject.getValues === "function") {
+            const defaultValues = settingsObject.getValues();
+            settingsObject.setValue(defaultValues);
           }
         }
       }
-    } else {
-      if (
-        (!currentProps || Object.keys(currentProps).length === 0) &&
-        typeof settingsObject.getValues === "function"
-      ) {
-        const defaultValues = settingsObject.getValues();
-        this.onUpdate(_componentId, { props: { ...defaultValues } });
-      }
-
-      if (currentProps && typeof settingsObject.setValue === "function") {
-        settingsObject.setValue(currentProps);
-      }
+    } finally {
+      this.isApplyingValues = false;
     }
   }
 
@@ -279,6 +265,22 @@ class SettingsRenderer {
     return false;
   }
 
+  forceUpdateSettingsUI(props: PropertyValue): void {
+    if (
+      this.currentSettingsObject &&
+      typeof this.currentSettingsObject.setValue === "function"
+    ) {
+      this.isApplyingValues = true;
+      try {
+        this.currentSettingsObject.setValue(props);
+      } catch (error) {
+        console.warn("Failed to force update settings UI:", error);
+      } finally {
+        this.isApplyingValues = false;
+      }
+    }
+  }
+
   async render(component: {
     id?: string;
     name: string;
@@ -287,6 +289,7 @@ class SettingsRenderer {
   }): Promise<void> {
     try {
       this.clearHost();
+      this.currentSettingsObject = null;
 
       const settingsContent = this.getSettingsContent(
         component.compiledData?.files
@@ -308,17 +311,39 @@ class SettingsRenderer {
         return;
       }
 
+      this.currentSettingsObject = settingsObject;
       const element = settingsObject.draw();
       this.hostElement.appendChild(element);
 
       if (component.id) {
-        this.applySettingsStyles(settingsObject, component.id, component.props);
+        this.setupSettingsHandlers(settingsObject, component.id);
 
-        this.setupSettingsHandlers(
-          settingsObject,
-          component.id,
-          component.props
-        );
+        await new Promise((resolve) => setTimeout(resolve, 1));
+
+        let propsToUse = component.props;
+        if (
+          this.viewMode === "mobile" &&
+          (!propsToUse || Object.keys(propsToUse).length === 0)
+        ) {
+          try {
+            const mobileResult =
+              MobileValuesService.getFilteredMobileValues(settingsObject);
+            if (
+              mobileResult.success &&
+              mobileResult.data &&
+              Object.keys(mobileResult.data).length > 0
+            ) {
+              propsToUse = mobileResult.data;
+              if (component.id) {
+                this.onUpdate(component.id, { props: propsToUse });
+              }
+            }
+          } catch (error) {
+            console.warn("Failed to get mobile defaults during render:", error);
+          }
+        }
+
+        this.applySettingsStyles(settingsObject, component.id, propsToUse);
       }
 
       this.onError("");
@@ -333,6 +358,7 @@ class SettingsRenderer {
 
   clear(): void {
     this.clearHost();
+    this.currentSettingsObject = null;
     this.onSettingsObjectChange(null);
   }
 }
@@ -384,6 +410,8 @@ export function PropertyRenderer({
   const settingsHost = useRef<HTMLDivElement>(null);
   const settingsRenderer = useRef<SettingsRenderer | null>(null);
   const [, setCurrentSettingsObject] = useState<SettingsObject | null>(null);
+  const previousPropsRef = useRef<PropertyValue | undefined>(undefined);
+  const previousComponentIdRef = useRef<string | undefined>(undefined);
 
   const selectedComponent = getSelectedComponent();
 
@@ -405,10 +433,31 @@ export function PropertyRenderer({
     if (!selectedComponent || !renderer) {
       clearError();
       renderer?.clear();
+      previousPropsRef.current = undefined;
+      previousComponentIdRef.current = undefined;
       return;
     }
 
-    renderer.render(selectedComponent);
+    const currentComponentId = selectedComponent.id;
+    const currentProps = selectedComponent.props;
+    const previousProps = previousPropsRef.current;
+    const previousComponentId = previousComponentIdRef.current;
+
+    if (
+      currentComponentId === previousComponentId &&
+      previousProps &&
+      currentProps &&
+      JSON.stringify(previousProps) !== JSON.stringify(currentProps)
+    ) {
+      renderer.forceUpdateSettingsUI(currentProps);
+      previousPropsRef.current = currentProps;
+      return;
+    }
+
+    renderer.render(selectedComponent).then(() => {
+      previousPropsRef.current = selectedComponent.props;
+      previousComponentIdRef.current = selectedComponent.id;
+    });
   }, [selectedComponent, clearError]);
 
   if (!selectedComponent) {
