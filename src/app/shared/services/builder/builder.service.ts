@@ -245,7 +245,11 @@ export class BuilderService {
 
     return removed;
   }
-  updateComponent(id: string, updates: Partial<ComponentState>): boolean {
+  updateComponent(
+    id: string,
+    updates: Partial<ComponentState>,
+    options?: { skipHistory?: boolean; isMobileDefaultValue?: boolean }
+  ): boolean {
     try {
       for (const mode of ["desktop", "mobile"] as const) {
         const component = this.state[mode].find((comp) => comp.id === id);
@@ -282,7 +286,9 @@ export class BuilderService {
             return false;
           }
 
-          this.saveHistory();
+          if (!options?.skipHistory && !options?.isMobileDefaultValue) {
+            this.saveHistory();
+          }
 
           Object.assign(component, updates, {
             props: updatedProps,

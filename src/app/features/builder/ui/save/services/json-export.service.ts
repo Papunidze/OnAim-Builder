@@ -12,24 +12,24 @@ export class JSONExportService {
     const components = builderService.getLiveComponents(viewMode);
     const componentData = components.map((comp, index) => {
       const exportData = transformComponentToExportData(comp, index);
-      
-      // Add language data if component has language files
-      const languageState = LanguageStateUtils.extractLanguageFromComponent(comp);
+
+      const languageState =
+        LanguageStateUtils.extractLanguageFromComponent(comp);
       if (languageState) {
         exportData.language = languageState;
       }
-      
+
       return exportData;
     });
 
-    // Collect global language state from all components
     const languageStates = componentData
-      .map(comp => comp.language)
+      .map((comp) => comp.language)
       .filter((lang): lang is NonNullable<typeof lang> => lang !== undefined);
 
-    const globalLanguageData = languageStates.length > 0 
-      ? LanguageStateUtils.mergeLanguageStates(languageStates)
-      : undefined;
+    const globalLanguageData =
+      languageStates.length > 0
+        ? LanguageStateUtils.mergeLanguageStates(languageStates)
+        : undefined;
 
     const componentNames = [
       ...new Set(componentData.map((c) => c.component.name)),
