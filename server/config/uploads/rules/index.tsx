@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from "react";
+import React, { useMemo } from "react";
 
 import "./styles.scss";
 import { Settings } from "./settings";
