@@ -16,33 +16,32 @@ export class JSONImportService {
 
   static async importFromData(saveData: SaveData): Promise<boolean> {
     try {
-      // Clear current state
       builderService.clear();
 
-      // Set project name if available
       if (saveData.project.metadata.projectName) {
         builderService.setProjectName(saveData.project.metadata.projectName);
       }
 
-      // Import components
       const componentsToImport = saveData.components;
-      const viewMode = saveData.project.metadata.viewMode as "desktop" | "mobile";
+      const viewMode = saveData.project.metadata.viewMode as
+        | "desktop"
+        | "mobile";
 
-      // Import components and store mapping of original IDs to new ones
       const idMapping = new Map<string, string>();
-      
+
       for (const componentData of componentsToImport) {
-        const newComponent = await this.importComponent(componentData, viewMode);
+        const newComponent = await this.importComponent(
+          componentData,
+          viewMode
+        );
         if (newComponent) {
           idMapping.set(componentData.component.id, newComponent.id);
         }
       }
 
-      // Restore global language state if available
       if (saveData.project.language) {
         this.restoreGlobalLanguageState(saveData.project.language);
       }
-
 
       return true;
     } catch (error) {
@@ -56,28 +55,31 @@ export class JSONImportService {
     viewMode: "desktop" | "mobile"
   ): Promise<ComponentState | null> {
     try {
+      const component = await builderService.addComponent(
+        componentData.component.name,
+        viewMode,
+        {
+          props: {},
+          styles: componentData.configuration.styles as Record<string, string>,
+          position: componentData.layout.position.coordinates,
+          size: componentData.layout.size,
+        }
+      );
 
-      const component = await builderService.addComponent(componentData.component.name, viewMode, {
-        props: {},
-        styles: componentData.configuration.styles as Record<string, string>,
-        position: componentData.layout.position.coordinates,
-        size: componentData.layout.size,
-      });
-
-
-
-      if (componentData.configuration.props && Object.keys(componentData.configuration.props).length > 0) {
+      if (
+        componentData.configuration.props &&
+        Object.keys(componentData.configuration.props).length > 0
+      ) {
         const defaultSettings = component.props || {};
         const mergedProps = this.mergePropsWithSettings(
           defaultSettings,
           componentData.configuration.props as Record<string, unknown>
         );
-        
+
         builderService.updateComponent(component.id, {
           props: mergedProps,
         });
       }
-
 
       if (componentData.language) {
         await this.restoreComponentLanguage(component, componentData.language);
@@ -85,7 +87,10 @@ export class JSONImportService {
 
       return component;
     } catch (error) {
-      console.error(`Failed to import component ${componentData.component.name}:`, error);
+      console.error(
+        `Failed to import component ${componentData.component.name}:`,
+        error
+      );
       return null;
     }
   }
@@ -99,19 +104,20 @@ export class JSONImportService {
     }
   ): Promise<void> {
     try {
-      // Update component with language files
       if (!component.compiledData) {
         component.compiledData = { files: [] };
       }
 
-      // Add or update language file
-      const languageFileIndex = component.compiledData.files.findIndex(file => 
-        file.file.includes('language') || file.type === 'language' || file.file.endsWith('.language.ts')
+      const languageFileIndex = component.compiledData.files.findIndex(
+        (file) =>
+          file.file.includes("language") ||
+          file.type === "language" ||
+          file.file.endsWith(".language.ts")
       );
 
       const languageFile = {
-        file: 'language.ts',
-        type: 'language',
+        file: "language.ts",
+        type: "language",
         content: languageData.content,
         prefix: component.name,
       };
@@ -122,23 +128,22 @@ export class JSONImportService {
         component.compiledData.files.push(languageFile);
       }
 
-      // Update component in builder service
       builderService.updateComponent(component.id, {
         compiledData: component.compiledData,
       });
     } catch (error) {
-      console.error(`Failed to restore language for component ${component.name}:`, error);
+      console.error(
+        `Failed to restore language for component ${component.name}:`,
+        error
+      );
     }
   }
 
-  private static restoreGlobalLanguageState(
-    languageState: {
-      globalState: Record<string, Record<string, string>>;
-      lastActiveLanguage: string;
-    }
-  ): void {
+  private static restoreGlobalLanguageState(languageState: {
+    globalState: Record<string, Record<string, string>>;
+    lastActiveLanguage: string;
+  }): void {
     try {
-      // Store global language state in builder service metadata
       const builderState = builderService.getState();
       const extendedMetadata: typeof builderState.metadata & {
         language: {
@@ -150,24 +155,27 @@ export class JSONImportService {
         language: languageState,
       };
       builderState.metadata = extendedMetadata;
-      
-      
     } catch (error) {
       console.error("Failed to restore global language state:", error);
     }
   }
 
-
-
   private static mergePropsWithSettings(
     defaultSettings: Record<string, unknown>,
     importedProps: Record<string, unknown>
   ): Record<string, unknown> {
-    const deepMerge = (target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> => {
+    const deepMerge = (
+      target: Record<string, unknown>,
+      source: Record<string, unknown>
+    ): Record<string, unknown> => {
       const result = { ...target };
-      
+
       for (const key in source) {
-        if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+        if (
+          source[key] &&
+          typeof source[key] === "object" &&
+          !Array.isArray(source[key])
+        ) {
           result[key] = deepMerge(
             (target[key] as Record<string, unknown>) || {},
             source[key] as Record<string, unknown>
@@ -176,10 +184,10 @@ export class JSONImportService {
           result[key] = source[key];
         }
       }
-      
+
       return result;
     };
-    
+
     return deepMerge(defaultSettings, importedProps);
   }
 
@@ -199,17 +207,17 @@ export class JSONImportService {
   }
 
   static createFileInput(): HTMLInputElement {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.style.display = 'none';
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.style.display = "none";
     return input;
   }
 
   static async handleFileImport(): Promise<boolean> {
     return new Promise((resolve): void => {
       const input = this.createFileInput();
-      
+
       input.onchange = async (e): Promise<void> => {
         const file = (e.target as HTMLInputElement).files?.[0];
         if (file) {
@@ -230,4 +238,4 @@ export class JSONImportService {
       input.click();
     });
   }
-} 
+}

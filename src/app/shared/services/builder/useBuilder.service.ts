@@ -23,7 +23,11 @@ export interface UseBuilderReturn {
   ) => Promise<ComponentState>;
   removeComponent: (name: string, viewMode: "desktop" | "mobile") => boolean;
   removeComponentById: (id: string) => boolean;
-  updateComponent: (id: string, updates: Partial<ComponentState>) => boolean;
+  updateComponent: (
+    id: string,
+    updates: Partial<ComponentState>,
+    options?: { skipHistory?: boolean; isMobileDefaultValue?: boolean }
+  ) => boolean;
   getComponent: (id: string) => ComponentState | undefined;
 
   hasComponent: (name: string, viewMode: "desktop" | "mobile") => boolean;
@@ -37,7 +41,10 @@ export interface UseBuilderReturn {
   clear: () => void;
   exportState: () => string;
   importState: (stateJson: string) => boolean;
-  copyComponents: (fromMode: "desktop" | "mobile", toMode: "desktop" | "mobile") => void;
+  copyComponents: (
+    fromMode: "desktop" | "mobile",
+    toMode: "desktop" | "mobile"
+  ) => void;
 
   canUndo: boolean;
   canRedo: boolean;
@@ -98,10 +105,13 @@ export function useBuilder(): UseBuilderReturn {
   const removeComponentById = useCallback((id: string) => {
     return builderService.removeComponent(id);
   }, []);
-
   const updateComponent = useCallback(
-    (id: string, updates: Partial<ComponentState>) => {
-      return builderService.updateComponent(id, updates);
+    (
+      id: string,
+      updates: Partial<ComponentState>,
+      options?: { skipHistory?: boolean; isMobileDefaultValue?: boolean }
+    ) => {
+      return builderService.updateComponent(id, updates, options);
     },
     []
   );
@@ -170,9 +180,12 @@ export function useBuilder(): UseBuilderReturn {
     return builderService.getSelectedComponent();
   }, []);
 
-  const copyComponents = useCallback((fromMode: "desktop" | "mobile", toMode: "desktop" | "mobile") => {
-    builderService.copyComponents(fromMode, toMode);
-  }, []);
+  const copyComponents = useCallback(
+    (fromMode: "desktop" | "mobile", toMode: "desktop" | "mobile") => {
+      builderService.copyComponents(fromMode, toMode);
+    },
+    []
+  );
 
   const stats = builderService.getStats();
   const projectName = builderService.getProjectName();

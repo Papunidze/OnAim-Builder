@@ -56,7 +56,6 @@ export function useLanguageActions({
         );
 
         if (updatedFiles && selectedComponent.compiledData) {
-          // Force a timestamp update to ensure re-rendering
           const now = Date.now();
           updateComponent(selectedComponent.id, {
             compiledData: {
@@ -66,7 +65,6 @@ export function useLanguageActions({
             timestamp: now,
           });
 
-          // Additional update to ensure visual refresh
           setTimeout(() => {
             updateComponent(selectedComponent.id, {
               timestamp: now + 1,

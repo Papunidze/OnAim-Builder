@@ -55,7 +55,8 @@ class SettingsRenderer {
   private readonly onError: (error: string) => void;
   private readonly onUpdate: (
     id: string,
-    updates: { props: PropertyValue }
+    updates: { props: PropertyValue },
+    options?: { skipHistory?: boolean; isMobileDefaultValue?: boolean }
   ) => void;
   private readonly viewMode: "desktop" | "mobile";
   private readonly onSettingsObjectChange: (
@@ -63,11 +64,14 @@ class SettingsRenderer {
   ) => void;
   private isApplyingValues = false;
   private currentSettingsObject: SettingsObject | null = null;
-
   constructor(
     hostElement: HTMLDivElement,
     onError: (error: string) => void,
-    onUpdate: (id: string, updates: { props: PropertyValue }) => void,
+    onUpdate: (
+      id: string,
+      updates: { props: PropertyValue },
+      options?: { skipHistory?: boolean; isMobileDefaultValue?: boolean }
+    ) => void,
     viewMode: "desktop" | "mobile",
     onSettingsObjectChange: (settingsObject: SettingsObject | null) => void
   ) {
@@ -107,6 +111,7 @@ class SettingsRenderer {
         this.onUpdate(componentId, {
           props: mergedProps,
         });
+
         if (
           this.viewMode === "mobile" &&
           typeof settingsObject.setMobileValues === "function" &&
@@ -137,7 +142,7 @@ class SettingsRenderer {
   }
   private applySettingsStyles(
     settingsObject: SettingsObject,
-    _componentId: string,
+    componentId: string,
     currentProps?: PropertyValue
   ): void {
     this.isApplyingValues = true;
@@ -146,56 +151,22 @@ class SettingsRenderer {
       if (this.viewMode === "mobile") {
         if (typeof settingsObject.getMobileValues === "function") {
           const existingMobileValues = settingsObject.getMobileValues();
-
           if (
             existingMobileValues &&
             Object.keys(existingMobileValues).length > 0
           ) {
             if (typeof settingsObject.setValue === "function") {
+              const originalFlag = this.isApplyingValues;
+              this.isApplyingValues = false;
               settingsObject.setValue(existingMobileValues);
+              this.isApplyingValues = originalFlag;
             }
           } else {
-            let valuesToSet: PropertyValue = {};
-
-            try {
-              const mobileResult =
-                MobileValuesService.getFilteredMobileValues(settingsObject);
-              if (
-                mobileResult.success &&
-                mobileResult.data &&
-                Object.keys(mobileResult.data).length > 0
-              ) {
-                valuesToSet = mobileResult.data;
-              } else {
-                if (currentProps && Object.keys(currentProps).length > 0) {
-                  valuesToSet = currentProps;
-                } else {
-                  const desktopDefaults =
-                    typeof settingsObject.getValues === "function"
-                      ? settingsObject.getValues()
-                      : {};
-                  valuesToSet = desktopDefaults;
-                }
-              }
-            } catch (error) {
-              console.warn("Failed to get mobile defaults:", error);
-              if (currentProps && Object.keys(currentProps).length > 0) {
-                valuesToSet = currentProps;
-              } else {
-                valuesToSet =
-                  typeof settingsObject.getValues === "function"
-                    ? settingsObject.getValues()
-                    : {};
-              }
-            }
-
-            if (typeof settingsObject.setMobileValues === "function") {
-              settingsObject.setMobileValues(valuesToSet);
-            }
-
-            if (typeof settingsObject.setValue === "function") {
-              settingsObject.setValue(valuesToSet);
-            }
+            this.initializeMobileDefaults(
+              settingsObject,
+              componentId,
+              currentProps
+            );
           }
         } else {
           if (currentProps && typeof settingsObject.setValue === "function") {
@@ -220,16 +191,86 @@ class SettingsRenderer {
         }
       } else {
         if (typeof settingsObject.setValue === "function") {
-          if (currentProps && Object.keys(currentProps).length > 0) {
-            settingsObject.setValue(currentProps);
-          } else if (typeof settingsObject.getValues === "function") {
-            const defaultValues = settingsObject.getValues();
-            settingsObject.setValue(defaultValues);
-          }
+          const valuesToUse =
+            currentProps && Object.keys(currentProps).length > 0
+              ? currentProps
+              : typeof settingsObject.getValues === "function"
+                ? settingsObject.getValues()
+                : {};
+          settingsObject.setValue(valuesToUse);
         }
       }
+    } catch (error) {
+      console.error("Error applying settings styles:", error);
     } finally {
       this.isApplyingValues = false;
+    }
+  }
+
+  private initializeMobileDefaults(
+    settingsObject: SettingsObject,
+    componentId: string,
+    currentProps?: PropertyValue
+  ): void {
+    let valuesToSet: PropertyValue = {};
+    let shouldSetMobileValues = false;
+
+    try {
+      const mobileResult =
+        MobileValuesService.getFilteredMobileValues(settingsObject);
+      if (
+        mobileResult.success &&
+        mobileResult.data &&
+        Object.keys(mobileResult.data).length > 0
+      ) {
+        valuesToSet = mobileResult.data;
+        shouldSetMobileValues = true;
+      } else if (currentProps && Object.keys(currentProps).length > 0) {
+        valuesToSet = currentProps;
+        shouldSetMobileValues = true;
+      } else {
+        const desktopDefaults =
+          typeof settingsObject.getValues === "function"
+            ? settingsObject.getValues()
+            : {};
+        if (Object.keys(desktopDefaults).length > 0) {
+          valuesToSet = desktopDefaults;
+          shouldSetMobileValues = true;
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to get mobile defaults:", error);
+      if (currentProps && Object.keys(currentProps).length > 0) {
+        valuesToSet = currentProps;
+        shouldSetMobileValues = true;
+      } else {
+        valuesToSet =
+          typeof settingsObject.getValues === "function"
+            ? settingsObject.getValues()
+            : {};
+        shouldSetMobileValues = true;
+      }
+    }
+    if (
+      shouldSetMobileValues &&
+      typeof settingsObject.setMobileValues === "function"
+    ) {
+      settingsObject.setMobileValues(valuesToSet);
+
+      this.onUpdate(
+        componentId,
+        {
+          props: valuesToSet,
+        },
+        { isMobileDefaultValue: true }
+      );
+    }
+
+    if (typeof settingsObject.setValue === "function") {
+      const originalFlag = this.isApplyingValues;
+      this.isApplyingValues = false;
+      settingsObject.setValue(valuesToSet);
+      this.isApplyingValues = originalFlag;
     }
   }
 
@@ -264,19 +305,15 @@ class SettingsRenderer {
     }
     return false;
   }
-
   forceUpdateSettingsUI(props: PropertyValue): void {
     if (
       this.currentSettingsObject &&
       typeof this.currentSettingsObject.setValue === "function"
     ) {
-      this.isApplyingValues = true;
       try {
         this.currentSettingsObject.setValue(props);
       } catch (error) {
         console.warn("Failed to force update settings UI:", error);
-      } finally {
-        this.isApplyingValues = false;
       }
     }
   }
@@ -335,7 +372,11 @@ class SettingsRenderer {
             ) {
               propsToUse = mobileResult.data;
               if (component.id) {
-                this.onUpdate(component.id, { props: propsToUse });
+                this.onUpdate(
+                  component.id,
+                  { props: propsToUse },
+                  { isMobileDefaultValue: true }
+                );
               }
             }
           } catch (error) {
@@ -458,7 +499,7 @@ export function PropertyRenderer({
       previousPropsRef.current = selectedComponent.props;
       previousComponentIdRef.current = selectedComponent.id;
     });
-  }, [selectedComponent, clearError]);
+  }, [selectedComponent, clearError, viewMode]);
 
   if (!selectedComponent) {
     return <EmptyState />;
