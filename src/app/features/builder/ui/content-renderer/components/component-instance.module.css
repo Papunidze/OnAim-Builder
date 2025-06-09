@@ -98,18 +98,7 @@
 }
 
 .componentWrapper.selected {
-  border-color: #007bff;
-  border-width: 2px;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
-}
-
-.componentLabel {
-  background: #f8f9fa;
-  padding: 8px 12px;
-  font-size: 12px;
-  color: #666;
-  border-bottom: 1px solid #e0e0e0;
-  font-family: monospace;
+  outline: 5px solid #007bff;
 }
 
 .componentPreparing {

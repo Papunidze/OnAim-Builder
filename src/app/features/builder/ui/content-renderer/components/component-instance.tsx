@@ -242,9 +242,6 @@ export function ComponentInstance({
         )}
       >
         <div className={wrapperClassName} onClick={handleClick}>
-          <div className={styles.componentLabel}>
-            {instance.name} - Prefix: {instance.prefix || "N/A"}
-          </div>
           <Component {...getComponentProps} />
         </div>
       </ErrorBoundary>

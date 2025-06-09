@@ -3,6 +3,7 @@ import "./leaderboard.css";
 import Button from "./button";
 import type { Settings } from "./settings";
 import { LngProps } from "./language";
+
 interface Leader {
   name: string;
   score: number;
