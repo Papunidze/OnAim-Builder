@@ -7,24 +7,26 @@ import {
 } from "builder-settings-types";
 
 export const settings = new SettingGroup({
-  title: "Leaderboard Settings",
+  title: "Leaderboard Styles",
   main: true,
   settings: {
+    color: new ColorSetting({
+      default: "15, 84, 42",
+      title: "Text Color",
+    }),
+
     background: new ColorSetting({
-      default: "255,255,255",
+      default: "15, 84, 42",
       title: "Background Color",
     }),
-    title: new StringSetting({
-      default: "Top Players",
-      title: "Title",
+
+    borderRadius: new StringSetting({
+      default: "8px",
+      title: "Border Radius",
     }),
     width: new WidthSetting({
-      default: 400,
+      default: 820,
       title: "Width (px)",
-    }),
-    players: new StringSetting({
-      default: "Player",
-      title: "Players",
     }),
   },
 });

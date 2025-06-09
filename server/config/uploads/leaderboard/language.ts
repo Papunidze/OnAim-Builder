@@ -3,11 +3,27 @@ import SetLanguage from "language-management-lib";
 const lngObject = {
   en: {
     title: "Leaderboard",
-    noPlayers: "No players yet!",
+    rank: "Rank",
+    player: "Player",
+    score: "Score",
+    prize: "Prize",
+    loading: "Loading leaderboard...",
+    error: "Error",
+    unknownError: "An unknown error occurred.",
+    errorFetchingData: "Failed to retrieve initial leaderboard configuration.",
+    noDataAlt: "No data found",
   },
   es: {
-    title: "Tabla de clasificación",
-    noPlayers: "¡No hay jugadores aún!",
+    title: "Tabla de Clasificación",
+    rank: "Rango",
+    player: "Jugador",
+    score: "Puntuación",
+    prize: "Premio",
+    loading: "Cargando tabla...",
+    error: "Error",
+    unknownError: "Ocurrió un error desconocido.",
+    errorFetchingData: "Error al recuperar la configuración de la tabla.",
+    noDataAlt: "No se encontraron datos",
   },
 };
 
