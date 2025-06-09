@@ -106,33 +106,28 @@ export class EnhancedReaderService {
   getFilesByPrefix(prefix: string): FileData[] {
     return this.fileData.filter((f) => f.prefix === prefix);
   }
-
   private isReactComponent(
     component: unknown
   ): component is ComponentType<unknown> {
-    if (!component || typeof component !== "function") {
-      return false;
-    }
-
-    const componentStr = component.toString();
-
-    if (
-      componentStr.includes("React.createElement") ||
-      componentStr.includes("jsx") ||
-      (componentStr.includes("return") &&
-        (componentStr.includes("<") ||
-          componentStr.includes("React.") ||
-          componentStr.includes("createElement")))
-    ) {
+    if (typeof component === "function") {
       return true;
     }
 
     if (
-      componentStr.includes("Component") ||
-      componentStr.includes("render") ||
-      componentStr.includes("extends")
+      typeof component === "object" &&
+      component !== null &&
+      ("$$typeof" in component || "render" in component)
     ) {
-      return true;
+      const comp = component as {
+        $$typeof?: symbol;
+        render?: () => unknown;
+      };
+
+      return (
+        typeof comp.render === "function" ||
+        comp.$$typeof === Symbol.for("react.forward_ref") ||
+        comp.$$typeof === Symbol.for("react.memo")
+      );
     }
 
     return false;

@@ -4,6 +4,7 @@ import React, {
   useState,
   useMemo,
   useCallback,
+  memo,
 } from "react";
 import "./styles.scss";
 import { fetchExternalUrl, leaderboardData } from "./action";
@@ -166,4 +167,4 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   );
 };
 
-export default Leaderboard;
+export default memo(Leaderboard);

@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import type { ComponentRenderProps } from "../types";
 import styles from "./component-instance.module.css";
 import { ErrorBoundary } from "@app-shared/components";
@@ -9,13 +9,13 @@ import {
   MobileValuesService,
 } from "@app-features/builder/ui/property-adjustments/services";
 import { compileLanguageObject } from "@app-features/builder/ui/language/compiler/language-compiler";
+import { isEqual } from "lodash";
 
 export function ComponentInstance({
   instance,
   onRetry,
 }: ComponentRenderProps): JSX.Element {
   const { selectComponent, selectedComponentId, getComponent } = useBuilder();
-
   const component = getComponent(instance.id);
 
   const componentContentKey = useMemo(() => {
@@ -39,6 +39,9 @@ export function ComponentInstance({
 
   const key = componentContentKey;
   const isSelected = selectedComponentId === instance.id;
+
+  const lastPropsRef = useRef<Record<string, unknown>>({});
+
   const getComponentProps = useMemo((): Record<string, unknown> => {
     if (!component?.compiledData?.files) {
       return {};
@@ -55,6 +58,7 @@ export function ComponentInstance({
       console.error("No settings file found for", instance.name);
       return {};
     }
+
     const languageObject = compileLanguageObject(
       languageFile?.content,
       component.name
@@ -156,7 +160,6 @@ export function ComponentInstance({
         const allLanguageData = languageObject.getLanguageData();
         const currentTranslations = allLanguageData[currentLang] || {};
         const defaultTranslations = allLanguageData["en"] || {};
-
         languageValue = {
           ...defaultTranslations,
           ...currentTranslations,
@@ -164,11 +167,17 @@ export function ComponentInstance({
       }
     }
 
-    return {
+    const computedProps = {
       settings: settingsValue,
       language: languageValue,
       languageObject,
     };
+
+    if (!isEqual(computedProps, lastPropsRef.current)) {
+      lastPropsRef.current = computedProps;
+    }
+
+    return lastPropsRef.current;
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [component, instance.name, component?.props, component?.timestamp]);
 
