@@ -1,7 +1,7 @@
 {
   "leaderboard": {
     "test": "test",
-    "background": "255,255,255",
+    "background": "232, 33, 33",
     "width": 860,
     "opacity": 100,
     "border": {
@@ -9,6 +9,8 @@
       "color": "0, 0, 30",
       "opacity": 100,
       "radius": 12
-    }
+    },
+    "fontSize": 16,
+    "padding": 20
   }
 }

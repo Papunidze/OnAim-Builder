@@ -9,5 +9,13 @@ export interface ComponentsProps {
 
 export interface ComponentsContentProps {
   folders: FolderEntry[];
-  addComponent: (name: string) => Promise<void>;
+  addComponent: (
+    name: string,
+    options?: {
+      props?: Record<string, unknown>;
+      styles?: Record<string, string>;
+      position?: { x: number; y: number };
+      size?: { width: number; height: number };
+    }
+  ) => Promise<void>;
 }

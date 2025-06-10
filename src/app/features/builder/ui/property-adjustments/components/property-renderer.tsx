@@ -434,8 +434,7 @@ export const PropertyRenderer = memo(function PropertyRenderer({
 }: {
   viewMode: "desktop" | "mobile";
 }): JSX.Element {
-  const { getSelectedComponent, updateComponent, selectedComponentId } =
-    useBuilder();
+  const { getSelectedComponent, updateComponent } = useBuilder();
   const { error, setError, clearError } = useComponentState();
   const settingsHost = useRef<HTMLDivElement>(null);
   const settingsRenderer = useRef<SettingsRenderer | null>(null);
@@ -445,7 +444,7 @@ export const PropertyRenderer = memo(function PropertyRenderer({
 
   const selectedComponent = useMemo(
     () => getSelectedComponent(),
-    [getSelectedComponent, selectedComponentId]
+    [getSelectedComponent]
   );
 
   useEffect(() => {

@@ -72,18 +72,30 @@ function computeComponentProps(
   if (propsCache.has(component)) {
     const cached = propsCache.get(component)!;
     if (cached.cacheKey === cacheKey) {
-      return {
-        settings: cached.settings,
-        language: cached.language,
-        languageObject: cached.languageObject,
-      };
+      if (!component.props?.templateLanguage) {
+        return {
+          settings: cached.settings,
+          language: cached.language,
+          languageObject: cached.languageObject,
+        };
+      }
     }
   }
 
   if (!component?.compiledData?.files) {
+    let languageValue = {};
+    if (component.props?.templateLanguage) {
+      const templateLanguage = component.props.templateLanguage as Record<
+        string,
+        Record<string, string>
+      >;
+      const templateTranslations = templateLanguage["en"] || {};
+      languageValue = templateTranslations;
+    }
+
     const result: CachedProps = {
       settings: component.props || {},
-      language: {},
+      language: languageValue,
       languageObject: null,
       cacheKey,
     };
@@ -130,6 +142,21 @@ function computeComponentProps(
     }
   } catch {
     languageValue = {};
+  }
+
+  if (component.props?.templateLanguage) {
+    const templateLanguage = component.props.templateLanguage as Record<
+      string,
+      Record<string, string>
+    >;
+    const currentLang = languageObject?.getCurrentLanguage() || "en";
+    const templateTranslations =
+      templateLanguage[currentLang] || templateLanguage["en"] || {};
+
+    languageValue = {
+      ...languageValue,
+      ...templateTranslations,
+    };
   }
 
   if (!settingsFile?.content) {
@@ -227,6 +254,21 @@ function computeComponentProps(
     }
   } catch {
     settingsValue = component.props || {};
+  }
+
+  if (component.props?.templateLanguage) {
+    const templateLanguage = component.props.templateLanguage as Record<
+      string,
+      Record<string, string>
+    >;
+    const currentLang = languageObject?.getCurrentLanguage() || "en";
+    const templateTranslations =
+      templateLanguage[currentLang] || templateLanguage["en"] || {};
+
+    languageValue = {
+      ...languageValue,
+      ...templateTranslations,
+    };
   }
 
   const result: CachedProps = {

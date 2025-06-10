@@ -6,11 +6,62 @@ import {
   EnhancedSourceExportService,
 } from "./services/export.services";
 import { useDropdown, useExportHandlers } from "./hooks/useSave.hooks";
+import { useTemplate } from "./hooks/useTemplate.hooks";
 import { SaveDropdown, type DropdownOption } from "./components/SaveDropdown";
+import { TemplateDialog } from "../components/templates";
+import { ComponentTemplateApiService } from "../components/templates/component-template-api.service";
+import { useBuilder } from "@app-shared/services/builder/useBuilder.service";
+import { extractComponentSettings } from "./utils/save.utils";
+import { LanguageStateUtils } from "../language/utils/language-state.utils";
 
 const Save = ({ viewMode }: SaveProps): JSX.Element => {
   const { isOpen, dropdownRef, toggle, close } = useDropdown();
   const { handleExport } = useExportHandlers(close);
+  const { getSelectedComponent } = useBuilder();
+  const { isTemplateDialogOpen, openTemplateDialog, closeTemplateDialog } =
+    useTemplate();
+
+  const handleSaveTemplate = async (templateData: {
+    name: string;
+    description?: string;
+  }): Promise<void> => {
+    const selectedComponent = getSelectedComponent();
+    if (!selectedComponent) {
+      alert("Please select a component first");
+      return;
+    }
+
+    try {
+      const componentSettings = extractComponentSettings(selectedComponent);
+
+      let languageUpdates = {};
+      try {
+        const languageState =
+          LanguageStateUtils.extractLanguageFromComponent(selectedComponent);
+        if (languageState && languageState.languageData) {
+          languageUpdates = languageState.languageData;
+        }
+      } catch (error) {
+        console.warn("Failed to extract language data:", error);
+      }
+
+      await ComponentTemplateApiService.createComponentTemplate(
+        selectedComponent.name,
+        {
+          name: templateData.name,
+          description: templateData.description,
+          settings: componentSettings,
+          language: languageUpdates,
+        }
+      );
+
+      alert("Template saved successfully!");
+    } catch (error) {
+      console.error("Error saving template:", error);
+      alert("Failed to save template. Please try again.");
+    }
+  };
+
   const dropdownOptions: DropdownOption[] = [
     {
       id: "json",
@@ -29,6 +80,13 @@ const Save = ({ viewMode }: SaveProps): JSX.Element => {
           EnhancedSourceExportService.downloadServerSources(viewMode)
         ),
     },
+    {
+      id: "save-template",
+      label: "Save as Template",
+      description: "Save current components as a reusable template",
+      icon: "",
+      onClick: () => openTemplateDialog(),
+    },
   ];
 
   return (
@@ -44,6 +102,12 @@ const Save = ({ viewMode }: SaveProps): JSX.Element => {
       </button>
 
       <SaveDropdown isOpen={isOpen} options={dropdownOptions} />
+
+      <TemplateDialog
+        isOpen={isTemplateDialogOpen}
+        onClose={() => closeTemplateDialog()}
+        onSave={handleSaveTemplate}
+      />
     </div>
   );
 };

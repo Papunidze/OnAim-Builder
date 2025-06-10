@@ -20,9 +20,9 @@ export default function Components({ viewMode }: ComponentsProps): JSX.Element {
   return (
     <ComponentsContent
       folders={folders}
-      addComponent={async (name) => {
+      addComponent={async (name, options) => {
         try {
-          await addComponent(name, viewMode);
+          await addComponent(name, viewMode, options);
         } catch (error) {
           console.error(`Failed to add component ${name}:`, error);
         }
