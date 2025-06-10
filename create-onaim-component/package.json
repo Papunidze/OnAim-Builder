@@ -1,0 +1,25 @@
+{
+  "name": "create-onaim-component",
+  "version": "1.0.0",
+  "description": "Create OnAim Builder components with ease - like create-vite but for OnAim",
+  "main": "index.js",
+  "bin": {
+    "create-onaim-component": "./index.js"
+  },
+  "scripts": {
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": [
+    "onaim",
+    "component",
+    "builder",
+    "generator",
+    "scaffold",
+    "create"
+  ],
+  "author": "OnAim Builder",
+  "license": "MIT",
+  "files": [
+    "index.js"
+  ]
+}

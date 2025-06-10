@@ -10,9 +10,11 @@
     "preview": "vite preview",
     "prepare": "husky",
     "commitlint": "commitlint --edit",
-    "pre-commit": "npm run lint"
+    "pre-commit": "npm run lint",
+    "create-component": "node create-onaim-component/index.js"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.80.6",
     "builder-settings-types": "^0.0.169",
     "language-management-lib": "^1.0.1",
     "lodash": "^4.17.21",

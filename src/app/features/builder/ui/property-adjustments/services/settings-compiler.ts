@@ -2,6 +2,7 @@ import "builder-settings-types/dist/style.css";
 import {
   SettingGroup,
   ColorSetting,
+  NumberSetting,
   WidthSetting,
   BorderSettingSet,
   OpacitySetting,
@@ -24,6 +25,7 @@ export interface SettingsObject {
 const BUILDER_SETTINGS_TYPES = {
   SettingGroup,
   ColorSetting,
+  NumberSetting,
   WidthSetting,
   BorderSettingSet,
   OpacitySetting,
@@ -106,6 +108,7 @@ function createModuleContext(
       const {
         SettingGroup,
         ColorSetting,
+        NumberSetting,
         WidthSetting,
         BorderSettingSet,
         SelectApiSettings,
