@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo, memo } from "react";
 import { useBuilder } from "@app-shared/services/builder/useBuilder.service";
 import {
   getCompiledSettings,
@@ -18,13 +18,13 @@ interface ComponentState {
   isRendering: boolean;
 }
 
-function useComponentState(): {
+const useComponentState = (): {
   error: string;
   isRendering: boolean;
   setError: (error: string) => void;
   setRendering: (isRendering: boolean) => void;
   clearError: () => void;
-} {
+} => {
   const [state, setState] = useState<ComponentState>({
     error: "",
     isRendering: false,
@@ -48,7 +48,7 @@ function useComponentState(): {
     setRendering,
     clearError,
   };
-}
+};
 
 class SettingsRenderer {
   private readonly hostElement: HTMLDivElement;
@@ -64,6 +64,8 @@ class SettingsRenderer {
   ) => void;
   private isApplyingValues = false;
   private currentSettingsObject: SettingsObject | null = null;
+  private propsCache = new WeakMap<SettingsObject, PropertyValue>();
+
   constructor(
     hostElement: HTMLDivElement,
     onError: (error: string) => void,
@@ -96,21 +98,17 @@ class SettingsRenderer {
   ): settingsObject is SettingsObject {
     return !!(settingsObject && typeof settingsObject.draw === "function");
   }
+
   private setupSettingsHandlers(
     settingsObject: SettingsObject,
     componentId: string
   ): void {
     if (typeof settingsObject.setOnChange === "function") {
       settingsObject.setOnChange((newValues: PropertyValue) => {
-        if (this.isApplyingValues) {
-          return;
-        }
+        if (this.isApplyingValues) return;
 
         const mergedProps = { ...newValues };
-
-        this.onUpdate(componentId, {
-          props: mergedProps,
-        });
+        this.onUpdate(componentId, { props: mergedProps });
 
         if (
           this.viewMode === "mobile" &&
@@ -119,7 +117,6 @@ class SettingsRenderer {
         ) {
           try {
             const isPartialUpdate = Object.keys(newValues).length < 5;
-
             if (isPartialUpdate) {
               const currentMobileValues =
                 settingsObject.getMobileValues() || {};
@@ -127,19 +124,18 @@ class SettingsRenderer {
                 ...currentMobileValues,
                 ...newValues,
               };
-
               this.isApplyingValues = true;
               settingsObject.setMobileValues(updatedMobileValues);
               this.isApplyingValues = false;
             }
-          } catch (error) {
-            console.warn("Failed to persist mobile values:", error);
+          } catch {
             this.isApplyingValues = false;
           }
         }
       });
     }
   }
+
   private applySettingsStyles(
     settingsObject: SettingsObject,
     componentId: string,
@@ -184,8 +180,8 @@ class SettingsRenderer {
                   settingsObject.setValue(mobileResult.data);
                 }
               }
-            } catch (error) {
-              console.warn("Failed to apply mobile defaults:", error);
+            } catch {
+              console.error("Failed to set mobile values");
             }
           }
         }
@@ -200,8 +196,6 @@ class SettingsRenderer {
           settingsObject.setValue(valuesToUse);
         }
       }
-    } catch (error) {
-      console.error("Error applying settings styles:", error);
     } finally {
       this.isApplyingValues = false;
     }
@@ -216,30 +210,35 @@ class SettingsRenderer {
     let shouldSetMobileValues = false;
 
     try {
-      const mobileResult =
-        MobileValuesService.getFilteredMobileValues(settingsObject);
-      if (
-        mobileResult.success &&
-        mobileResult.data &&
-        Object.keys(mobileResult.data).length > 0
-      ) {
-        valuesToSet = mobileResult.data;
-        shouldSetMobileValues = true;
-      } else if (currentProps && Object.keys(currentProps).length > 0) {
-        valuesToSet = currentProps;
+      if (this.propsCache.has(settingsObject)) {
+        valuesToSet = this.propsCache.get(settingsObject)!;
         shouldSetMobileValues = true;
       } else {
-        const desktopDefaults =
-          typeof settingsObject.getValues === "function"
-            ? settingsObject.getValues()
-            : {};
-        if (Object.keys(desktopDefaults).length > 0) {
-          valuesToSet = desktopDefaults;
+        const mobileResult =
+          MobileValuesService.getFilteredMobileValues(settingsObject);
+        if (
+          mobileResult.success &&
+          mobileResult.data &&
+          Object.keys(mobileResult.data).length > 0
+        ) {
+          valuesToSet = mobileResult.data;
           shouldSetMobileValues = true;
+        } else if (currentProps && Object.keys(currentProps).length > 0) {
+          valuesToSet = currentProps;
+          shouldSetMobileValues = true;
+        } else {
+          const desktopDefaults =
+            typeof settingsObject.getValues === "function"
+              ? settingsObject.getValues()
+              : {};
+          if (Object.keys(desktopDefaults).length > 0) {
+            valuesToSet = desktopDefaults;
+            shouldSetMobileValues = true;
+          }
         }
+        this.propsCache.set(settingsObject, valuesToSet);
       }
-    } catch (error) {
-      console.warn("Failed to get mobile defaults:", error);
+    } catch {
       if (currentProps && Object.keys(currentProps).length > 0) {
         valuesToSet = currentProps;
         shouldSetMobileValues = true;
@@ -251,17 +250,15 @@ class SettingsRenderer {
         shouldSetMobileValues = true;
       }
     }
+
     if (
       shouldSetMobileValues &&
       typeof settingsObject.setMobileValues === "function"
     ) {
       settingsObject.setMobileValues(valuesToSet);
-
       this.onUpdate(
         componentId,
-        {
-          props: valuesToSet,
-        },
+        { props: valuesToSet },
         { isMobileDefaultValue: true }
       );
     }
@@ -280,8 +277,7 @@ class SettingsRenderer {
     if (typeof settingsObject.getMobileValues === "function") {
       try {
         return settingsObject.getMobileValues();
-      } catch (error) {
-        console.error("Error getting mobile values:", error);
+      } catch {
         this.onError("Failed to get mobile values");
         return null;
       }
@@ -297,14 +293,14 @@ class SettingsRenderer {
       try {
         settingsObject.setMobileValues(values);
         return true;
-      } catch (error) {
-        console.error("Error setting mobile values:", error);
+      } catch {
         this.onError("Failed to set mobile values");
         return false;
       }
     }
     return false;
   }
+
   forceUpdateSettingsUI(props: PropertyValue): void {
     if (
       this.currentSettingsObject &&
@@ -312,8 +308,8 @@ class SettingsRenderer {
     ) {
       try {
         this.currentSettingsObject.setValue(props);
-      } catch (error) {
-        console.warn("Failed to force update settings UI:", error);
+      } catch {
+        console.error("Failed to update settings UI");
       }
     }
   }
@@ -354,7 +350,6 @@ class SettingsRenderer {
 
       if (component.id) {
         this.setupSettingsHandlers(settingsObject, component.id);
-
         await new Promise((resolve) => setTimeout(resolve, 1));
 
         let propsToUse = component.props;
@@ -379,8 +374,8 @@ class SettingsRenderer {
                 );
               }
             }
-          } catch (error) {
-            console.warn("Failed to get mobile defaults during render:", error);
+          } catch {
+            console.error("Failed to update settings UI");
           }
         }
 
@@ -404,49 +399,43 @@ class SettingsRenderer {
   }
 }
 
-function EmptyState(): JSX.Element {
-  return (
-    <div className={styles.container}>
-      <div className={styles.noComponent}>No component selected</div>
-    </div>
-  );
-}
+const EmptyState = memo(() => (
+  <div className={styles.container}>
+    <div className={styles.noComponent}>No component selected</div>
+  </div>
+));
 
-interface ErrorStateProps {
-  error: string;
-  componentName: string;
-}
+EmptyState.displayName = "EmptyState";
 
-function ErrorState({ error, componentName }: ErrorStateProps): JSX.Element {
-  return (
+const ErrorState = memo(
+  ({ error, componentName }: { error: string; componentName: string }) => (
     <div className={styles.error}>
       <p>Error: {error}</p>
       <p className={styles.noSettings}>
         No properties available for {componentName}
       </p>
     </div>
-  );
-}
+  )
+);
 
-interface HeaderProps {
-  componentName: string;
-}
+ErrorState.displayName = "ErrorState";
 
-function Header({ componentName }: HeaderProps): JSX.Element {
-  return (
-    <div className={styles.header}>
-      <h3 className={styles.title}>Component Properties</h3>
-      <p className={styles.componentName}>Component: {componentName}</p>
-    </div>
-  );
-}
+const Header = memo(({ componentName }: { componentName: string }) => (
+  <div className={styles.header}>
+    <h3 className={styles.title}>Component Properties</h3>
+    <p className={styles.componentName}>Component: {componentName}</p>
+  </div>
+));
 
-export function PropertyRenderer({
+Header.displayName = "Header";
+
+export const PropertyRenderer = memo(function PropertyRenderer({
   viewMode,
 }: {
   viewMode: "desktop" | "mobile";
 }): JSX.Element {
-  const { getSelectedComponent, updateComponent } = useBuilder();
+  const { getSelectedComponent, updateComponent, selectedComponentId } =
+    useBuilder();
   const { error, setError, clearError } = useComponentState();
   const settingsHost = useRef<HTMLDivElement>(null);
   const settingsRenderer = useRef<SettingsRenderer | null>(null);
@@ -454,7 +443,10 @@ export function PropertyRenderer({
   const previousPropsRef = useRef<PropertyValue | undefined>(undefined);
   const previousComponentIdRef = useRef<string | undefined>(undefined);
 
-  const selectedComponent = getSelectedComponent();
+  const selectedComponent = useMemo(
+    () => getSelectedComponent(),
+    [getSelectedComponent, selectedComponentId]
+  );
 
   useEffect(() => {
     if (settingsHost.current && !settingsRenderer.current) {
@@ -466,7 +458,7 @@ export function PropertyRenderer({
         setCurrentSettingsObject
       );
     }
-  }, [setError, updateComponent, viewMode, setCurrentSettingsObject]);
+  }, [setError, updateComponent, viewMode]);
 
   useEffect(() => {
     const renderer = settingsRenderer.current;
@@ -499,7 +491,7 @@ export function PropertyRenderer({
       previousPropsRef.current = selectedComponent.props;
       previousComponentIdRef.current = selectedComponent.id;
     });
-  }, [selectedComponent, clearError, viewMode]);
+  }, [selectedComponent, clearError]);
 
   if (!selectedComponent) {
     return <EmptyState />;
@@ -508,12 +500,10 @@ export function PropertyRenderer({
   return (
     <div className={styles.container}>
       <Header componentName={selectedComponent.name} />
-
       <div className={styles.settingsHost} ref={settingsHost} />
-
       {error && (
         <ErrorState error={error} componentName={selectedComponent.name} />
       )}
     </div>
   );
-}
+});

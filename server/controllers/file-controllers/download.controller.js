@@ -234,8 +234,8 @@ Note: Missing keys automatically fall back to English values.
 Each component receives props in the following structure:
 \`\`\`typescript
 interface ComponentProps {
-  settings: SettingsObject;  // Component settings/configuration
-  language: LanguageObject; // Current language translations
+  settings: SettingsObject; 
+  language: LanguageObject; 
 }
 \`\`\`
 

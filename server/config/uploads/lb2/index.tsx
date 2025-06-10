@@ -13,6 +13,7 @@ interface LeaderboardProps {
   language: LngProps;
 }
 const Leaderboard: React.FC<LeaderboardProps> = (props) => {
+  console.warn("intance count");
   const leaders: Leader[] = [
     { name: "Giga", score: 1200 },
     { name: "Gela", score: 950 },
