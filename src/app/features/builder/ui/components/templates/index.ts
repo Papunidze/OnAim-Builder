@@ -1,11 +1,13 @@
-export { default as TemplateDialog } from "./TemplateDialog";
-export { default as TemplateSelection } from "./TemplateSelection";
-export { TemplateService } from "./template.service";
-export { TemplateApiService } from "./template-api.service";
-export { ComponentTemplateApiService } from "./component-template-api.service";
-export { TemplateApplicationService } from "./template-application.service";
+// Components
+export { TemplateSelector } from "./components/TemplateSelector";
+export { TemplateManager } from "./components/TemplateManager";
+
+// Services
+export { templateManagerService } from "./services";
+
+// Types
 export type {
   Template,
-  TemplateDialogProps,
-  TemplateSelectionProps,
-} from "../types/template.types";
+  TemplateCreateData,
+  TemplateUpdateData,
+} from "./types/template.types";

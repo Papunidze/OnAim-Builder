@@ -3,12 +3,14 @@ import type {
   LanguageEntry,
   LanguageObject,
 } from "../../../types/language.types";
+import type { ComponentState } from "@app-shared/services/builder";
 
 interface UseFormStatesProps {
   translationKeys: string[];
   selectedLanguage: string;
   languages: LanguageEntry[];
   languageObject: LanguageObject | null;
+  selectedComponent: ComponentState | null;
 }
 
 interface UseFormStatesReturn {
@@ -34,6 +36,7 @@ export function useFormStates({
   selectedLanguage,
   languages,
   languageObject,
+  selectedComponent,
 }: UseFormStatesProps): UseFormStatesReturn {
   const [newLanguageCode, setNewLanguageCode] = useState("");
   const [newLanguageName, setNewLanguageName] = useState("");
@@ -55,8 +58,20 @@ export function useFormStates({
   useEffect(() => {
     if (selectedLanguage && languageObject) {
       try {
-        const existingTranslations =
-          languageObject.getTranslations(selectedLanguage);
+        let existingTranslations: Record<string, string> = {};
+
+        // First check if we have template language values
+        if (selectedComponent?.props?.templateLanguage) {
+          const templateLanguage = selectedComponent.props
+            .templateLanguage as Record<string, Record<string, string>>;
+          existingTranslations = templateLanguage[selectedLanguage] || {};
+        }
+
+        // Fallback to component default language if no template language found
+        if (Object.keys(existingTranslations).length === 0) {
+          existingTranslations =
+            languageObject.getTranslations(selectedLanguage);
+        }
 
         const completeTranslations: Record<string, string> = {};
         translationKeys.forEach((key) => {
@@ -75,7 +90,7 @@ export function useFormStates({
     } else {
       setEditTranslations({});
     }
-  }, [selectedLanguage, languageObject, translationKeys]);
+  }, [selectedLanguage, languageObject, translationKeys, selectedComponent]);
 
   const updateNewTranslation = (key: string, value: string): void => {
     setNewTranslations((prev) => ({

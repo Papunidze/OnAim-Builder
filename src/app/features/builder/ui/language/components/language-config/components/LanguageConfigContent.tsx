@@ -59,6 +59,7 @@ export function LanguageConfigContent({
     selectedLanguage,
     languages,
     languageObject,
+    selectedComponent,
   });
 
   const handleLanguageSelect = (languageCode: string): void => {

@@ -98,3 +98,141 @@
   margin-top: 2px;
   font-weight: normal;
 }
+
+/* Template Dialog Styles */
+.dialogOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.dialogHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dialogHeader h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-color-dark);
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.closeButton:hover {
+  background: #f0f0f0;
+}
+
+.dialogContent {
+  padding: var(--spacing-xl);
+}
+
+.formGroup {
+  margin-bottom: var(--spacing-lg);
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-color-dark);
+  font-size: var(--font-size-sm);
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-sm);
+  transition: border-color 0.2s ease;
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: #02cc59;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.dialogActions {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+  border-top: 1px solid #e0e0e0;
+  justify-content: flex-end;
+}
+
+.cancelButton {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 1px solid #e0e0e0;
+  background: white;
+  color: var(--text-color-dark);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-sm);
+  transition: background-color 0.2s ease;
+}
+
+.cancelButton:hover {
+  background: #f8f9fa;
+}
+
+.saveButton {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: none;
+  background: #02cc59;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: background-color 0.2s ease;
+}
+
+.saveButton:hover:not(:disabled) {
+  background: #02b350;
+}
+
+.saveButton:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}

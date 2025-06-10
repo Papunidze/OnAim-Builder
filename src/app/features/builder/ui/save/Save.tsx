@@ -8,8 +8,8 @@ import {
 import { useDropdown, useExportHandlers } from "./hooks/useSave.hooks";
 import { useTemplate } from "./hooks/useTemplate.hooks";
 import { SaveDropdown, type DropdownOption } from "./components/SaveDropdown";
-import { TemplateDialog } from "../components/templates";
-import { ComponentTemplateApiService } from "../components/templates/component-template-api.service";
+import { TemplateDialog } from "./components/TemplateDialog";
+import { ComponentTemplateApiService } from "../components/templates/services/component-template-api.service";
 import { useBuilder } from "@app-shared/services/builder/useBuilder.service";
 import { extractComponentSettings } from "./utils/save.utils";
 import { LanguageStateUtils } from "../language/utils/language-state.utils";
@@ -34,15 +34,28 @@ const Save = ({ viewMode }: SaveProps): JSX.Element => {
     try {
       const componentSettings = extractComponentSettings(selectedComponent);
 
+      const cleanSettings = { ...componentSettings };
+      if (cleanSettings.templateLanguage) {
+        delete cleanSettings.templateLanguage;
+      }
+
       let languageUpdates = {};
-      try {
-        const languageState =
-          LanguageStateUtils.extractLanguageFromComponent(selectedComponent);
-        if (languageState && languageState.languageData) {
-          languageUpdates = languageState.languageData;
+
+      if (selectedComponent.props?.templateLanguage) {
+        languageUpdates = selectedComponent.props.templateLanguage as Record<
+          string,
+          Record<string, string>
+        >;
+      } else {
+        try {
+          const languageState =
+            LanguageStateUtils.extractLanguageFromComponent(selectedComponent);
+          if (languageState && languageState.languageData) {
+            languageUpdates = languageState.languageData;
+          }
+        } catch (error) {
+          console.warn("Failed to extract language data:", error);
         }
-      } catch (error) {
-        console.warn("Failed to extract language data:", error);
       }
 
       await ComponentTemplateApiService.createComponentTemplate(
@@ -50,7 +63,7 @@ const Save = ({ viewMode }: SaveProps): JSX.Element => {
         {
           name: templateData.name,
           description: templateData.description,
-          settings: componentSettings,
+          settings: cleanSettings,
           language: languageUpdates,
         }
       );

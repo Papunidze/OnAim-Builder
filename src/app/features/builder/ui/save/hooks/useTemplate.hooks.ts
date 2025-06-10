@@ -1,17 +1,13 @@
 import { useState, useCallback } from "react";
-import { TemplateService } from "../../components/templates/template.service";
-import type { Template } from "../../components/types/template.types";
+import { templateManagerService } from "../../components/templates/services";
+import type { Template } from "../../components/templates";
 
 export const useTemplate = (): {
   isTemplateDialogOpen: boolean;
   openTemplateDialog: () => void;
   closeTemplateDialog: () => void;
-  saveTemplate: (
-    templateData: { name: string; description?: string },
-    componentData: Template["componentData"]
-  ) => void;
-  getTemplates: () => Template[];
-  getTemplatesByComponent: (componentName: string) => Template[];
+  getTemplates: () => Promise<Template[]>;
+  getTemplatesByComponent: () => Promise<Template[]>;
 } => {
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
 
@@ -23,34 +19,18 @@ export const useTemplate = (): {
     setIsTemplateDialogOpen(false);
   }, []);
 
-  const saveTemplate = useCallback(
-    (
-      templateData: { name: string; description?: string },
-      componentData: Template["componentData"]
-    ) => {
-      TemplateService.createTemplate(
-        templateData.name,
-        templateData.description,
-        componentData
-      );
-      closeTemplateDialog();
-    },
-    [closeTemplateDialog]
-  );
-
-  const getTemplates = useCallback(() => {
-    return TemplateService.getTemplates();
+  const getTemplates = useCallback(async () => {
+    return await templateManagerService.getTemplates();
   }, []);
 
-  const getTemplatesByComponent = useCallback((componentName: string) => {
-    return TemplateService.getTemplatesByComponent(componentName);
+  const getTemplatesByComponent = useCallback(async () => {
+    return await templateManagerService.getTemplates();
   }, []);
 
   return {
     isTemplateDialogOpen,
     openTemplateDialog,
     closeTemplateDialog,
-    saveTemplate,
     getTemplates,
     getTemplatesByComponent,
   };

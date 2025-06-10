@@ -250,7 +250,6 @@ router.post("/components/:componentName/apply-settings", async (req, res) => {
     const { settings, componentId } = req.body;
 
     const componentDir = path.join(UPLOADS_DIR, componentName);
-    const settingsPath = path.join(componentDir, "settings.json");
 
     try {
       await fs.access(componentDir);
@@ -261,27 +260,20 @@ router.post("/components/:componentName/apply-settings", async (req, res) => {
       });
     }
 
-    let currentSettings = {};
-    try {
-      const settingsContent = await fs.readFile(settingsPath, "utf8");
-      currentSettings = JSON.parse(settingsContent);
-    } catch (error) {
-      currentSettings = {};
-    }
+    console.log(
+      `Template settings applied to ${componentName} (in-memory only)`,
+      {
+        componentId,
+        settings,
+      }
+    );
 
-    const updatedSettings = mergeDeep(currentSettings, settings);
-
-    await fs.writeFile(settingsPath, JSON.stringify(updatedSettings, null, 2));
-
-    console.log(`Applied settings template to ${componentName}`, {
-      componentId,
-      settings,
-    });
-
+    // Return settings without creating settings.json file
     res.json({
       success: true,
-      message: "Settings applied successfully",
-      settings: updatedSettings,
+      message: "Settings applied successfully (in-memory)",
+      settings: settings,
+      note: "Settings applied in-memory only, no settings.json file created",
     });
   } catch (error) {
     console.error("Error applying settings template:", error);

@@ -72,31 +72,50 @@ function computeComponentProps(
   if (propsCache.has(component)) {
     const cached = propsCache.get(component)!;
     if (cached.cacheKey === cacheKey) {
-      if (!component.props?.templateLanguage) {
-        return {
-          settings: cached.settings,
-          language: cached.language,
-          languageObject: cached.languageObject,
-        };
-      }
+      return {
+        settings: cached.settings,
+        language: cached.language,
+        languageObject: cached.languageObject,
+      };
     }
   }
 
   if (!component?.compiledData?.files) {
     let languageValue = {};
+    let tempLanguageObject = null;
+
+    try {
+      if (component.name) {
+        const minimalLanguageContent = `
+import { SetLanguage } from "language-management-lib";
+const lngObject = { "en": {}, "ka": {} };
+export const lng = new SetLanguage(lngObject, "en");
+        `;
+        tempLanguageObject = compileLanguageObject(
+          minimalLanguageContent,
+          component.name
+        );
+      }
+    } catch {
+      console.error("Failed to compile language object");
+    }
+
+    // Apply template language if it exists (for display only, not saved)
     if (component.props?.templateLanguage) {
       const templateLanguage = component.props.templateLanguage as Record<
         string,
         Record<string, string>
       >;
-      const templateTranslations = templateLanguage["en"] || {};
+      const currentLang = tempLanguageObject?.getCurrentLanguage() || "en";
+      const templateTranslations =
+        templateLanguage[currentLang] || templateLanguage["en"] || {};
       languageValue = templateTranslations;
     }
 
     const result: CachedProps = {
       settings: component.props || {},
       language: languageValue,
-      languageObject: null,
+      languageObject: tempLanguageObject,
       cacheKey,
     };
     propsCache.set(component, result);
@@ -254,21 +273,6 @@ function computeComponentProps(
     }
   } catch {
     settingsValue = component.props || {};
-  }
-
-  if (component.props?.templateLanguage) {
-    const templateLanguage = component.props.templateLanguage as Record<
-      string,
-      Record<string, string>
-    >;
-    const currentLang = languageObject?.getCurrentLanguage() || "en";
-    const templateTranslations =
-      templateLanguage[currentLang] || templateLanguage["en"] || {};
-
-    languageValue = {
-      ...languageValue,
-      ...templateTranslations,
-    };
   }
 
   const result: CachedProps = {

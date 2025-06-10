@@ -3,11 +3,9 @@ import { useState } from "react";
 import Image from "@app-shared/components/image";
 import styles from "./components.module.css";
 import type { ComponentsContentProps } from "./types";
-import { TemplateSelection } from "./templates";
-import { ComponentTemplateApiService } from "./templates/component-template-api.service";
-import { TemplateApplicationService } from "./templates/template-application.service";
 
-import type { ComponentTemplate } from "./types/template.types";
+import type { ComponentTemplate } from "./templates/types/template.types";
+import { ComponentTemplateApiService } from "./templates/services/component-template-api.service";
 
 export default function ComponentsContent({
   folders,
@@ -21,13 +19,18 @@ export default function ComponentsContent({
   >([]);
 
   const handleComponentClick = async (name: string): Promise<void> => {
-    const specificTemplates =
-      await ComponentTemplateApiService.getComponentTemplates(name);
+    try {
+      const specificTemplates =
+        await ComponentTemplateApiService.getComponentTemplates(name);
 
-    if (specificTemplates.length > 0) {
-      setSelectedComponent(name);
-      setComponentTemplates(specificTemplates);
-    } else {
+      if (specificTemplates.length > 0) {
+        setSelectedComponent(name);
+        setComponentTemplates(specificTemplates);
+      } else {
+        await handleAddComponent(name);
+      }
+    } catch (error) {
+      console.error("Error fetching templates:", error);
       await handleAddComponent(name);
     }
   };
@@ -40,19 +43,15 @@ export default function ComponentsContent({
     }
   };
 
-  const handleSelectTemplate = async (): Promise<void> => {};
-
   const handleSelectComponentTemplate = async (
     template: ComponentTemplate
   ): Promise<void> => {
-    if (!selectedComponent) return;
+    if (!selectedComponent) {
+      console.error("No selected component");
+      return;
+    }
 
     try {
-      await TemplateApplicationService.applyComponentTemplate(
-        selectedComponent,
-        template
-      );
-
       const templateProps = {
         ...(template.settings || {}),
         ...(template.language && Object.keys(template.language).length > 0
@@ -75,7 +74,10 @@ export default function ComponentsContent({
   };
 
   const handleSelectBasic = async (): Promise<void> => {
-    if (!selectedComponent) return;
+    if (!selectedComponent) {
+      console.error("No selected component");
+      return;
+    }
 
     try {
       await addComponent(selectedComponent);
@@ -111,16 +113,42 @@ export default function ComponentsContent({
         ))}
       </div>
 
-      <TemplateSelection
-        componentName={selectedComponent || ""}
-        templates={[]}
-        componentTemplates={componentTemplates}
-        onSelectTemplate={handleSelectTemplate}
-        onSelectComponentTemplate={handleSelectComponentTemplate}
-        onSelectBasic={handleSelectBasic}
-        onClose={handleCloseTemplateSelection}
-        isOpen={selectedComponent !== null}
-      />
+      {selectedComponent && (
+        <div
+          className={styles.templateSelectionOverlay}
+          onClick={handleCloseTemplateSelection}
+        >
+          <div
+            className={styles.templateSelection}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Select Template for {selectedComponent}</h3>
+            <div className={styles.templateOptions}>
+              <button
+                onClick={handleSelectBasic}
+                className={styles.basicOption}
+              >
+                Use Basic Component
+              </button>
+              {componentTemplates.map((template) => (
+                <button
+                  key={template.id}
+                  onClick={() => handleSelectComponentTemplate(template)}
+                  className={styles.templateOption}
+                >
+                  {template.name}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={handleCloseTemplateSelection}
+              className={styles.closeButton}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

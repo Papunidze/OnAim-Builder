@@ -47,3 +47,91 @@
 .builderPropertyComponentsItem:hover {
   background-color: #f9fafb;
 }
+
+/* Template Selection Dialog */
+.templateSelectionOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.templateSelection {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.15);
+  padding: var(--spacing-xl);
+  min-width: 400px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.templateSelection h3 {
+  margin: 0 0 var(--spacing-lg) 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-color-dark);
+}
+
+.templateOptions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.basicOption,
+.templateOption {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 1px solid #e0e0e0;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-sm);
+  color: var(--text-color-dark);
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.basicOption:hover,
+.templateOption:hover {
+  background: #f8f9fa;
+  border-color: #02cc59;
+}
+
+.basicOption {
+  background: #02cc59;
+  color: white;
+  border-color: #02cc59;
+  font-weight: var(--font-weight-medium);
+}
+
+.basicOption:hover {
+  background: #02b350;
+}
+
+.closeButton {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 1px solid #e0e0e0;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-sm);
+  color: var(--text-color-dark);
+  transition: background-color 0.2s ease;
+}
+
+.closeButton:hover {
+  background: #f8f9fa;
+}
