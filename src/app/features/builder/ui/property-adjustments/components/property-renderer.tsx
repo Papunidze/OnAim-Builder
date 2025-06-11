@@ -434,7 +434,8 @@ export const PropertyRenderer = memo(function PropertyRenderer({
 }: {
   viewMode: "desktop" | "mobile";
 }): JSX.Element {
-  const { getSelectedComponent, updateComponent } = useBuilder();
+  const { getSelectedComponent, updateComponent, selectedComponentId } =
+    useBuilder();
   const { error, setError, clearError } = useComponentState();
   const settingsHost = useRef<HTMLDivElement>(null);
   const settingsRenderer = useRef<SettingsRenderer | null>(null);
@@ -490,7 +491,7 @@ export const PropertyRenderer = memo(function PropertyRenderer({
       previousPropsRef.current = selectedComponent.props;
       previousComponentIdRef.current = selectedComponent.id;
     });
-  }, [selectedComponent, clearError]);
+  }, [selectedComponent, selectedComponentId, clearError]);
 
   if (!selectedComponent) {
     return <EmptyState />;

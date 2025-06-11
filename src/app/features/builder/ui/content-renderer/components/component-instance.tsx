@@ -320,7 +320,10 @@ export const ComponentInstance = memo(function ComponentInstance({
     () => getComponent(instance.id),
     [getComponent, instance.id]
   );
-  const isSelected = selectedComponentId === instance.id;
+  const isSelected = useMemo(
+    () => selectedComponentId === instance.id,
+    [selectedComponentId, instance.id]
+  );
 
   const componentContentKey = useMemo(
     () => getComponentCacheKey(instance, component),

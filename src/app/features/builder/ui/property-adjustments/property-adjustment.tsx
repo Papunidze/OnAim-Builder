@@ -9,14 +9,14 @@ interface PropertyProps {
 }
 
 const Property = ({ viewMode }: PropertyProps): JSX.Element => {
-  const { getSelectedComponent } = useBuilder();
+  const { getSelectedComponent, selectedComponentId } = useBuilder();
   const selectedComponent = getSelectedComponent();
 
   return (
     <div className={styles.builderPropertyAdjustment}>
       <div className={styles.builderPropertyAdjustmentContent}>
         {selectedComponent ? (
-          <PropertyRenderer viewMode={viewMode} />
+          <PropertyRenderer key={selectedComponentId} viewMode={viewMode} />
         ) : (
           <div className={styles.noComponentSelected}>
             <p>Select a component to view its properties</p>

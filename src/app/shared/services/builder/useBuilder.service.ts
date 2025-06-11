@@ -189,6 +189,8 @@ export function useBuilder(): UseBuilderReturn {
 
   const stats = builderService.getStats();
   const projectName = builderService.getProjectName();
+  const selectedComponentId = components.selectedComponentId;
+  
   return {
     components,
     stats,
@@ -214,6 +216,6 @@ export function useBuilder(): UseBuilderReturn {
     setProjectName,
     selectComponent,
     getSelectedComponent,
-    selectedComponentId: components.selectedComponentId,
+    selectedComponentId,
   };
 }
