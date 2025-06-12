@@ -2,7 +2,7 @@ import type { ComponentTemplate } from "../types/template.types";
 
 export class TemplateApplicationService {
   static async applyComponentTemplate(
-    componentName: string,
+    _componentName: string,
     template: ComponentTemplate
   ): Promise<{
     settings?: Record<string, unknown>;

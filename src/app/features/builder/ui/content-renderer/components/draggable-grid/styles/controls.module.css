@@ -198,8 +198,8 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .checkmark {
@@ -214,30 +214,27 @@
 
 /* Help Text */
 .helpText {
-  background: #e3f2fd;
-  border-radius: 6px;
-  padding: 12px;
-  border-left: 4px solid #2196f3;
+  font-size: 11px;
+  color: #6c757d;
+  line-height: 1.4;
+  margin-top: 12px;
 }
 
 .helpText p {
   margin: 0 0 8px 0;
-  font-size: 13px;
-  color: #1565c0;
-  font-weight: 600;
+}
+
+.helpText p:last-child {
+  margin-bottom: 0;
 }
 
 .helpText ul {
-  margin: 0;
+  margin: 4px 0;
   padding-left: 16px;
-  list-style: none;
 }
 
 .helpText li {
-  font-size: 12px;
-  color: #1976d2;
   margin-bottom: 4px;
-  position: relative;
 }
 
 .helpText li:last-child {
@@ -249,34 +246,34 @@
   .controls {
     margin-bottom: 12px;
   }
-  
+
   .mainToggle {
     padding: 10px 12px;
   }
-  
+
   .toggleButton {
-    padding: 6px 12px;
     font-size: 13px;
+    padding: 6px 12px;
   }
-  
+
   .expandedControls {
     padding: 12px;
   }
-  
+
   .actionButtons {
     flex-direction: column;
   }
-  
+
   .actionButton {
     min-width: auto;
   }
-  
+
   .helpText {
-    padding: 10px;
+    font-size: 10px;
   }
-  
+
   .helpText p,
   .helpText li {
-    font-size: 11px;
+    margin-bottom: 6px;
   }
 } 

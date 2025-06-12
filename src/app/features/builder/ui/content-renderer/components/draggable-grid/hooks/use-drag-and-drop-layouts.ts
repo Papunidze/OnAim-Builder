@@ -1,23 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Layouts } from 'react-grid-layout';
-import type { ViewMode } from '../types';
-
-interface UseDragAndDropLayoutsOptions {
-  projectId?: string;
-  viewMode: ViewMode;
-  autoSave?: boolean;
-  autoSaveDelay?: number;
-}
-
-interface UseDragAndDropLayoutsReturn {
-  layouts: Layouts;
-  updateLayouts: (newLayouts: Layouts) => void;
-  resetLayouts: () => void;
-  saveLayouts: () => Promise<void>;
-  loadLayouts: () => Promise<void>;
-  isLoading: boolean;
-  hasUnsavedChanges: boolean;
-}
+import type { UseDragAndDropLayoutsOptions, UseDragAndDropLayoutsReturn } from '../types';
 
 export const useDragAndDropLayouts = ({
   projectId,
@@ -30,13 +13,11 @@ export const useDragAndDropLayouts = ({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  // Generate storage key for persistence
   const getStorageKey = useCallback(
     (key: string): string => `builder_layouts_${projectId || 'default'}_${key}`,
     [projectId]
   );
 
-  // Load layouts from localStorage
   const loadLayouts = useCallback(async (): Promise<void> => {
     setIsLoading(true);
     try {

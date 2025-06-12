@@ -1,18 +1,6 @@
 import React, { useState } from 'react';
-import type { Layouts } from 'react-grid-layout';
-import styles from './drag-drop-controls.module.css';
-
-interface DragDropControlsProps {
-  isDragDropEnabled: boolean;
-  onToggleDragDrop: (enabled: boolean) => void;
-  onResetLayout?: () => void;
-  onSaveLayout?: () => Promise<void>;
-  onLoadLayout?: () => Promise<void>;
-  hasUnsavedChanges?: boolean;
-  isLoading?: boolean;
-  layouts?: Layouts;
-  viewMode: 'desktop' | 'mobile';
-}
+import type { DragDropControlsProps } from '../types';
+import styles from '../styles/controls.module.css';
 
 export const DragDropControls: React.FC<DragDropControlsProps> = ({
   isDragDropEnabled,

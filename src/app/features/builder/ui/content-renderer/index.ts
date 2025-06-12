@@ -4,6 +4,7 @@ export {
   DragDropControls, 
   EnhancedContentRenderer 
 } from "./components";
-export { useComponentInstances, useDragAndDropLayouts } from "./hooks";
+export { useComponentInstances } from "./hooks";
+export { useDragAndDropLayouts } from "./components/draggable-grid";
 export { loadComponent } from "./services";
 export type * from "./types";

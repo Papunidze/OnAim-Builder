@@ -1,6 +1,6 @@
 import type { JSX } from "react";
 import type { Layouts } from "react-grid-layout";
-import { DraggableGridLayout } from "../components/draggable-grid-layout";
+import { DraggableGridLayout } from "../components/draggable-grid";
 import type { ComponentInstanceState } from "../types";
 import styles from "./desktop-layout.module.css";
 

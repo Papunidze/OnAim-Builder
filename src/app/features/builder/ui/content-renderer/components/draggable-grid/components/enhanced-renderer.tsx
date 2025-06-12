@@ -1,20 +1,12 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import type { Layouts } from 'react-grid-layout';
 
-import { ContentRenderer } from './content-renderer';
-import { DragDropControls } from './drag-drop-controls';
-import { useDragAndDropLayouts } from '../hooks/useDragAndDropLayouts';
+import { ContentRenderer } from '../../content-renderer';
+import { DragDropControls } from './controls';
+import { useDragAndDropLayouts } from '../hooks';
+import type { EnhancedContentRendererProps } from '../types';
 
-import type { ContentRendererProps } from '../types';
-import styles from './enhanced-content-renderer.module.css';
-
-interface EnhancedContentRendererProps extends Omit<ContentRendererProps, 'useDragAndDrop' | 'onLayoutChange' | 'savedLayouts'> {
-  projectId?: string;
-  showDragDropControls?: boolean;
-  enableDragDropByDefault?: boolean;
-  autoSaveLayouts?: boolean;
-  className?: string;
-}
+import styles from '../styles/enhanced-renderer.module.css';
 
 export const EnhancedContentRenderer: React.FC<EnhancedContentRendererProps> = ({
   components,

@@ -4,34 +4,26 @@ import type { Layout, Layouts } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
-import { ComponentInstance } from "./component-instance";
-import type { ComponentInstanceState, ViewMode } from "../types";
+import { ComponentInstance } from "../../component-instance";
+import type { ComponentInstanceState, ViewMode } from "../../../types";
+import type { DraggableGridLayoutProps } from "../types";
 
-import styles from "./draggable-grid-layout.module.css";
+import styles from "../styles/grid-layout.module.css";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
-
-interface DraggableGridLayoutProps {
-  instances: ComponentInstanceState[];
-  viewMode: ViewMode;
-  onRetry: (id: string) => void;
-  isPending: boolean;
-  onLayoutChange?: (layouts: Layouts) => void;
-  savedLayouts?: Layouts;
-}
 
 const getGridConfig = (viewMode: ViewMode): { breakpoints: Record<string, number>; cols: Record<string, number>; rowHeight: number } => {
   if (viewMode === "mobile") {
     return {
       breakpoints: { lg: 768, md: 576, sm: 480, xs: 320, xxs: 0 },
       cols: { lg: 2, md: 2, sm: 1, xs: 1, xxs: 1 },
-      rowHeight: 150, // Increased for better mobile display
+      rowHeight: 150,
     };
   }
   return {
     breakpoints: { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 },
     cols: { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 },
-    rowHeight: 120, // Increased row height to show full content better
+    rowHeight: 120,
   };
 };
 
@@ -52,7 +44,6 @@ const generateDefaultLayout = (
     }));
   }
   
-  // Desktop: Larger components, 2 per row instead of 3
   const itemsPerRow = 2;
   return instances.map((instance, index) => {
     const col = index % itemsPerRow;
@@ -60,12 +51,12 @@ const generateDefaultLayout = (
 
     return {
       i: instance.id,
-      x: col * 6, // 6 columns width each (12/2 = 6)
-      y: row * 5, // More vertical spacing
-      w: 6, // Half the screen width (6 out of 12 columns)
-      h: 5, // Much taller to show full content
-      minW: 4, // Minimum 4 columns
-      minH: 3, // Minimum 3 rows
+      x: col * 6,
+      y: row * 5, 
+      w: 6,
+      h: 5,
+      minW: 4,
+      minH: 3,
     };
   });
 };
@@ -89,7 +80,6 @@ export const DraggableGridLayout: React.FC<DraggableGridLayoutProps> = ({
     savedLayouts || { [viewMode]: defaultLayout }
   );
 
-  // Aggregate all styles from instances
   const aggregatedStyles = useMemo(() => {
     return instances
       .filter(instance => instance.styles)
@@ -98,7 +88,7 @@ export const DraggableGridLayout: React.FC<DraggableGridLayoutProps> = ({
   }, [instances]);
 
   const handleLayoutChange = useCallback(
-    (currentLayout: Layout[], allLayouts: Layouts) => {
+    (_currentLayout: Layout[], allLayouts: Layouts) => {
       setLayouts(allLayouts);
       onLayoutChange?.(allLayouts);
     },
@@ -125,7 +115,6 @@ export const DraggableGridLayout: React.FC<DraggableGridLayoutProps> = ({
   }
   return (
     <div className={containerClassName}>
-      {/* Inject aggregated styles */}
       {aggregatedStyles && (
         <style dangerouslySetInnerHTML={{ __html: aggregatedStyles }} />
       )}
@@ -166,4 +155,4 @@ export const DraggableGridLayout: React.FC<DraggableGridLayoutProps> = ({
       </ResponsiveGridLayout>
     </div>
   );
-};
+}; 
