@@ -1,4 +1,4 @@
-import { useMemo, memo } from "react";
+import { useMemo, memo, useCallback } from "react";
 import type { JSX } from "react";
 import type { ComponentRenderProps } from "../types";
 import styles from "./component-instance.module.css";
@@ -343,11 +343,16 @@ export const ComponentInstance = memo(function ComponentInstance({
   instance,
   onRetry,
 }: ComponentRenderProps): JSX.Element {
-  const { getComponent } = useBuilder();
+  const { selectComponent, selectedComponentId, getComponent } = useBuilder();
 
   const component = useMemo(
     () => getComponent(instance.id),
     [getComponent, instance.id]
+  );
+  
+  const isSelected = useMemo(
+    () => selectedComponentId === instance.id,
+    [selectedComponentId, instance.id]
   );
 
   const componentContentKey = useMemo(
@@ -380,7 +385,22 @@ export const ComponentInstance = memo(function ComponentInstance({
     };
   }, [componentProps, component?.props]);
 
-  // Removed unused wrapperClassName and handleClick variables
+  const wrapperClassName = useMemo(
+    () =>
+      isSelected
+        ? `${styles.componentWrapper} ${styles.selected}`
+        : styles.componentWrapper,
+    [isSelected]
+  );
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent): void => {
+      e.preventDefault();
+      e.stopPropagation();
+      selectComponent(instance.id);
+    },
+    [selectComponent, instance.id]
+  );
 
   const stableComponentInstance = useMemo(() => {
     if (instance.status !== "loaded" || !instance.component) return null;
@@ -405,9 +425,15 @@ export const ComponentInstance = memo(function ComponentInstance({
 
   if (instance.status === "idle" || instance.status === "loading") {
     return (
-      <div key={componentContentKey} className={styles.componentLoading}>
-        <div className={styles.loadingSpinner} />
-        <span>Loading {instance.name}...</span>
+      <div
+        key={componentContentKey}
+        className={wrapperClassName}
+        onClick={handleClick}
+      >
+        <div className={styles.componentLoading}>
+          <div className={styles.loadingSpinner} />
+          <span>Loading {instance.name}...</span>
+        </div>
       </div>
     );
   }
@@ -417,64 +443,81 @@ export const ComponentInstance = memo(function ComponentInstance({
     const canRetry = retryCount < 3;
 
     return (
-      <div key={componentContentKey} className={styles.componentError}>
-        <div className={styles.errorHeader}>
-          <strong>Error loading {instance.name}:</strong>
-        </div>
-        <div className={styles.errorMessage}>{instance.error}</div>
-
-        {canRetry && (
-          <button
-            onClick={() => onRetry(instance.id)}
-            className={styles.retryButton}
-          >
-            Retry ({retryCount}/3)
-          </button>
-        )}
-
-        {instance.component && (
-          <div className={styles.fallbackComponent}>
-            <div className={styles.fallbackLabel}>
-              Fallback to previous version:
-            </div>
-            <instance.component />
+      <div
+        key={componentContentKey}
+        className={wrapperClassName}
+        onClick={handleClick}
+      >
+        <div className={styles.componentError}>
+          <div className={styles.errorHeader}>
+            <strong>Error loading {instance.name}:</strong>
           </div>
-        )}
+          <div className={styles.errorMessage}>{instance.error}</div>
+
+          {canRetry && (
+            <button
+              onClick={() => onRetry(instance.id)}
+              className={styles.retryButton}
+            >
+              Retry ({retryCount}/3)
+            </button>
+          )}
+
+          {instance.component && (
+            <div className={styles.fallbackComponent}>
+              <div className={styles.fallbackLabel}>
+                Fallback to previous version:
+              </div>
+              <instance.component />
+            </div>
+          )}
+        </div>
       </div>
     );
   }
 
   if (stableComponentInstance) {
     return (
-      <ErrorBoundary
+      <div
         key={componentContentKey}
-        componentName={instance.name}
-        fallback={(error) => (
-          <div className={styles.renderError}>
-            <div className={styles.errorHeader}>
-              <strong>Render Error in {instance.name}:</strong>
-            </div>
-            <div className={styles.errorMessage}>{error.message}</div>
-            <div className={styles.errorDetails}>
-              <details>
-                <summary>Error Details</summary>
-                <pre>{error.stack}</pre>
-              </details>
-            </div>
-          </div>
-        )}
+        className={wrapperClassName}
+        onClick={handleClick}
       >
-        <MemoizedComponentWrapper
-          Component={stableComponentInstance}
-          props={safeProps}
-        />
-      </ErrorBoundary>
+        <ErrorBoundary
+          componentName={instance.name}
+          fallback={(error) => (
+            <div className={styles.renderError}>
+              <div className={styles.errorHeader}>
+                <strong>Render Error in {instance.name}:</strong>
+              </div>
+              <div className={styles.errorMessage}>{error.message}</div>
+              <div className={styles.errorDetails}>
+                <details>
+                  <summary>Error Details</summary>
+                  <pre>{error.stack}</pre>
+                </details>
+              </div>
+            </div>
+          )}
+        >
+          <MemoizedComponentWrapper
+            Component={stableComponentInstance}
+            props={safeProps}
+          />
+        </ErrorBoundary>
+      </div>
     );
   }
 
   return (
-    <div key={componentContentKey} className={styles.componentPreparing}>
-      Preparing {instance.name}...
+    <div
+      key={componentContentKey}
+      className={wrapperClassName}
+      onClick={handleClick}
+    >
+      <div className={styles.componentPreparing}>
+        Preparing {instance.name}...
+      </div>
     </div>
   );
 });
