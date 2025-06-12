@@ -1,5 +1,7 @@
 import { useCallback } from "react";
 import { useBuilder } from "@app-shared/services/builder/useBuilder.service";
+import { invalidateComponentCache } from "@app-features/builder/ui/content-renderer/services/component-loader";
+import { clearComponentInstanceCache } from "@app-features/builder/ui/content-renderer/services/component-cache";
 import type { LanguageObject } from "../../../types/language.types";
 import type { ComponentState } from "@app-shared/services/builder";
 
@@ -35,24 +37,84 @@ export function useLanguageActions({
   const { updateComponent } = useBuilder();
   const updateComponentFiles = useCallback(
     async (updatedContent: string): Promise<void> => {
-      if (!selectedComponent?.compiledData?.files) return;
-
-      const updatedFiles = selectedComponent.compiledData.files.map(
-        (file: ComponentFile) => {
-          if (file.file === "language.ts") {
-            return { ...file, content: updatedContent };
+      if (!selectedComponent) return;
+      
+      // Handle components with compiled language files
+      if (selectedComponent.compiledData?.files) {
+        const updatedFiles = selectedComponent.compiledData.files.map(
+          (file: ComponentFile) => {
+            if (file.file === "language.ts") {
+              return { ...file, content: updatedContent };
+            }
+            return file;
           }
-          return file;
+        );
+        
+        const now = Date.now();
+        
+        // Remove templateLanguage from props when updating compiled files
+        const updatedProps = { ...selectedComponent.props };
+        if (updatedProps.templateLanguage) {
+          delete updatedProps.templateLanguage;
         }
-      );
-      updateComponent(selectedComponent.id, {
-        compiledData: {
-          ...selectedComponent.compiledData,
-          files: updatedFiles,
-        },
-        timestamp: Date.now(),
-      });
+        
+        // Clear caches and update component
+        invalidateComponentCache(selectedComponent.id);
+        clearComponentInstanceCache(selectedComponent.id);
+        
+        updateComponent(selectedComponent.id, {
+          compiledData: {
+            ...selectedComponent.compiledData,
+            files: updatedFiles,
+          },
+          props: updatedProps,
+          timestamp: now,
+        });
+        
+        // Final update with new timestamp to ensure re-render
+        setTimeout(() => {
+          updateComponent(selectedComponent.id, {
+            timestamp: now + 1,
+          });
+        }, 50);
+      }
+      // Handle components with template language (convert to compiled files)
+      else if (selectedComponent.props?.templateLanguage) {
+        const now = Date.now();
+        
+        // Create compiled data structure with language file
+        const compiledData = {
+          files: [
+            {
+              file: "language.ts",
+              content: updatedContent,
+            },
+          ],
+        };
 
+        // Remove templateLanguage from props and add compiled data
+        const updatedProps = { ...selectedComponent.props };
+        delete updatedProps.templateLanguage;
+
+        // Clear caches and update component
+        invalidateComponentCache(selectedComponent.id);
+        clearComponentInstanceCache(selectedComponent.id);
+
+        updateComponent(selectedComponent.id, {
+          compiledData,
+          props: updatedProps,
+          timestamp: now,
+        });
+
+        // Final update with new timestamp to ensure re-render
+        setTimeout(() => {
+          updateComponent(selectedComponent.id, {
+            timestamp: now + 1,
+          });
+        }, 50);
+      }
+
+      // Refresh language data after updates complete
       setTimeout(() => {
         refreshLanguages();
       }, 100);

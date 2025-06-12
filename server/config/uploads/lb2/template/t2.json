@@ -1,0 +1,44 @@
+{
+  "name": "t2",
+  "description": "",
+  "settings": {
+    "leaderboard": {
+      "test": "test",
+      "background": "152, 134, 134",
+      "width": 860,
+      "fontSize": 16,
+      "padding": 20,
+      "opacity": 100,
+      "border": {
+        "size": 0,
+        "color": "0, 0, 30",
+        "opacity": 100,
+        "radius": 12
+      }
+    }
+  },
+  "language": {
+    "en": {
+      "title": "Leaderboard",
+      "button": "Click Me",
+      "rank": "Rank",
+      "player": "Player",
+      "score": "Score",
+      "loading": "Loading...",
+      "error": "Error",
+      "noDataAlt": "No data found"
+    },
+    "ka": {
+      "title": "ლიდერბორდი",
+      "button": "დააჭირე",
+      "rank": "რანგი",
+      "player": "მოთამაშე",
+      "score": "ქულა",
+      "loading": "იტვირთება...",
+      "error": "შეცდომა",
+      "noDataAlt": "მონაცემები არ მოიძებნა"
+    }
+  },
+  "createdAt": "2025-06-12T06:22:20.708Z",
+  "updatedAt": "2025-06-12T06:22:20.708Z"
+}

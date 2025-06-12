@@ -1,0 +1,628 @@
+{
+  "info": {
+    "name": "OnAim-Builder API Collection",
+    "description": "Comprehensive API collection for OnAim-Builder visual component builder system",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "File Management",
+      "description": "Endpoints for file upload, download, and component management",
+      "item": [
+        {
+          "name": "Upload Component Files",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "tsFiles",
+                  "type": "file",
+                  "description": "TypeScript component files (max 10 files)"
+                },
+                {
+                  "key": "cssFile",
+                  "type": "file",
+                  "description": "CSS style file (max 1 file)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/file/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["file", "upload"]
+            },
+            "description": "Upload TypeScript component files and CSS styles to create new components in the builder system."
+          }
+        },
+        {
+          "name": "Get All Component Folders",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/file/folders",
+              "host": ["{{baseUrl}}"],
+              "path": ["file", "folders"]
+            },
+            "description": "Retrieve a list of all available component folders in the system."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/file/folders",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["file", "folders"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"folders\": [\"Button\", \"Card\", \"Header\", \"Footer\"]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Component Files",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/file/folders/:componentName/files",
+              "host": ["{{baseUrl}}"],
+              "path": ["file", "folders", ":componentName", "files"],
+              "variable": [
+                {
+                  "key": "componentName",
+                  "value": "Button",
+                  "description": "Name of the component folder"
+                }
+              ]
+            },
+            "description": "Get all files (TypeScript, CSS) for a specific component."
+          }
+        },
+        {
+          "name": "Get Compiled Component Files",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/file/folders/:componentName",
+              "host": ["{{baseUrl}}"],
+              "path": ["file", "folders", ":componentName"],
+              "variable": [
+                {
+                  "key": "componentName",
+                  "value": "Button",
+                  "description": "Name of the component to get compiled files"
+                }
+              ]
+            },
+            "description": "Get compiled and processed files for a specific component including settings and compiled code."
+          }
+        },
+        {
+          "name": "Download Multiple Components",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"componentNames\": [\"Button\", \"Card\", \"Header\"],\n  \"format\": \"zip\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/file/download-multiple",
+              "host": ["{{baseUrl}}"],
+              "path": ["file", "download-multiple"]
+            },
+            "description": "Download multiple components as a ZIP file with all their source files and dependencies."
+          }
+        },
+        {
+          "name": "Check Component Exists",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/file/check/:componentName",
+              "host": ["{{baseUrl}}"],
+              "path": ["file", "check", ":componentName"],
+              "variable": [
+                {
+                  "key": "componentName",
+                  "value": "Button",
+                  "description": "Component name to check"
+                }
+              ]
+            },
+            "description": "Check if a specific component exists in the system."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Project Import/Export",
+      "description": "Endpoints for importing and exporting complete projects",
+      "item": [
+        {
+          "name": "Import Project (JSON)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectData\": {\n    \"version\": \"1.0\",\n    \"components\": [],\n    \"settings\": {},\n    \"metadata\": {\n      \"name\": \"My Project\",\n      \"description\": \"Imported project\"\n    }\n  },\n  \"options\": {\n    \"mergeStrategy\": \"replace\",\n    \"preserveExisting\": false\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/file/import",
+              "host": ["{{baseUrl}}"],
+              "path": ["file", "import"]
+            },
+            "description": "Import a complete project from JSON data with component configurations, settings, and metadata."
+          }
+        },
+        {
+          "name": "Import Project from File",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "projectFile",
+                  "type": "file",
+                  "description": "JSON project file to import"
+                },
+                {
+                  "key": "mergeStrategy",
+                  "value": "replace",
+                  "type": "text",
+                  "description": "How to handle conflicts: 'replace', 'merge', 'skip'"
+                },
+                {
+                  "key": "overwriteComponents",
+                  "value": "true",
+                  "type": "text",
+                  "description": "Whether to overwrite existing components"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/file/import/file",
+              "host": ["{{baseUrl}}"],
+              "path": ["file", "import", "file"]
+            },
+            "description": "Import a project by uploading a JSON file with complete project configuration."
+          }
+        },
+        {
+          "name": "Get Import Status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/file/import/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["file", "import", "status"]
+            },
+            "description": "Check the status of the last import operation, including progress and any errors."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Global Templates",
+      "description": "Endpoints for managing global project templates",
+      "item": [
+        {
+          "name": "Get All Templates",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/templates",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "templates"]
+            },
+            "description": "Retrieve all available global templates with their metadata and component configurations."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/templates",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "templates"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"templates\": [\n    {\n      \"id\": \"template_1234567890_abc123\",\n      \"name\": \"Landing Page Template\",\n      \"description\": \"Modern landing page with hero section\",\n      \"componentData\": {},\n      \"createdAt\": \"2025-01-01T00:00:00.000Z\",\n      \"updatedAt\": \"2025-01-01T00:00:00.000Z\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create New Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dashboard Template\",\n  \"description\": \"Admin dashboard layout with sidebar and widgets\",\n  \"componentData\": {\n    \"components\": [\n      {\n        \"id\": \"header-1\",\n        \"type\": \"Header\",\n        \"props\": {\n          \"title\": \"Dashboard\",\n          \"showLogo\": true\n        }\n      }\n    ],\n    \"layout\": {\n      \"type\": \"grid\",\n      \"columns\": 12\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/templates",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "templates"]
+            },
+            "description": "Create a new global template with component configuration and layout information."
+          }
+        },
+        {
+          "name": "Get Template by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/templates/:templateId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "templates", ":templateId"],
+              "variable": [
+                {
+                  "key": "templateId",
+                  "value": "template_1234567890_abc123",
+                  "description": "Unique template identifier"
+                }
+              ]
+            },
+            "description": "Retrieve a specific template by its unique identifier."
+          }
+        },
+        {
+          "name": "Update Template",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Dashboard Template\",\n  \"description\": \"Enhanced admin dashboard with new widgets\",\n  \"componentData\": {\n    \"components\": [\n      {\n        \"id\": \"header-1\",\n        \"type\": \"Header\",\n        \"props\": {\n          \"title\": \"Enhanced Dashboard\",\n          \"showLogo\": true,\n          \"showSearch\": true\n        }\n      }\n    ]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/templates/:templateId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "templates", ":templateId"],
+              "variable": [
+                {
+                  "key": "templateId",
+                  "value": "template_1234567890_abc123",
+                  "description": "Template ID to update"
+                }
+              ]
+            },
+            "description": "Update an existing template with new configuration and component data."
+          }
+        },
+        {
+          "name": "Delete Template",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/templates/:templateId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "templates", ":templateId"],
+              "variable": [
+                {
+                  "key": "templateId",
+                  "value": "template_1234567890_abc123",
+                  "description": "Template ID to delete"
+                }
+              ]
+            },
+            "description": "Permanently delete a template from the system."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Component Templates",
+      "description": "Endpoints for managing component-specific templates and configurations",
+      "item": [
+        {
+          "name": "Get Component Templates",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/components/:componentName/templates",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "components", ":componentName", "templates"],
+              "variable": [
+                {
+                  "key": "componentName",
+                  "value": "Button",
+                  "description": "Name of the component"
+                }
+              ]
+            },
+            "description": "Get all available templates for a specific component with their settings and language configurations."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/components/Button/templates",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "components", "Button", "templates"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"templates\": [\n    {\n      \"id\": \"primary-button\",\n      \"name\": \"Primary Button\",\n      \"description\": \"Main action button with primary styling\",\n      \"settings\": {\n        \"variant\": \"primary\",\n        \"size\": \"medium\",\n        \"disabled\": false\n      },\n      \"language\": {\n        \"en\": {\n          \"text\": \"Click me\"\n        },\n        \"ka\": {\n          \"text\": \"დამაჭირე\"\n        }\n      },\n      \"componentName\": \"Button\",\n      \"createdAt\": \"2025-01-01T00:00:00.000Z\",\n      \"updatedAt\": \"2025-01-01T00:00:00.000Z\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Component Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Secondary Button\",\n  \"description\": \"Secondary action button with outline styling\",\n  \"settings\": {\n    \"variant\": \"secondary\",\n    \"size\": \"medium\",\n    \"outline\": true,\n    \"disabled\": false\n  },\n  \"language\": {\n    \"en\": {\n      \"text\": \"Cancel\"\n    },\n    \"ka\": {\n      \"text\": \"გაუქმება\"\n    },\n    \"ru\": {\n      \"text\": \"Отмена\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/components/:componentName/templates",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "components", ":componentName", "templates"],
+              "variable": [
+                {
+                  "key": "componentName",
+                  "value": "Button",
+                  "description": "Component name to create template for"
+                }
+              ]
+            },
+            "description": "Create a new template for a specific component with custom settings and multi-language support."
+          }
+        },
+        {
+          "name": "Get Component Template by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/components/:componentName/templates/:templateId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "components", ":componentName", "templates", ":templateId"],
+              "variable": [
+                {
+                  "key": "componentName",
+                  "value": "Button",
+                  "description": "Component name"
+                },
+                {
+                  "key": "templateId",
+                  "value": "primary-button",
+                  "description": "Template identifier"
+                }
+              ]
+            },
+            "description": "Retrieve a specific template for a component with full configuration details."
+          }
+        },
+        {
+          "name": "Update Component Template",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Primary Button\",\n  \"description\": \"Enhanced primary button with animation\",\n  \"settings\": {\n    \"variant\": \"primary\",\n    \"size\": \"large\",\n    \"disabled\": false,\n    \"animated\": true\n  },\n  \"language\": {\n    \"en\": {\n      \"text\": \"Get Started\"\n    },\n    \"ka\": {\n      \"text\": \"დაიწყე\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/components/:componentName/templates/:templateId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "components", ":componentName", "templates", ":templateId"],
+              "variable": [
+                {
+                  "key": "componentName",
+                  "value": "Button",
+                  "description": "Component name"
+                },
+                {
+                  "key": "templateId",
+                  "value": "primary-button",
+                  "description": "Template ID to update"
+                }
+              ]
+            },
+            "description": "Update an existing component template with new settings and language configurations."
+          }
+        },
+        {
+          "name": "Delete Component Template",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/components/:componentName/templates/:templateId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "components", ":componentName", "templates", ":templateId"],
+              "variable": [
+                {
+                  "key": "componentName",
+                  "value": "Button",
+                  "description": "Component name"
+                },
+                {
+                  "key": "templateId",
+                  "value": "secondary-button",
+                  "description": "Template ID to delete"
+                }
+              ]
+            },
+            "description": "Delete a specific template for a component."
+          }
+        },
+        {
+          "name": "Apply Component Settings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"settings\": {\n    \"variant\": \"primary\",\n    \"size\": \"large\",\n    \"disabled\": false,\n    \"fullWidth\": true\n  },\n  \"mobileSettings\": {\n    \"size\": \"medium\",\n    \"fullWidth\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/components/:componentName/apply-settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "components", ":componentName", "apply-settings"],
+              "variable": [
+                {
+                  "key": "componentName",
+                  "value": "Button",
+                  "description": "Component to apply settings to"
+                }
+              ]
+            },
+            "description": "Apply specific settings to a component with separate desktop and mobile configurations."
+          }
+        },
+        {
+          "name": "Apply Component Language",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"language\": \"ka\",\n  \"translations\": {\n    \"text\": \"ღილაკი\",\n    \"tooltip\": \"დააჭირეთ ქმედებისთვის\",\n    \"aria-label\": \"მთავარი ღილაკი\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/components/:componentName/apply-language",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "components", ":componentName", "apply-language"],
+              "variable": [
+                {
+                  "key": "componentName",
+                  "value": "Button",
+                  "description": "Component to apply language to"
+                }
+              ]
+            },
+            "description": "Apply language-specific translations to a component for internationalization support."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "description": "Server health and status endpoints",
+      "item": [
+        {
+          "name": "Server Status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "Check if the server is running and responding to requests."
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set timestamp for request tracking",
+          "pm.globals.set('timestamp', new Date().toISOString());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test to check response time",
+          "pm.test('Response time is less than 5000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "// Global test to check status code for success responses",
+          "if (pm.response.code >= 200 && pm.response.code < 300) {",
+          "    pm.test('Status code is successful', function () {",
+          "        pm.response.to.have.status(pm.response.code);",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ]
+}

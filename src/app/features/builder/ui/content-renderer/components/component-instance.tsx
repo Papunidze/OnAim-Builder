@@ -9,6 +9,7 @@ import {
   MobileValuesService,
 } from "@app-features/builder/ui/property-adjustments/services";
 import { compileLanguageObject } from "@app-features/builder/ui/language/compiler/language-compiler";
+import { getComponentCaches } from "../services/component-cache";
 import type { ComponentState } from "@app-shared/services/builder";
 
 interface CachedProps {
@@ -19,29 +20,41 @@ interface CachedProps {
 }
 
 const propsCache = new WeakMap<ComponentState, CachedProps>();
-const componentKeyCache = new Map<string, string>();
-const componentInstanceCache = new Map<
-  string,
-  React.ComponentType<Record<string, unknown>>
->();
+const { componentKeyCache, componentInstanceCache } = getComponentCaches();
 
 function getComponentCacheKey(
   instance: { id: string },
   component: ComponentState | undefined
 ): string {
-  if (!component?.compiledData?.files) return `${instance.id}-no-files`;
+  if (!component) return `${instance.id}-no-component`;
 
   const timestamp = component.timestamp || 0;
-  const cacheKey = `${instance.id}-${timestamp}`;
+  const hasCompiledFiles =
+    component.compiledData?.files && component.compiledData.files.length > 0;
+  const hasTemplateLanguage = component.props?.templateLanguage;
+
+  // Include template language in cache key when no compiled files exist
+  const templateLanguageKey =
+    hasTemplateLanguage && !hasCompiledFiles
+      ? JSON.stringify(component.props.templateLanguage)
+      : "";
+
+  const cacheKey = `${instance.id}-${timestamp}-${templateLanguageKey}`;
 
   if (componentKeyCache.has(cacheKey)) {
     return componentKeyCache.get(cacheKey)!;
   }
 
-  const languageFile = component.compiledData.files.find(
+  if (!hasCompiledFiles) {
+    const finalKey = `${instance.id}-no-files-${timestamp}-${templateLanguageKey.length}`;
+    componentKeyCache.set(cacheKey, finalKey);
+    return finalKey;
+  }
+
+  const languageFile = component.compiledData!.files.find(
     (file: { file: string }) => file.file === "language.ts"
   );
-  const settingsFile = component.compiledData.files.find(
+  const settingsFile = component.compiledData!.files.find(
     (file: { file: string }) => file.file === "settings.ts"
   );
 
@@ -49,6 +62,7 @@ function getComponentCacheKey(
     languageFile?.content || "",
     settingsFile?.content || "",
     timestamp,
+    templateLanguageKey,
   ].join("|");
 
   const finalKey = `${instance.id}-${contentHash.length}-${timestamp}`;
@@ -67,7 +81,15 @@ function computeComponentProps(
 
   if (!component) return defaultResult;
 
-  const cacheKey = `${component.id}-${component.timestamp}-${JSON.stringify(component.props)}`;
+  // Include language file content in cache key for more accurate invalidation
+  const languageFileContent =
+    component.compiledData?.files?.find(
+      (file: { file: string }) => file.file === "language.ts"
+    )?.content || "";
+
+  const templateLanguage = component.props?.templateLanguage || {};
+  
+  const cacheKey = `${component.id}-${component.timestamp}-${JSON.stringify(component.props)}-${languageFileContent.length}-${JSON.stringify(templateLanguage)}`;
 
   if (propsCache.has(component)) {
     const cached = propsCache.get(component)!;
@@ -77,6 +99,8 @@ function computeComponentProps(
         language: cached.language,
         languageObject: cached.languageObject,
       };
+    } else {
+      propsCache.delete(component);
     }
   }
 
@@ -100,7 +124,6 @@ export const lng = new SetLanguage(lngObject, "en");
       console.error("Failed to compile language object");
     }
 
-    // Apply template language if it exists (for display only, not saved)
     if (component.props?.templateLanguage) {
       const templateLanguage = component.props.templateLanguage as Record<
         string,
@@ -164,18 +187,24 @@ export const lng = new SetLanguage(lngObject, "en");
   }
 
   if (component.props?.templateLanguage) {
-    const templateLanguage = component.props.templateLanguage as Record<
-      string,
-      Record<string, string>
-    >;
-    const currentLang = languageObject?.getCurrentLanguage() || "en";
-    const templateTranslations =
-      templateLanguage[currentLang] || templateLanguage["en"] || {};
+    // IMPORTANT: Only use template language if we don't have a valid compiled language file
+    // This prevents template language from overriding edited compiled language
+    const hasValidCompiledLanguage = languageObject && Object.keys(languageValue).length > 0;
+    
+    if (!hasValidCompiledLanguage) {
+      const templateLanguage = component.props.templateLanguage as Record<
+        string,
+        Record<string, string>
+      >;
+      const currentLang = languageObject?.getCurrentLanguage() || "en";
+      const templateTranslations =
+        templateLanguage[currentLang] || templateLanguage["en"] || {};
 
-    languageValue = {
-      ...languageValue,
-      ...templateTranslations,
-    };
+      languageValue = {
+        ...languageValue,
+        ...templateTranslations,
+      };
+    }
   }
 
   if (!settingsFile?.content) {
