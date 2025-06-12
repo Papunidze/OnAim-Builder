@@ -1,0 +1,282 @@
+/* Main Controls Container */
+.controls {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* Main Toggle Section */
+.mainToggle {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 1px solid #dee2e6;
+}
+
+.toggleButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: white;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+  flex: 1;
+}
+
+.toggleButton:hover {
+  border-color: #adb5bd;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toggleButton.active {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  border-color: #28a745;
+  color: white;
+}
+
+.toggleButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toggleIcon {
+  font-size: 16px;
+}
+
+.toggleText {
+  font-weight: 600;
+}
+
+.expandButton {
+  background: none;
+  border: none;
+  padding: 8px;
+  margin-left: 8px;
+  cursor: pointer;
+  color: #6c757d;
+  font-size: 12px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.expandButton:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #495057;
+}
+
+/* Expanded Controls */
+.expandedControls {
+  padding: 16px;
+  background: white;
+  border-top: 1px solid #f1f3f4;
+}
+
+/* Layout Info Section */
+.layoutInfo {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.infoRow:last-child {
+  margin-bottom: 0;
+}
+
+.infoLabel {
+  font-size: 12px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.infoValue {
+  font-size: 12px;
+  font-weight: 600;
+  color: #495057;
+  text-transform: capitalize;
+}
+
+.unsavedIndicator {
+  font-size: 12px;
+  color: #dc3545;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 100px;
+  justify-content: center;
+}
+
+.actionButton:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.actionButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.saveButton {
+  border-color: #007bff;
+  color: #007bff;
+}
+
+.saveButton:hover:not(:disabled) {
+  background: #007bff;
+  color: white;
+}
+
+.loadButton {
+  border-color: #6f42c1;
+  color: #6f42c1;
+}
+
+.loadButton:hover:not(:disabled) {
+  background: #6f42c1;
+  color: white;
+}
+
+.resetButton {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.resetButton:hover:not(:disabled) {
+  background: #dc3545;
+  color: white;
+}
+
+/* Button Icons and Status */
+.icon {
+  font-size: 14px;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  font-size: 14px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.checkmark {
+  color: #28a745;
+  font-size: 14px;
+}
+
+.error {
+  color: #dc3545;
+  font-size: 14px;
+}
+
+/* Help Text */
+.helpText {
+  background: #e3f2fd;
+  border-radius: 6px;
+  padding: 12px;
+  border-left: 4px solid #2196f3;
+}
+
+.helpText p {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: #1565c0;
+  font-weight: 600;
+}
+
+.helpText ul {
+  margin: 0;
+  padding-left: 16px;
+  list-style: none;
+}
+
+.helpText li {
+  font-size: 12px;
+  color: #1976d2;
+  margin-bottom: 4px;
+  position: relative;
+}
+
+.helpText li:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .controls {
+    margin-bottom: 12px;
+  }
+  
+  .mainToggle {
+    padding: 10px 12px;
+  }
+  
+  .toggleButton {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  
+  .expandedControls {
+    padding: 12px;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+  }
+  
+  .actionButton {
+    min-width: auto;
+  }
+  
+  .helpText {
+    padding: 10px;
+  }
+  
+  .helpText p,
+  .helpText li {
+    font-size: 11px;
+  }
+} 

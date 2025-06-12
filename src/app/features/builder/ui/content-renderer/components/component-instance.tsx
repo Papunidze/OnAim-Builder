@@ -1,4 +1,4 @@
-import { useMemo, memo, useCallback } from "react";
+import { useMemo, memo } from "react";
 import type { JSX } from "react";
 import type { ComponentRenderProps } from "../types";
 import styles from "./component-instance.module.css";
@@ -343,15 +343,11 @@ export const ComponentInstance = memo(function ComponentInstance({
   instance,
   onRetry,
 }: ComponentRenderProps): JSX.Element {
-  const { selectComponent, selectedComponentId, getComponent } = useBuilder();
+  const { getComponent } = useBuilder();
 
   const component = useMemo(
     () => getComponent(instance.id),
     [getComponent, instance.id]
-  );
-  const isSelected = useMemo(
-    () => selectedComponentId === instance.id,
-    [selectedComponentId, instance.id]
   );
 
   const componentContentKey = useMemo(
@@ -384,22 +380,7 @@ export const ComponentInstance = memo(function ComponentInstance({
     };
   }, [componentProps, component?.props]);
 
-  const wrapperClassName = useMemo(
-    () =>
-      isSelected
-        ? `${styles.componentWrapper} ${styles.selected}`
-        : styles.componentWrapper,
-    [isSelected]
-  );
-
-  const handleClick = useCallback(
-    (e: React.MouseEvent): void => {
-      e.preventDefault();
-      e.stopPropagation();
-      selectComponent(instance.id);
-    },
-    [selectComponent, instance.id]
-  );
+  // Removed unused wrapperClassName and handleClick variables
 
   const stableComponentInstance = useMemo(() => {
     if (instance.status !== "loaded" || !instance.component) return null;
@@ -483,12 +464,10 @@ export const ComponentInstance = memo(function ComponentInstance({
           </div>
         )}
       >
-        <div className={wrapperClassName} onClick={handleClick}>
-          <MemoizedComponentWrapper
-            Component={stableComponentInstance}
-            props={safeProps}
-          />
-        </div>
+        <MemoizedComponentWrapper
+          Component={stableComponentInstance}
+          props={safeProps}
+        />
       </ErrorBoundary>
     );
   }

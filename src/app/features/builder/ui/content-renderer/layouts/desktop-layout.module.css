@@ -1,6 +1,5 @@
 .desktopFrame {
   width: 100%;
-  max-width: 1200px;
   margin: 0 auto;
   padding: var(--spacing-lg);
   background: var(--background-primary);
@@ -27,5 +26,4 @@
 
 .desktopContent {
   background: var(----background-primary) no-repeat top/cover local;
-  padding: var(--spacing-md) var(--spacing-4xl) var(--spacing-5xl);
 }

@@ -1,6 +1,6 @@
 import { useState, type JSX } from "react";
 
-import { ContentRenderer } from "./ui/content-renderer";
+import { EnhancedContentRenderer } from "./ui/content-renderer";
 import Header from "./ui/header/header";
 import { Components } from "./ui/components";
 import Property from "./ui/property-adjustments/property-adjustment";
@@ -22,10 +22,14 @@ const Builder = (): JSX.Element => {
         <Components viewMode={viewMode} />
         <div className={styles.contentContainer}>
           {currentComponents.length > 0 ? (
-            <ContentRenderer
+            <EnhancedContentRenderer
               key={viewMode}
               components={currentComponents}
               viewMode={viewMode}
+              projectId="main-builder"
+              showDragDropControls={false}
+                        enableDragDropByDefault
+          autoSaveLayouts
             />
           ) : (
             <div>No components selected. Add components from the panel.</div>

@@ -26,7 +26,7 @@ const Leaderboard: React.FC<LeaderboardProps> = (props) => {
       className="leaderboard"
       style={{
         backgroundColor: `rgb(${leaderboardSettings.background})`,
-        width: `${leaderboardSettings.width}px`,
+        
       }}
     >
       <Button>{props.language.button}</Button>

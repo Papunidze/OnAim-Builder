@@ -4,8 +4,8 @@
   color: white;
   background: black;
 }
+
 .leaderboard {
-  max-width: 360px;
   margin: 0 auto;
   background: white;
   border-radius: 8px;
@@ -14,6 +14,7 @@
   overflow: hidden;
   width: 100%;
   height: fit-content;
+  max-width: 480px;
 }
 
 .leaderboard-title {

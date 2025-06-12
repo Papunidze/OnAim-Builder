@@ -66,6 +66,9 @@ ComponentsList.displayName = "ComponentsList";
 export const ContentRenderer = memo(function ContentRenderer({
   components,
   viewMode,
+  useDragAndDrop = false,
+  onLayoutChange,
+  savedLayouts,
 }: ContentRendererProps): JSX.Element {
   const { instances, aggregatedStyles, retryComponent, isPending } =
     useComponentInstances(components);
@@ -91,5 +94,19 @@ export const ContentRenderer = memo(function ContentRenderer({
 
   const Layout = viewMode === "desktop" ? DesktopLayout : MobileLayout;
 
-  return <Layout>{content}</Layout>;
+  const layoutProps = useDragAndDrop
+    ? {
+        instances,
+        onRetry: retryComponent,
+        isPending,
+        onLayoutChange,
+        savedLayouts,
+        useDragAndDrop: true,
+      }
+    : { 
+        children: content,
+        useDragAndDrop: false,
+      };
+
+  return <Layout {...layoutProps} />;
 });

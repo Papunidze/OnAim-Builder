@@ -121,14 +121,8 @@
   transition: all 0.2s ease;
 }
 
-.componentWrapper:hover {
-  border-color: #007bff;
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
-}
 
-.componentWrapper.selected {
-  outline: 5px solid #007bff;
-}
+
 
 .componentPreparing {
   padding: 16px;
