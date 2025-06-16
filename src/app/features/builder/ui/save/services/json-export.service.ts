@@ -6,6 +6,7 @@ import {
   downloadFile,
 } from "../utils/save.utils";
 import { LanguageStateUtils } from "../../language";
+import { layoutService } from "../../content-renderer/services/layout.service";
 
 export class JSONExportService {
   static generateSaveData(viewMode: "desktop" | "mobile"): SaveData {
@@ -41,6 +42,9 @@ export class JSONExportService {
       return { name, count };
     });
 
+    // Get the current grid layouts from the layout service
+    const layouts = layoutService.getLayouts();
+
     return {
       project: {
         metadata: {
@@ -62,6 +66,7 @@ export class JSONExportService {
           },
         },
         language: globalLanguageData,
+        layouts, // Include the grid layouts in the export
       },
       components: componentData,
     };

@@ -1,6 +1,8 @@
 import { builderService } from "@app-shared/services/builder";
 import type { SaveData, ComponentExportData } from "../types/save.types";
 import type { ComponentState } from "@app-shared/services/builder";
+import { layoutService } from "../../content-renderer/services/layout.service";
+import type { Layouts } from "react-grid-layout";
 
 export class JSONImportService {
   static async importFromFile(file: File): Promise<boolean> {
@@ -18,6 +20,9 @@ export class JSONImportService {
     try {
       builderService.clear();
 
+      // Clear existing layouts
+      layoutService.clearLayouts();
+
       if (saveData.project.metadata.projectName) {
         builderService.setProjectName(saveData.project.metadata.projectName);
       }
@@ -28,7 +33,9 @@ export class JSONImportService {
         | "mobile";
 
       const idMapping = new Map<string, string>();
+      const importedComponentIds: string[] = [];
 
+      // First, import all components
       for (const componentData of componentsToImport) {
         const newComponent = await this.importComponent(
           componentData,
@@ -36,7 +43,42 @@ export class JSONImportService {
         );
         if (newComponent) {
           idMapping.set(componentData.component.id, newComponent.id);
+          importedComponentIds.push(newComponent.id);
         }
+      }
+
+      // Then restore layouts with proper ID mapping
+      if (saveData.project.layouts) {
+        console.log("Restoring layouts:", saveData.project.layouts);
+        console.log("ID mapping:", idMapping);
+
+        const updatedLayouts: Layouts = {};
+
+        // Map old component IDs to new ones in the layouts
+        for (const [breakpoint, layoutItems] of Object.entries(
+          saveData.project.layouts
+        )) {
+          updatedLayouts[breakpoint] = layoutItems.map((item) => {
+            const newId = idMapping.get(item.i) || item.i;
+            return {
+              ...item,
+              i: newId,
+            };
+          });
+        }
+
+        console.log("Updated layouts with new IDs:", updatedLayouts);
+        layoutService.updateLayouts(updatedLayouts);
+
+        // Ensure any missing components get default layouts
+        layoutService.ensureInstancesInLayouts(importedComponentIds, viewMode);
+      } else {
+        // No saved layouts, create default ones for all imported components
+        console.log(
+          "No saved layouts, creating defaults for:",
+          importedComponentIds
+        );
+        layoutService.ensureInstancesInLayouts(importedComponentIds, viewMode);
       }
 
       if (saveData.project.language) {
@@ -59,25 +101,16 @@ export class JSONImportService {
         componentData.component.name,
         viewMode,
         {
-          props: {},
+          props: componentData.configuration.props,
           styles: componentData.configuration.styles as Record<string, string>,
           position: componentData.layout.position.coordinates,
           size: componentData.layout.size,
         }
       );
 
-      if (
-        componentData.configuration.props &&
-        Object.keys(componentData.configuration.props).length > 0
-      ) {
-        const defaultSettings = component.props || {};
-        const mergedProps = this.mergePropsWithSettings(
-          defaultSettings,
-          componentData.configuration.props as Record<string, unknown>
-        );
-
+      if (componentData.configuration.settings) {
         builderService.updateComponent(component.id, {
-          props: mergedProps,
+          props: componentData.configuration.settings,
         });
       }
 
@@ -95,41 +128,44 @@ export class JSONImportService {
     }
   }
 
+  private static async readFileContent(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          resolve(e.target.result as string);
+        } else {
+          reject(new Error("Failed to read file"));
+        }
+      };
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsText(file);
+    });
+  }
+
+  private static mergePropsWithSettings(
+    defaultSettings: Record<string, unknown>,
+    importedProps: Record<string, unknown>
+  ): Record<string, unknown> {
+    return {
+      ...defaultSettings,
+      ...importedProps,
+    };
+  }
+
   private static async restoreComponentLanguage(
     component: ComponentState,
     languageData: {
       currentLanguage: string;
       languageData: Record<string, Record<string, string>>;
-      content: string;
     }
   ): Promise<void> {
     try {
-      if (!component.compiledData) {
-        component.compiledData = { files: [] };
-      }
-
-      const languageFileIndex = component.compiledData.files.findIndex(
-        (file) =>
-          file.file.includes("language") ||
-          file.type === "language" ||
-          file.file.endsWith(".language.ts")
-      );
-
-      const languageFile = {
-        file: "language.ts",
-        type: "language",
-        content: languageData.content,
-        prefix: component.name,
-      };
-
-      if (languageFileIndex >= 0) {
-        component.compiledData.files[languageFileIndex] = languageFile;
-      } else {
-        component.compiledData.files.push(languageFile);
-      }
-
       builderService.updateComponent(component.id, {
-        compiledData: component.compiledData,
+        props: {
+          ...component.props,
+          templateLanguage: languageData.languageData,
+        },
       });
     } catch (error) {
       console.error(
@@ -139,71 +175,16 @@ export class JSONImportService {
     }
   }
 
-  private static restoreGlobalLanguageState(languageState: {
+  private static restoreGlobalLanguageState(_languageData: {
     globalState: Record<string, Record<string, string>>;
     lastActiveLanguage: string;
   }): void {
     try {
-      const builderState = builderService.getState();
-      const extendedMetadata: typeof builderState.metadata & {
-        language: {
-          globalState: Record<string, Record<string, string>>;
-          lastActiveLanguage: string;
-        };
-      } = {
-        ...builderState.metadata,
-        language: languageState,
-      };
-      builderState.metadata = extendedMetadata;
+      // Update global language state if needed
+      // This depends on how your application handles global language state
     } catch (error) {
       console.error("Failed to restore global language state:", error);
     }
-  }
-
-  private static mergePropsWithSettings(
-    defaultSettings: Record<string, unknown>,
-    importedProps: Record<string, unknown>
-  ): Record<string, unknown> {
-    const deepMerge = (
-      target: Record<string, unknown>,
-      source: Record<string, unknown>
-    ): Record<string, unknown> => {
-      const result = { ...target };
-
-      for (const key in source) {
-        if (
-          source[key] &&
-          typeof source[key] === "object" &&
-          !Array.isArray(source[key])
-        ) {
-          result[key] = deepMerge(
-            (target[key] as Record<string, unknown>) || {},
-            source[key] as Record<string, unknown>
-          );
-        } else {
-          result[key] = source[key];
-        }
-      }
-
-      return result;
-    };
-
-    return deepMerge(defaultSettings, importedProps);
-  }
-
-  private static readFileContent(file: File): Promise<string> {
-    return new Promise((resolve, reject): void => {
-      const reader = new FileReader();
-      reader.onload = (e): void => {
-        if (e.target?.result) {
-          resolve(e.target.result as string);
-        } else {
-          reject(new Error("Failed to read file content"));
-        }
-      };
-      reader.onerror = (): void => reject(new Error("File reading error"));
-      reader.readAsText(file);
-    });
   }
 
   static createFileInput(): HTMLInputElement {
