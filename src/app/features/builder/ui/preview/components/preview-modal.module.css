@@ -15,8 +15,8 @@
 .modalContainer {
   background: white;
   border-radius: 12px;
-  max-width: 90vw;
-  max-height: 90vh;
+  max-width: 95vw;
+  max-height: 95vh;
   width: 1200px;
   height: 800px;
   display: flex;
@@ -76,4 +76,4 @@
 
 :global(body.preview-mode) .componentWrapper {
   pointer-events: none !important;
-} 
+}

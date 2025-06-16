@@ -30,15 +30,10 @@ export const useDragAndDropLayouts = ({
     const unsubscribe = layoutService.subscribe((newLayouts) => {
       // Prevent feedback loop - don't update if the change came from this hook
       if (isUpdatingFromHook.current) {
-        console.log("Layout service updated by this hook, skipping sync back");
         isUpdatingFromHook.current = false;
         return;
       }
 
-      console.log(
-        "Layout service updated externally, syncing to hook:",
-        newLayouts
-      );
       setLayouts(newLayouts);
       setHasUnsavedChanges(false); // Layouts from service are considered saved
     });
@@ -102,7 +97,6 @@ export const useDragAndDropLayouts = ({
   // Update layouts with auto-save functionality
   const updateLayouts = useCallback(
     (newLayouts: Layouts): void => {
-      console.log("Hook updateLayouts called with:", newLayouts);
       setLayouts(newLayouts);
       setHasUnsavedChanges(true);
 

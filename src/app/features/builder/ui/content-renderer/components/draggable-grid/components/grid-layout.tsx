@@ -1,54 +1,36 @@
-import React, { useState, useCallback, useMemo, useEffect } from "react";
-import { WidthProvider, Responsive } from "react-grid-layout";
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+} from "react";
+import ReactGridLayout, { WidthProvider } from "react-grid-layout";
 import type { Layout, Layouts } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
 import { ComponentInstance } from "../../component-instance";
-import type { ComponentInstanceState, ViewMode } from "../../../types";
+import type { ComponentInstanceState } from "../../../types";
 import type { DraggableGridLayoutProps } from "../types";
 
 import styles from "../styles/grid-layout.module.css";
 
-const ResponsiveGridLayout = WidthProvider(Responsive);
+const GridLayout = WidthProvider(ReactGridLayout);
 
-const getGridConfig = (
-  viewMode: ViewMode
-): {
-  breakpoints: Record<string, number>;
-  cols: Record<string, number>;
+const getGridConfig = (): {
+  cols: number;
   rowHeight: number;
 } => {
-  if (viewMode === "mobile") {
-    return {
-      breakpoints: { lg: 768, md: 576, sm: 480, xs: 320, xxs: 0 },
-      cols: { lg: 2, md: 2, sm: 1, xs: 1, xxs: 1 },
-      rowHeight: 150,
-    };
-  }
   return {
-    breakpoints: { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 },
-    cols: { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 },
+    cols: 12,
     rowHeight: 120,
   };
 };
 
 const generateDefaultLayout = (
-  instances: ComponentInstanceState[],
-  viewMode: ViewMode
+  instances: ComponentInstanceState[]
 ): Layout[] => {
-  if (viewMode === "mobile") {
-    return instances.map((instance, index) => ({
-      i: instance.id,
-      x: 0,
-      y: index * 4,
-      w: 2,
-      h: 4,
-      minW: 2,
-      minH: 3,
-    }));
-  }
-
   const itemsPerRow = 2;
   return instances.map((instance, index) => {
     const col = index % itemsPerRow;
@@ -68,75 +50,68 @@ const generateDefaultLayout = (
 
 export const DraggableGridLayout: React.FC<DraggableGridLayoutProps> = ({
   instances,
-  viewMode,
+  viewMode: _viewMode,
   onRetry,
   isPending,
   onLayoutChange,
   savedLayouts,
 }) => {
-  const config = useMemo(() => getGridConfig(viewMode), [viewMode]);
+  const config = useMemo(() => getGridConfig(), []);
+  const isInternalUpdate = useRef(false);
 
   const defaultLayout = useMemo(
-    () => generateDefaultLayout(instances, viewMode),
-    [instances, viewMode]
+    () => generateDefaultLayout(instances),
+    [instances]
   );
 
-  // Initialize layouts with proper structure
-  const initialLayouts = useMemo(() => {
-    if (savedLayouts && Object.keys(savedLayouts).length > 0) {
-      // Ensure all current instances have layout entries
-      const existingLayouts = { ...savedLayouts };
+  // Use simple layout instead of responsive layouts
+  const initialLayout = useMemo(() => {
+    if (savedLayouts && savedLayouts.lg && savedLayouts.lg.length > 0) {
+      // Use the 'lg' layout as the single layout
+      const existingLayout = [...savedLayouts.lg];
+      const existingIds = new Set(existingLayout.map((item) => item.i));
 
-      // Get all breakpoints for the current viewMode
-      const breakpoints = Object.keys(config.breakpoints);
-
-      for (const breakpoint of breakpoints) {
-        if (!existingLayouts[breakpoint]) {
-          existingLayouts[breakpoint] = [];
+      // Ensure all instances have layout entries
+      instances.forEach((instance, index) => {
+        if (!existingIds.has(instance.id)) {
+          const defaultItem = defaultLayout[index] || {
+            i: instance.id,
+            x: 0,
+            y: index,
+            w: 6,
+            h: 5,
+            minW: 4,
+            minH: 3,
+          };
+          existingLayout.push(defaultItem);
         }
+      });
 
-        // Ensure all instances have layout entries
-        const existingIds = new Set(
-          existingLayouts[breakpoint].map((item) => item.i)
-        );
-
-        instances.forEach((instance, index) => {
-          if (!existingIds.has(instance.id)) {
-            // Add missing component with default layout
-            const defaultItem = defaultLayout[index] || {
-              i: instance.id,
-              x: 0,
-              y: index,
-              w: viewMode === "mobile" ? 2 : 6,
-              h: viewMode === "mobile" ? 4 : 5,
-              minW: viewMode === "mobile" ? 2 : 4,
-              minH: 3,
-            };
-            existingLayouts[breakpoint].push(defaultItem);
-          }
-        });
-      }
-
-      return existingLayouts;
+      return existingLayout;
     }
 
-    // Create layouts for all breakpoints with default layout
-    const layouts: Layouts = {};
-    const breakpoints = Object.keys(config.breakpoints);
+    return defaultLayout;
+  }, [savedLayouts, instances, defaultLayout]);
 
-    for (const breakpoint of breakpoints) {
-      layouts[breakpoint] = defaultLayout;
-    }
+  const [layout, setLayout] = useState<Layout[]>(initialLayout);
 
-    return layouts;
-  }, [savedLayouts, instances, defaultLayout, config.breakpoints, viewMode]);
-
-  const [layouts, setLayouts] = useState<Layouts>(initialLayouts);
-
-  // Update layouts when instances change
+  // Only update layout when instances change (new components added/removed)
+  // Don't update when savedLayouts change to prevent infinite loops
   useEffect(() => {
-    setLayouts(initialLayouts);
-  }, [initialLayouts]);
+    // Check if instances have actually changed by comparing IDs
+    const currentIds = new Set(layout.map((item) => item.i));
+    const newIds = new Set(instances.map((instance) => instance.id));
+
+    // Only update if instances were added or removed
+    const idsChanged =
+      currentIds.size !== newIds.size ||
+      [...currentIds].some((id) => !newIds.has(id)) ||
+      [...newIds].some((id) => !currentIds.has(id));
+
+    if (idsChanged && !isInternalUpdate.current) {
+      setLayout(initialLayout);
+    }
+  }, [instances, initialLayout]);
 
   const aggregatedStyles = useMemo(() => {
     return instances
@@ -146,10 +121,25 @@ export const DraggableGridLayout: React.FC<DraggableGridLayoutProps> = ({
   }, [instances]);
 
   const handleLayoutChange = useCallback(
-    (currentLayout: Layout[], allLayouts: Layouts) => {
-      console.log("Layout changed:", { currentLayout, allLayouts }); // Debug log
-      setLayouts(allLayouts);
-      onLayoutChange?.(allLayouts);
+    (newLayout: Layout[]) => {
+      // Prevent calling onLayoutChange if this is an internal update
+      if (isInternalUpdate.current) {
+        isInternalUpdate.current = false;
+        return;
+      }
+
+      setLayout(newLayout);
+
+      // Convert single layout to responsive format for compatibility
+      const responsiveLayouts: Layouts = {
+        lg: newLayout,
+        md: newLayout,
+        sm: newLayout,
+        xs: newLayout,
+        xxs: newLayout,
+      };
+
+      onLayoutChange?.(responsiveLayouts);
     },
     [onLayoutChange]
   );
@@ -179,10 +169,9 @@ export const DraggableGridLayout: React.FC<DraggableGridLayoutProps> = ({
         <style dangerouslySetInnerHTML={{ __html: aggregatedStyles }} />
       )}
 
-      <ResponsiveGridLayout
+      <GridLayout
         className={styles.layout}
-        layouts={layouts}
-        breakpoints={config.breakpoints}
+        layout={layout}
         cols={config.cols}
         rowHeight={config.rowHeight}
         isDraggable
@@ -198,29 +187,19 @@ export const DraggableGridLayout: React.FC<DraggableGridLayoutProps> = ({
             <div className={styles.gridItemContent}>
               <div className={`drag-handle ${styles.dragHandle}`}>
                 <span className={styles.dragIcon}>⋮⋮</span>
-                <span className={styles.componentName}>{instance.name}</span>
-                <div className={styles.layoutInfo}>
-                  {/* Find layout info from any breakpoint since we're in responsive mode */}
-                  {(() => {
-                    const currentBreakpoint = Object.keys(layouts)[0]; // Get first available breakpoint
-                    const layoutItem = layouts[currentBreakpoint]?.find(
-                      (l) => l.i === instance.id
-                    );
-                    return (
-                      layoutItem && (
-                        <span className={styles.sizeInfo}>
-                          {layoutItem.w} × {layoutItem.h}
-                        </span>
-                      )
-                    );
-                  })()}
-                </div>
               </div>
-              <ComponentInstance instance={instance} onRetry={onRetry} />
+
+              <div className={styles.componentWrapper}>
+                <ComponentInstance instance={instance} onRetry={onRetry} />
+              </div>
+
+              <div className={styles.resizeHandle}>
+                <span className={styles.resizeIcon}>↘</span>
+              </div>
             </div>
           </div>
         ))}
-      </ResponsiveGridLayout>
+      </GridLayout>
     </div>
   );
 };

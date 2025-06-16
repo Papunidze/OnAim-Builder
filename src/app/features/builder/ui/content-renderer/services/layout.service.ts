@@ -5,18 +5,15 @@ class LayoutService {
   private subscribers: ((layouts: Layouts) => void)[] = [];
 
   getLayouts(): Layouts {
-    console.log("LayoutService.getLayouts():", this.layouts); // Debug log
     return { ...this.layouts };
   }
 
   updateLayouts(layouts: Layouts): void {
-    console.log("LayoutService.updateLayouts():", layouts); // Debug log
     this.layouts = { ...layouts };
     this.notifySubscribers();
   }
 
   clearLayouts(): void {
-    console.log("LayoutService.clearLayouts()"); // Debug log
     this.layouts = {};
     this.notifySubscribers();
   }
@@ -36,9 +33,7 @@ class LayoutService {
   }
 
   // Helper method to get layouts for a specific view mode
-  getLayoutsForViewMode(viewMode: "desktop" | "mobile"): Layouts {
-    // For debugging - log what we have
-    console.log(`Getting layouts for view mode: ${viewMode}`, this.layouts);
+  getLayoutsForViewMode(_viewMode: "desktop" | "mobile"): Layouts {
     return this.getLayouts();
   }
 
@@ -82,7 +77,6 @@ class LayoutService {
     }
 
     if (updated) {
-      console.log("Updated layouts with missing instances:", layouts);
       this.updateLayouts(layouts);
     }
   }
