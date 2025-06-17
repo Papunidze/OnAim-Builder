@@ -3,14 +3,14 @@ import type {
   BuilderState,
   EventCallback,
   ComponentState,
-} from "./buiilder.interfaces";
+} from "./builder.interfaces";
 import {
   compileSettingsObject,
   type SettingsObject,
 } from "@app-features/builder/ui/property-adjustments/services";
 import { loadComponentData } from "@app-features/builder/ui/content-renderer/services";
 import { copyService } from "@app-features/builder/ui/copy/services/copy.service";
-import { isEqual } from "lodash";
+import isEqual from "lodash/isEqual";
 
 export class BuilderService {
   private state: BuilderState = {
@@ -104,7 +104,7 @@ export class BuilderService {
     this.saveHistory();
 
     const componentId = this.generateId();
-    
+
     // Ensure component has proper default props including title
     const defaultProps = {
       title: name, // Use component name as default title
@@ -171,12 +171,12 @@ export class BuilderService {
                       ...defaultValues,
                       ...targetComponent.props, // Existing props take priority
                     };
-                    
+
                     // Ensure title is always present
                     if (!mergedProps.title) {
                       mergedProps.title = name;
                     }
-                    
+
                     targetComponent.props = mergedProps;
                   }
                 } catch (error) {
@@ -203,7 +203,7 @@ export class BuilderService {
             );
             targetComponent.status = "error";
             targetComponent.error = `Failed to compile settings: ${(error as Error).message}`;
-            
+
             // Even on error, ensure title is present
             if (!targetComponent.props.title) {
               targetComponent.props.title = name;
@@ -221,7 +221,7 @@ export class BuilderService {
           targetComponent.props.title = name;
         }
       }
-      
+
       if (targetComponent.status !== "error") {
         targetComponent.status = "loaded";
       }
@@ -233,7 +233,7 @@ export class BuilderService {
       if (targetComponent) {
         targetComponent.status = "error";
         targetComponent.error = `Failed to load component data: ${(error as Error).message}`;
-        
+
         // Even on error, ensure title is present
         if (!targetComponent.props.title) {
           targetComponent.props.title = name;

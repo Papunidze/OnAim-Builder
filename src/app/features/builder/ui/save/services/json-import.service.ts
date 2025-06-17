@@ -65,9 +65,6 @@ export class JSONImportService {
           console.warn("Updated layouts with new IDs:", updatedLayouts);
 
           // Update the layout service
-          const { layoutService } = await import(
-            "../../content-renderer/services/layout.service"
-          );
           layoutService.updateLayout(updatedLayouts);
 
           console.warn(
@@ -145,16 +142,6 @@ export class JSONImportService {
       reader.onerror = (): void => reject(new Error("Failed to read file"));
       reader.readAsText(file);
     });
-  }
-
-  private static mergePropsWithSettings(
-    defaultSettings: Record<string, unknown>,
-    importedProps: Record<string, unknown>
-  ): Record<string, unknown> {
-    return {
-      ...defaultSettings,
-      ...importedProps,
-    };
   }
 
   private static async restoreComponentLanguage(

@@ -3,7 +3,7 @@ export type {
   BuilderState,
   BuilderServiceEvents,
   EventCallback,
-} from "./buiilder.interfaces";
+} from "./builder.interfaces";
 
 export type { UseBuilderReturn } from "./useBuilder.service";
 

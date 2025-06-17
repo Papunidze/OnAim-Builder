@@ -1,4 +1,4 @@
-import type { ComponentState } from "@app-shared/services/builder/buiilder.interfaces";
+import type { ComponentState } from "@app-shared/services/builder";
 
 export interface SafeUpdateOptions {
   preserveStyles?: boolean;

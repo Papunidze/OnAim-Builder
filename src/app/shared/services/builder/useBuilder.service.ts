@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, type ComponentState } from "react";
 import { builderService } from "./builder.service";
-import type { BuilderState } from "./buiilder.interfaces";
+import type { BuilderState } from "./builder.interfaces";
 
 export interface UseBuilderReturn {
   components: BuilderState;
@@ -190,7 +190,7 @@ export function useBuilder(): UseBuilderReturn {
   const stats = builderService.getStats();
   const projectName = builderService.getProjectName();
   const selectedComponentId = components.selectedComponentId;
-  
+
   return {
     components,
     stats,

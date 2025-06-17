@@ -16,6 +16,9 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
+      "@/*": ["src/*"],
+      "@api": ["src/app/shared/services/api"],
+      "@api/*": ["src/app/shared/services/api/*"],
       "@app-shared/*": ["src/app/shared/*"],
       "@app-environments/*": ["src/environments/*"],
       "@app-features/*": ["src/app/features/*"],

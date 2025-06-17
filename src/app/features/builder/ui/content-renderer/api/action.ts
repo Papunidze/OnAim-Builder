@@ -1,4 +1,5 @@
 import { rest } from "@app-shared/services/api";
+import { logger } from "@app-shared/utils/logger";
 
 export interface ContentFile {
   content: string;
@@ -40,7 +41,7 @@ export const fetchComponents = async (
 
     return validateAndFilterFiles(res.data, name);
   } catch (error) {
-    console.error(`Error fetching components for "${name}":`, error);
+    logger.error(`Error fetching components for "${name}":`, error);
     throw error instanceof Error ? error : new Error(String(error));
   }
 };
