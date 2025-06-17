@@ -28,8 +28,8 @@ const Builder = (): JSX.Element => {
               viewMode={viewMode}
               projectId="main-builder"
               showDragDropControls={false}
-                        enableDragDropByDefault
-          autoSaveLayouts
+              enableDragDropByDefault
+              autoSaveLayouts
             />
           ) : (
             <div>No components selected. Add components from the panel.</div>

@@ -1,4 +1,4 @@
-import type { Layouts } from 'react-grid-layout';
+import type { Layout, Layouts } from 'react-grid-layout';
 import type { ComponentInstanceState, ViewMode, ContentRendererProps } from '../../../types';
 
 // Grid Layout Component Props
@@ -7,8 +7,9 @@ export interface DraggableGridLayoutProps {
   viewMode: ViewMode;
   onRetry: (id: string) => void;
   isPending: boolean;
-  onLayoutChange?: (layouts: Layouts) => void;
-  savedLayouts?: Layouts;
+  onLayoutChange?: (layout: Layout[]) => void;
+  savedLayouts?: Layout[];
+  readOnly?: boolean;
 }
 
 // Drag Drop Controls Component Props
@@ -20,7 +21,7 @@ export interface DragDropControlsProps {
   onLoadLayout?: () => Promise<void>;
   hasUnsavedChanges?: boolean;
   isLoading?: boolean;
-  layouts?: Layouts;
+  layout?: Layout[];
   viewMode: 'desktop' | 'mobile';
 }
 
@@ -31,6 +32,7 @@ export interface EnhancedContentRendererProps extends Omit<ContentRendererProps,
   enableDragDropByDefault?: boolean;
   autoSaveLayouts?: boolean;
   className?: string;
+  readOnly?: boolean;
 }
 
 // Hook Options and Return Types
@@ -42,11 +44,13 @@ export interface UseDragAndDropLayoutsOptions {
 }
 
 export interface UseDragAndDropLayoutsReturn {
-  layouts: Layouts;
-  updateLayouts: (newLayouts: Layouts) => void;
+  layout: Layout[];
+  updateLayouts: (newLayout: Layout[]) => void;
   resetLayouts: () => void;
   saveLayouts: () => Promise<void>;
   loadLayouts: () => Promise<void>;
   isLoading: boolean;
   hasUnsavedChanges: boolean;
+  // Kept for backward compatibility if some component still uses it, but should be phased out
+  layouts: Layouts;
 } 

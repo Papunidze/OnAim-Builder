@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { Layouts } from "react-grid-layout";
+import type { Layout } from "react-grid-layout";
 import { layoutService } from "../../../services/layout.service";
 import type {
   UseDragAndDropLayoutsOptions,
@@ -8,11 +8,11 @@ import type {
 
 export const useDragAndDropLayouts = ({
   projectId,
-  viewMode: _viewMode,
+  viewMode: _viewMode, // No longer used for responsive behavior
   autoSave = true,
   autoSaveDelay = 1000,
 }: UseDragAndDropLayoutsOptions): UseDragAndDropLayoutsReturn => {
-  const [layouts, setLayouts] = useState<Layouts>({});
+  const [layout, setLayout] = useState<Layout[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(
@@ -21,21 +21,20 @@ export const useDragAndDropLayouts = ({
   const isUpdatingFromHook = useRef(false);
 
   const getStorageKey = useCallback(
-    (key: string): string => `builder_layouts_${projectId || "default"}_${key}`,
+    (key: string): string => `builder_layout_${projectId || "default"}_${key}`,
     [projectId]
   );
 
-  // Subscribe to layout service changes (only from external sources, not from this hook)
+  // Subscribe to layout service changes
   useEffect(() => {
-    const unsubscribe = layoutService.subscribe((newLayouts) => {
-      // Prevent feedback loop - don't update if the change came from this hook
+    const unsubscribe = layoutService.subscribe((newLayout) => {
       if (isUpdatingFromHook.current) {
         isUpdatingFromHook.current = false;
         return;
       }
 
-      setLayouts(newLayouts);
-      setHasUnsavedChanges(false); // Layouts from service are considered saved
+      setLayout(newLayout);
+      setHasUnsavedChanges(false);
     });
 
     return unsubscribe;
@@ -45,23 +44,34 @@ export const useDragAndDropLayouts = ({
     setIsLoading(true);
     try {
       // First try to load from layout service
-      const serviceLayouts = layoutService.getLayouts();
-      if (serviceLayouts && Object.keys(serviceLayouts).length > 0) {
-        setLayouts(serviceLayouts);
+      const serviceLayout = layoutService.getLayout();
+      if (serviceLayout && serviceLayout.length > 0) {
+        setLayout(serviceLayout);
         setHasUnsavedChanges(false);
         return;
       }
 
-      // Fallback to localStorage
-      const storageKey = getStorageKey("layouts");
-      const savedLayouts = localStorage.getItem(storageKey);
-
-      if (savedLayouts) {
-        const parsedLayouts = JSON.parse(savedLayouts) as Layouts;
-        setLayouts(parsedLayouts);
-        // Update layout service with loaded layouts
+      // Try new simple format from localStorage
+      const newFormatKey = getStorageKey("layout");
+      const savedLayout = localStorage.getItem(newFormatKey);
+      if (savedLayout) {
+        const parsedLayout = JSON.parse(savedLayout) as Layout[];
+        setLayout(parsedLayout);
         isUpdatingFromHook.current = true;
-        layoutService.updateLayouts(parsedLayouts);
+        layoutService.updateLayout(parsedLayout);
+        setHasUnsavedChanges(false);
+        return;
+      }
+
+      // Fallback to old breakpoint format for backward compatibility
+      const oldFormatKey = `builder_layouts_${projectId || "default"}_layouts`;
+      const oldSavedLayouts = localStorage.getItem(oldFormatKey);
+      if (oldSavedLayouts) {
+        const parsedOldLayouts = JSON.parse(oldSavedLayouts);
+        const extractedLayout = parsedOldLayouts.lg || [];
+        setLayout(extractedLayout);
+        isUpdatingFromHook.current = true;
+        layoutService.updateLayout(extractedLayout);
         setHasUnsavedChanges(false);
       }
     } catch (error) {
@@ -69,21 +79,21 @@ export const useDragAndDropLayouts = ({
     } finally {
       setIsLoading(false);
     }
-  }, [getStorageKey]);
+  }, [getStorageKey, projectId]);
 
   // Save layouts to localStorage and layout service
   const saveLayouts = useCallback(async (): Promise<void> => {
-    if (!Object.keys(layouts).length) return;
+    if (!layout.length) return;
 
     setIsLoading(true);
     try {
-      // Save to layout service (this is what gets exported)
+      // Save to layout service
       isUpdatingFromHook.current = true;
-      layoutService.updateLayouts(layouts);
+      layoutService.updateLayout(layout);
 
-      // Also save to localStorage as backup
-      const storageKey = getStorageKey("layouts");
-      localStorage.setItem(storageKey, JSON.stringify(layouts));
+      // Save to localStorage in new simple format
+      const storageKey = getStorageKey("layout");
+      localStorage.setItem(storageKey, JSON.stringify(layout));
 
       setHasUnsavedChanges(false);
     } catch (error) {
@@ -92,25 +102,23 @@ export const useDragAndDropLayouts = ({
     } finally {
       setIsLoading(false);
     }
-  }, [layouts, getStorageKey]);
+  }, [layout, getStorageKey]);
 
   // Update layouts with auto-save functionality
   const updateLayouts = useCallback(
-    (newLayouts: Layouts): void => {
-      setLayouts(newLayouts);
+    (newLayout: Layout[]): void => {
+      setLayout(newLayout);
       setHasUnsavedChanges(true);
 
-      // Immediately update layout service (mark as from this hook to prevent feedback)
+      // Immediately update layout service
       isUpdatingFromHook.current = true;
-      layoutService.updateLayouts(newLayouts);
+      layoutService.updateLayout(newLayout);
 
       if (autoSave) {
-        // Clear existing timeout
         if (autoSaveTimeout) {
           clearTimeout(autoSaveTimeout);
         }
 
-        // Set new timeout for localStorage backup
         const timeout = setTimeout(() => {
           saveLayouts();
         }, autoSaveDelay);
@@ -123,16 +131,15 @@ export const useDragAndDropLayouts = ({
 
   // Reset layouts to empty state
   const resetLayouts = useCallback((): void => {
-    const emptyLayouts = {};
-    setLayouts(emptyLayouts);
+    setLayout([]);
     setHasUnsavedChanges(true);
 
     // Update layout service
     isUpdatingFromHook.current = true;
-    layoutService.updateLayouts(emptyLayouts);
+    layoutService.updateLayout([]);
 
     if (autoSave) {
-      const storageKey = getStorageKey("layouts");
+      const storageKey = getStorageKey("layout");
       localStorage.removeItem(storageKey);
       setHasUnsavedChanges(false);
     }
@@ -152,12 +159,11 @@ export const useDragAndDropLayouts = ({
 
   useEffect(() => {
     const handleBeforeUnload = (): void => {
-      if (hasUnsavedChanges && Object.keys(layouts).length > 0) {
-        // Save to both localStorage and layout service
-        const storageKey = getStorageKey("layouts");
-        localStorage.setItem(storageKey, JSON.stringify(layouts));
+      if (hasUnsavedChanges && layout.length > 0) {
+        const storageKey = getStorageKey("layout");
+        localStorage.setItem(storageKey, JSON.stringify(layout));
         isUpdatingFromHook.current = true;
-        layoutService.updateLayouts(layouts);
+        layoutService.updateLayout(layout);
       }
     };
 
@@ -165,11 +171,21 @@ export const useDragAndDropLayouts = ({
     return (): void => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [hasUnsavedChanges, layouts, getStorageKey]);
+  }, [hasUnsavedChanges, layout, getStorageKey]);
 
   return {
-    layouts,
+    // New simple format
+    layout,
     updateLayouts,
+    
+    // For backward compatibility, provide the old breakpoint format
+    layouts: {
+      lg: layout,
+      md: layout,
+      sm: layout,
+      xs: layout,
+      xxs: layout,
+    },
     resetLayouts,
     saveLayouts,
     loadLayouts,

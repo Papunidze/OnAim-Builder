@@ -9,6 +9,7 @@ export interface ComponentExportData {
     id: string;
     name: string;
     prefix: string;
+    title?: string;
   };
   layout: {
     position: {

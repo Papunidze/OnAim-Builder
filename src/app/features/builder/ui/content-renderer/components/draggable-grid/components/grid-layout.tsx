@@ -5,8 +5,8 @@ import React, {
   useEffect,
   useRef,
 } from "react";
-import ReactGridLayout, { WidthProvider } from "react-grid-layout";
-import type { Layout, Layouts } from "react-grid-layout";
+import ReactGridLayout from "react-grid-layout";
+import type { Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
@@ -16,34 +16,66 @@ import type { DraggableGridLayoutProps } from "../types";
 
 import styles from "../styles/grid-layout.module.css";
 
-const GridLayout = WidthProvider(ReactGridLayout);
+const SimpleGridLayout = ReactGridLayout;
 
-const getGridConfig = (): {
+// Helper function to ensure layout items stay within grid bounds
+const constrainLayout = (layout: Layout[], cols: number = 12): Layout[] => {
+  return layout.map(item => {
+    const maxX = Math.max(0, cols - item.w);
+    const constrainedItem = {
+      ...item,
+      x: Math.max(0, Math.min(item.x, maxX)), // Ensure x is within bounds
+      y: Math.max(0, item.y), // Ensure y is not negative
+      w: Math.max(1, Math.min(item.w, cols)), // Ensure width is reasonable
+      h: Math.max(1, item.h), // Ensure height is positive
+    };
+    
+    return constrainedItem;
+  });
+};
+
+const getGridConfig = (containerWidth?: number): {
   cols: number;
   rowHeight: number;
+  width: number;
 } => {
+  // Use responsive width based on container or fallback to a reasonable default
+  const effectiveWidth = containerWidth || 1200;
+  
   return {
     cols: 12,
     rowHeight: 120,
+    width: effectiveWidth, // Use dynamic width instead of fixed 1200px
   };
 };
 
 const generateDefaultLayout = (
   instances: ComponentInstanceState[]
 ): Layout[] => {
-  const itemsPerRow = 2;
   return instances.map((instance, index) => {
-    const col = index % itemsPerRow;
-    const row = Math.floor(index / itemsPerRow);
+    // Calculate position more carefully to ensure components fit within bounds
+    const componentsPerRow = 2; // Two components per row
+    const componentWidth = 4; // Each component takes 4 columns
+    const componentSpacing = 1; // 1 column spacing between components
+    
+    const col = index % componentsPerRow;
+    const row = Math.floor(index / componentsPerRow);
+    
+    // Calculate x position: first component at 0, second at 5 (4 width + 1 spacing)
+    const xPosition = col * (componentWidth + componentSpacing);
+    
+    // Ensure the component doesn't go beyond the grid bounds (12 columns)
+    const maxX = 12 - componentWidth; // Maximum x position is 8 (12 - 4)
+    const safeX = Math.min(xPosition, maxX);
 
     return {
       i: instance.id,
-      x: col * 6,
-      y: row * 5,
-      w: 6,
-      h: 5,
-      minW: 4,
-      minH: 3,
+      x: safeX,
+      y: row * 4, // Reduced spacing between rows
+      w: componentWidth,
+      h: 3,
+      minW: 3, // Reduced minimum width
+      minH: 2, // Reduced minimum height
     };
   });
 };
@@ -55,63 +87,157 @@ export const DraggableGridLayout: React.FC<DraggableGridLayoutProps> = ({
   isPending,
   onLayoutChange,
   savedLayouts,
+  readOnly = false,
 }) => {
-  const config = useMemo(() => getGridConfig(), []);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(1200);
+  const config = useMemo(() => getGridConfig(containerWidth), [containerWidth]);
   const isInternalUpdate = useRef(false);
+  const lastLayoutUpdate = useRef<number>(0);
 
   const defaultLayout = useMemo(
     () => generateDefaultLayout(instances),
     [instances]
   );
 
-  // Use simple layout instead of responsive layouts
   const initialLayout = useMemo(() => {
-    if (savedLayouts && savedLayouts.lg && savedLayouts.lg.length > 0) {
-      // Use the 'lg' layout as the single layout
-      const existingLayout = [...savedLayouts.lg];
-      const existingIds = new Set(existingLayout.map((item) => item.i));
-
-      // Ensure all instances have layout entries
-      instances.forEach((instance, index) => {
-        if (!existingIds.has(instance.id)) {
-          const defaultItem = defaultLayout[index] || {
-            i: instance.id,
-            x: 0,
-            y: index,
-            w: 6,
-            h: 5,
-            minW: 4,
-            minH: 3,
-          };
-          existingLayout.push(defaultItem);
+    if (Array.isArray(savedLayouts) && savedLayouts.length > 0) {
+      // Create a map of saved positions
+      const savedPositions = new Map(savedLayouts.map(item => [item.i, item]));
+      
+      // For each instance, use saved position if available, otherwise generate default
+      const mergedLayout = instances.map((instance, index) => {
+        const saved = savedPositions.get(instance.id);
+        if (saved) {
+          return saved;
         }
+        
+        // Generate default position for new instances
+        const componentsPerRow = 2;
+        const componentWidth = 4;
+        const componentSpacing = 1;
+        
+        const col = index % componentsPerRow;
+        const row = Math.floor(index / componentsPerRow);
+        
+        const xPosition = col * (componentWidth + componentSpacing);
+        const maxX = 12 - componentWidth;
+        const safeX = Math.min(xPosition, maxX);
+        
+        return {
+          i: instance.id,
+          x: safeX,
+          y: row * 4,
+          w: componentWidth,
+          h: 3,
+          minW: 3,
+          minH: 2,
+        };
       });
-
-      return existingLayout;
+      
+      // Apply bounds checking to the merged layout
+      const constrainedLayout = constrainLayout(mergedLayout, config.cols);
+      return constrainedLayout;
     }
 
-    return defaultLayout;
-  }, [savedLayouts, instances, defaultLayout]);
+    // Apply bounds checking to default layout as well
+    return constrainLayout(defaultLayout, config.cols);
+  }, [savedLayouts, defaultLayout, config.cols, instances]);
 
   const [layout, setLayout] = useState<Layout[]>(initialLayout);
 
-  // Only update layout when instances change (new components added/removed)
-  // Don't update when savedLayouts change to prevent infinite loops
+  // Optimized layout update with debouncing
   useEffect(() => {
-    // Check if instances have actually changed by comparing IDs
-    const currentIds = new Set(layout.map((item) => item.i));
-    const newIds = new Set(instances.map((instance) => instance.id));
-
-    // Only update if instances were added or removed
-    const idsChanged =
-      currentIds.size !== newIds.size ||
-      [...currentIds].some((id) => !newIds.has(id)) ||
-      [...newIds].some((id) => !currentIds.has(id));
-
-    if (idsChanged && !isInternalUpdate.current) {
-      setLayout(initialLayout);
+    const newDefaultLayout = generateDefaultLayout(instances);
+    const constrainedNewLayout = constrainLayout(newDefaultLayout, config.cols);
+    
+    // Only update if we don't have saved layouts or if the number of instances changed
+    if (!savedLayouts || savedLayouts.length === 0 || instances.length !== layout.length) {
+      setLayout(constrainedNewLayout);
     }
-  }, [instances, initialLayout]);
+  }, [instances, config.cols, savedLayouts, layout.length]); // Include all dependencies
+
+  // Optimized saved layouts update
+  useEffect(() => {
+    if (Array.isArray(savedLayouts) && savedLayouts.length > 0) {
+      const savedPositions = new Map(savedLayouts.map(item => [item.i, item]));
+      const mergedLayout = instances.map((instance, index) => {
+        const saved = savedPositions.get(instance.id);
+        if (saved) {
+          return saved;
+        }
+        
+        // Use consistent positioning logic for new instances
+        const componentsPerRow = 2;
+        const componentWidth = 4;
+        const componentSpacing = 1;
+        
+        const col = index % componentsPerRow;
+        const row = Math.floor(index / componentsPerRow);
+        
+        const xPosition = col * (componentWidth + componentSpacing);
+        const maxX = 12 - componentWidth;
+        const safeX = Math.min(xPosition, maxX);
+        
+        return {
+          i: instance.id,
+          x: safeX,
+          y: row * 4,
+          w: componentWidth,
+          h: 3,
+          minW: 3,
+          minH: 2,
+        };
+      });
+      
+      // Apply bounds checking before setting layout
+      const constrainedLayout = constrainLayout(mergedLayout, config.cols);
+      setLayout(constrainedLayout);
+    } else if (savedLayouts && savedLayouts.length === 0) {
+      // Only reset to default if we explicitly get an empty array
+      const constrainedDefaultLayout = constrainLayout(defaultLayout, config.cols);
+      setLayout(constrainedDefaultLayout);
+    }
+  }, [savedLayouts, instances, config.cols, defaultLayout]); // Include all dependencies
+
+  // Optimized resize observer with throttling
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    const updateWidth = (): void => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const newWidth = Math.max(900, rect.width - 16);
+        
+        if (Math.abs(newWidth - containerWidth) > 20) { // Increased threshold to reduce updates
+          setContainerWidth(newWidth);
+        }
+      }
+    };
+
+    const throttledUpdate = (): void => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(updateWidth, 100); // Throttle updates
+    };
+    
+    // Initial width calculation
+    updateWidth();
+
+    // Set up resize observer
+    const resizeObserver = new ResizeObserver(throttledUpdate);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    // Also listen to window resize
+    window.addEventListener('resize', throttledUpdate);
+
+    return (): void => {
+      clearTimeout(timeoutId);
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', throttledUpdate);
+    };
+  }, [containerWidth]); // Include containerWidth dependency
 
   const aggregatedStyles = useMemo(() => {
     return instances
@@ -120,28 +246,35 @@ export const DraggableGridLayout: React.FC<DraggableGridLayoutProps> = ({
       .join("\n");
   }, [instances]);
 
+  // Optimized layout change handler with debouncing
   const handleLayoutChange = useCallback(
     (newLayout: Layout[]) => {
-      // Prevent calling onLayoutChange if this is an internal update
+      if (readOnly) {
+        return;
+      }
+
       if (isInternalUpdate.current) {
         isInternalUpdate.current = false;
         return;
       }
 
-      setLayout(newLayout);
+      // Debounce rapid changes
+      const now = Date.now();
+      if (now - lastLayoutUpdate.current < 16) { // ~60fps limit
+        return;
+      }
+      lastLayoutUpdate.current = now;
 
-      // Convert single layout to responsive format for compatibility
-      const responsiveLayouts: Layouts = {
-        lg: newLayout,
-        md: newLayout,
-        sm: newLayout,
-        xs: newLayout,
-        xxs: newLayout,
-      };
+      // Apply bounds checking to the new layout
+      const constrainedNewLayout = constrainLayout(newLayout, config.cols);
 
-      onLayoutChange?.(responsiveLayouts);
+      setLayout(constrainedNewLayout);
+
+      if (onLayoutChange) {
+        onLayoutChange(constrainedNewLayout);
+      }
     },
-    [onLayoutChange]
+    [onLayoutChange, readOnly, config.cols]
   );
 
   const containerClassName = useMemo(
@@ -163,43 +296,62 @@ export const DraggableGridLayout: React.FC<DraggableGridLayoutProps> = ({
     );
   }
 
+  // Validate layout before rendering
+  const validatedLayout = layout.map(item => ({
+    ...item,
+    i: String(item.i), // Ensure i is a string
+    x: Number(item.x) || 0,
+    y: Number(item.y) || 0,
+    w: Number(item.w) || 4,
+    h: Number(item.h) || 3,
+  }));
+
   return (
-    <div className={containerClassName}>
+    <div ref={containerRef} className={containerClassName}>
       {aggregatedStyles && (
         <style dangerouslySetInnerHTML={{ __html: aggregatedStyles }} />
       )}
 
-      <GridLayout
+      <SimpleGridLayout
         className={styles.layout}
-        layout={layout}
+        layout={validatedLayout}
         cols={config.cols}
         rowHeight={config.rowHeight}
-        isDraggable
-        isResizable
+        width={config.width}
+        isDraggable={!readOnly}
+        isResizable={!readOnly}
         draggableHandle=".drag-handle"
         onLayoutChange={handleLayoutChange}
-        margin={[10, 10]}
-        compactType="vertical"
+        margin={[8, 8]} // Reduced margin for better performance
+        compactType={null}
         preventCollision={false}
+        autoSize
+        useCSSTransforms
+        containerPadding={[0, 0]}
+        verticalCompact={false}
+        allowOverlap={false}
+        isBounded={false}
+        isDroppable={false}
+        transformScale={1} // Ensure proper scaling
       >
         {instances.map((instance) => (
           <div key={instance.id} className={styles.gridItem}>
             <div className={styles.gridItemContent}>
-              <div className={`drag-handle ${styles.dragHandle}`}>
-                <span className={styles.dragIcon}>⋮⋮</span>
-              </div>
+              {!readOnly && (
+                <div className={`drag-handle ${styles.dragHandle}`}>
+                  <span className={styles.dragIcon}>⋮⋮</span>
+                </div>
+              )}
 
               <div className={styles.componentWrapper}>
                 <ComponentInstance instance={instance} onRetry={onRetry} />
               </div>
 
-              <div className={styles.resizeHandle}>
-                <span className={styles.resizeIcon}>↘</span>
-              </div>
+         
             </div>
           </div>
         ))}
-      </GridLayout>
+      </SimpleGridLayout>
     </div>
   );
 };

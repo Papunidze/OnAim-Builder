@@ -69,6 +69,7 @@ export const ContentRenderer = memo(function ContentRenderer({
   useDragAndDrop = false,
   onLayoutChange,
   savedLayouts,
+  readOnly = false,
 }: ContentRendererProps): JSX.Element {
   const { instances, aggregatedStyles, retryComponent, isPending } =
     useComponentInstances(components);
@@ -102,10 +103,12 @@ export const ContentRenderer = memo(function ContentRenderer({
         onLayoutChange,
         savedLayouts,
         useDragAndDrop: true,
+        readOnly,
       }
     : { 
         children: content,
         useDragAndDrop: false,
+        readOnly: false,
       };
 
   return <Layout {...layoutProps} />;

@@ -5,7 +5,6 @@ const router = express.Router();
 
 const TEMPLATES_FILE = path.join(__dirname, "../config/templates.json");
 
-// Initialize templates file if it doesn't exist
 async function initTemplatesFile() {
   try {
     await fs.access(TEMPLATES_FILE);
@@ -14,7 +13,6 @@ async function initTemplatesFile() {
   }
 }
 
-// Get all templates
 router.get("/templates", async (req, res) => {
   try {
     await initTemplatesFile();
@@ -29,7 +27,6 @@ router.get("/templates", async (req, res) => {
   }
 });
 
-// Create a new template
 router.post("/templates", async (req, res) => {
   try {
     const { name, description, componentData } = req.body;
@@ -66,7 +63,6 @@ router.post("/templates", async (req, res) => {
   }
 });
 
-// Update a template
 router.put("/templates/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -104,7 +100,6 @@ router.put("/templates/:id", async (req, res) => {
   }
 });
 
-// Delete a template
 router.delete("/templates/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -134,7 +129,6 @@ router.delete("/templates/:id", async (req, res) => {
   }
 });
 
-// Get template by ID
 router.get("/templates/:id", async (req, res) => {
   try {
     const { id } = req.params;

@@ -28,7 +28,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/file", require("./routes/file-routes"));
 app.use("/api", require("./routes/template-routes"));
 app.use("/api", require("./routes/component-template-routes"));
-app.use("/api/layouts", require("./routes/layouts"));
 
 app.use((err, req, res, next) => {
   console.error(`Error handler : ${err.message}`);

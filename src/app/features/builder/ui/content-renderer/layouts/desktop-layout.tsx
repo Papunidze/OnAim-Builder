@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import type { Layouts } from "react-grid-layout";
+import type { Layout } from "react-grid-layout";
 import { DraggableGridLayout } from "../components/draggable-grid";
 import type { ComponentInstanceState } from "../types";
 import styles from "./desktop-layout.module.css";
@@ -9,9 +9,10 @@ interface DesktopLayoutProps {
   instances?: ComponentInstanceState[];
   onRetry?: (id: string) => void;
   isPending?: boolean;
-  onLayoutChange?: (layouts: Layouts) => void;
-  savedLayouts?: Layouts;
+  onLayoutChange?: (layout: Layout[]) => void;
+  savedLayouts?: Layout[];
   useDragAndDrop?: boolean;
+  readOnly?: boolean;
 }
 
 export function DesktopLayout({
@@ -22,6 +23,7 @@ export function DesktopLayout({
   onLayoutChange,
   savedLayouts,
   useDragAndDrop = false,
+  readOnly = false,
 }: DesktopLayoutProps): JSX.Element {
   return (
     <div className={styles.desktopFrame}>
@@ -34,6 +36,7 @@ export function DesktopLayout({
             isPending={isPending}
             onLayoutChange={onLayoutChange}
             savedLayouts={savedLayouts}
+            readOnly={readOnly}
           />
         ) : (
           children

@@ -15,9 +15,9 @@
 .modalContainer {
   background: white;
   border-radius: 12px;
-  max-width: 95vw;
+  max-width: 98vw;
   max-height: 95vh;
-  width: 1200px;
+  width: 1400px;
   height: 800px;
   display: flex;
   flex-direction: column;

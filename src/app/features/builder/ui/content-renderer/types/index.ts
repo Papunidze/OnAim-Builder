@@ -19,8 +19,9 @@ export interface ContentRendererProps {
   components: ComponentState[];
   viewMode: ViewMode;
   useDragAndDrop?: boolean;
-  onLayoutChange?: (layouts: import('react-grid-layout').Layouts) => void;
-  savedLayouts?: import('react-grid-layout').Layouts;
+  onLayoutChange?: (layout: import('react-grid-layout').Layout[]) => void;
+  savedLayouts?: import('react-grid-layout').Layout[];
+  readOnly?: boolean;
 }
 
 export interface ComponentFileData {

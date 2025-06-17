@@ -3,10 +3,13 @@
   position: relative;
   width: 100%;
   height: 100%;
+  min-width: 800px;
+  min-height: 400px; /* Minimum height but allow expansion */
   background: #f8f9fa;
   border-radius: 8px;
   padding: 8px;
-  transition: all 0.3s ease;
+  box-sizing: border-box;
+  overflow: visible; /* Allow proper positioning */
 }
 
 .gridContainer.dragMode {
@@ -15,147 +18,141 @@
 }
 
 /* Grid Layout */
-.gridLayout {
-  position: relative;
-  width: 100%;
-  height: 100%;
+.layout {
+  position: relative !important;
+  width: 100% !important;
+  min-height: 400px;
   background: white;
   border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  overflow: auto;
+  box-sizing: border-box;
 }
 
-/* Grid Items */
+/* Grid Items - Optimized for performance */
 .gridItem {
-  position: absolute;
-  background: white;
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  overflow: hidden;
-  cursor: move;
+  background: white !important;
+  border: 1px solid #e9ecef !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease !important; /* Optimized transitions */
+  overflow: visible !important;
+  box-sizing: border-box !important;
+  position: absolute !important;
+  will-change: transform !important; /* Optimize for transform changes */
 }
 
 .gridItem:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-color: #007bff;
-  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border-color: #007bff !important;
+  z-index: 10 !important;
 }
 
-.gridItem.dragging {
-  z-index: 1000;
-  transform: rotate(5deg);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  border-color: #28a745;
+.gridItem.react-draggable-dragging {
+  z-index: 1000 !important;
+  transform: rotate(1deg) !important; /* Reduced rotation for better performance */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+  border-color: #28a745 !important;
+  transition: none !important; /* Disable transitions during drag */
 }
 
-.gridItem.resizing {
-  border-color: #ffc107;
-  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+.gridItem.react-resizable-resizing {
+  border-color: #ffc107 !important;
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3) !important;
+  transition: none !important; /* Disable transitions during resize */
 }
 
 /* Grid Item Content */
-.itemContent {
+.gridItemContent {
   width: 100%;
   height: 100%;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
   position: relative;
+  overflow: hidden;
 }
 
-.itemHeader {
+/* Drag Handle - Optimized */
+.dragHandle {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 123, 255, 0.8);
+  border-radius: 4px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #f1f3f4;
-}
-
-.itemTitle {
-  font-size: 14px;
-  font-weight: 600;
-  color: #495057;
-  margin: 0;
-}
-
-.itemActions {
-  display: flex;
-  gap: 4px;
+  justify-content: center;
+  cursor: move;
+  z-index: 20;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.15s ease, transform 0.15s ease; /* Faster transitions */
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  will-change: opacity, transform; /* Optimize for changes */
 }
 
-.gridItem:hover .itemActions {
+.gridItem:hover .dragHandle {
   opacity: 1;
 }
 
-.actionButton {
-  background: none;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
-  border-radius: 3px;
-  font-size: 12px;
-  color: #6c757d;
-  transition: all 0.2s ease;
+.dragHandle:hover {
+  background: rgba(0, 123, 255, 1);
+  transform: scale(1.05); /* Reduced scale for better performance */
 }
 
-.actionButton:hover {
-  background: #f8f9fa;
-  color: #495057;
+.dragIcon {
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  line-height: 1;
+  user-select: none;
+  pointer-events: none; /* Prevent interference with drag */
 }
 
-.itemBody {
-  flex: 1;
-  overflow: auto;
-}
-
-/* Resize Handles */
+/* Resize Handle - Optimized */
 .resizeHandle {
   position: absolute;
-  background: #007bff;
+  bottom: 4px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  background: rgba(255, 193, 7, 0.8);
+  border-radius: 0 0 4px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: se-resize;
+  z-index: 20;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.15s ease, transform 0.15s ease; /* Faster transitions */
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  will-change: opacity, transform; /* Optimize for changes */
 }
 
 .gridItem:hover .resizeHandle {
-  opacity: 0.7;
-}
-
-.resizeHandle:hover {
   opacity: 1;
 }
 
-.resizeHandleSE {
-  bottom: 0;
-  right: 0;
-  width: 12px;
-  height: 12px;
-  cursor: se-resize;
-  border-radius: 6px 0 6px 0;
+.resizeHandle:hover {
+  background: rgba(255, 193, 7, 1);
+  transform: scale(1.05); /* Reduced scale for better performance */
 }
 
-.resizeHandleE {
-  top: 50%;
-  right: 0;
-  width: 4px;
-  height: 20px;
-  cursor: e-resize;
-  transform: translateY(-50%);
-  border-radius: 4px 0 0 4px;
+.resizeIcon {
+  color: white;
+  font-size: 8px;
+  font-weight: bold;
+  line-height: 1;
+  user-select: none;
+  pointer-events: none; /* Prevent interference with resize */
 }
 
-.resizeHandleS {
-  bottom: 0;
-  left: 50%;
-  width: 20px;
-  height: 4px;
-  cursor: s-resize;
-  transform: translateX(-50%);
-  border-radius: 4px 4px 0 0;
+/* Component Wrapper */
+.componentWrapper {
+  width: 100%;
+  height: 100%;
+  padding: 8px;
+  overflow: auto;
+  position: relative; /* Ensure proper positioning context */
 }
 
 /* Drop Zones */
@@ -224,7 +221,7 @@
 }
 
 .loading::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -238,7 +235,7 @@
 }
 
 .loading::before {
-  content: '⟳';
+  content: "⟳";
   position: absolute;
   top: 50%;
   left: 50%;
@@ -250,8 +247,12 @@
 }
 
 @keyframes spin {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
 }
 
 /* Responsive Design */
@@ -259,20 +260,20 @@
   .gridContainer {
     padding: 4px;
   }
-  
-  .itemContent {
+
+  .gridItemContent {
     padding: 8px;
   }
-  
+
   .itemTitle {
     font-size: 13px;
   }
-  
+
   .resizeHandle {
     display: none;
   }
-  
+
   .gridItem {
     cursor: default;
   }
-} 
+}

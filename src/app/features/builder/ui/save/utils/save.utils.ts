@@ -134,11 +134,20 @@ export const transformComponentToExportData = (
     prefix
   );
 
+  // Get component title from settings or fall back to name
+  let componentTitle = component.name;
+  if (extractedSettings.title && typeof extractedSettings.title === 'string') {
+    componentTitle = extractedSettings.title;
+  } else if (component.props?.title && typeof component.props.title === 'string') {
+    componentTitle = component.props.title;
+  }
+
   return {
     component: {
       id: component.id,
       name: component.name,
       prefix,
+      title: componentTitle, // Include the component title
     },
     layout: {
       position: {
@@ -148,11 +157,17 @@ export const transformComponentToExportData = (
         },
         coordinates: component.position || { x: 0, y: 0 },
       },
-      size: component.size,
+      size: component.size || { width: 400, height: 300 }, // Provide default size
     },
     configuration: {
-      settings: extractedSettings,
-      props: component.props || {},
+      settings: {
+        ...extractedSettings,
+        title: componentTitle, // Ensure title is in settings
+      },
+      props: {
+        ...(component.props || {}),
+        title: componentTitle, // Ensure title is in props
+      },
       styles: component.styles || {},
       elementSpecificCSS,
     },

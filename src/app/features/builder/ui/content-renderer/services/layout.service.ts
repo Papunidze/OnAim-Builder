@@ -1,24 +1,24 @@
-import type { Layouts } from "react-grid-layout";
+import type { Layout } from "react-grid-layout";
 
 class LayoutService {
-  private layouts: Layouts = {};
-  private subscribers: ((layouts: Layouts) => void)[] = [];
+  private layout: Layout[] = [];
+  private subscribers: ((layout: Layout[]) => void)[] = [];
 
-  getLayouts(): Layouts {
-    return { ...this.layouts };
+  getLayout(): Layout[] {
+    return [...this.layout];
   }
 
-  updateLayouts(layouts: Layouts): void {
-    this.layouts = { ...layouts };
+  updateLayout(layout: Layout[]): void {
+    this.layout = [...layout];
     this.notifySubscribers();
   }
 
-  clearLayouts(): void {
-    this.layouts = {};
+  clearLayout(): void {
+    this.layout = [];
     this.notifySubscribers();
   }
 
-  subscribe(callback: (layouts: Layouts) => void): () => void {
+  subscribe(callback: (layout: Layout[]) => void): () => void {
     this.subscribers.push(callback);
     return () => {
       const index = this.subscribers.indexOf(callback);
@@ -29,55 +29,56 @@ class LayoutService {
   }
 
   private notifySubscribers(): void {
-    this.subscribers.forEach((callback) => callback(this.layouts));
+    this.subscribers.forEach((callback) => callback(this.layout));
   }
 
-  // Helper method to get layouts for a specific view mode
-  getLayoutsForViewMode(_viewMode: "desktop" | "mobile"): Layouts {
-    return this.getLayouts();
+  generateConsistentLayout(instanceIds: string[]): void {
+    const layout = instanceIds.map((id, index) => {
+      const col = index % 2;
+      const row = Math.floor(index / 2);
+      
+      return {
+        i: id,
+        x: col * 6, // 0 or 6 (for 2 columns)
+        y: row * 5, // Stacked rows
+        w: 6, // Half width for 2x2 grid
+        h: 5, // Consistent height
+        minW: 4,
+        minH: 3,
+      };
+    });
+
+    this.updateLayout(layout);
   }
 
-  // Helper method to ensure all instances have layout entries
-  ensureInstancesInLayouts(
-    instanceIds: string[],
-    viewMode: "desktop" | "mobile"
-  ): void {
-    const layouts = this.getLayouts();
+  ensureInstancesInLayout(instanceIds: string[]): void {
+    const currentLayout = this.getLayout();
     let updated = false;
 
-    // Define breakpoints based on view mode
-    const breakpoints =
-      viewMode === "mobile"
-        ? ["lg", "md", "sm", "xs", "xxs"]
-        : ["lg", "md", "sm", "xs", "xxs"];
+    const existingIds = new Set(currentLayout.map((item) => item.i));
 
-    for (const breakpoint of breakpoints) {
-      if (!layouts[breakpoint]) {
-        layouts[breakpoint] = [];
+    instanceIds.forEach((id, index) => {
+      if (!existingIds.has(id)) {
+        const col = index % 2;
+        const row = Math.floor(index / 2);
+        
+        const defaultLayout = {
+          i: id,
+          x: col * 6,
+          y: row * 5,
+          w: 6, 
+          h: 5, 
+          minW: 4,
+          minH: 3,
+        };
+        
+        currentLayout.push(defaultLayout);
         updated = true;
       }
-
-      const existingIds = new Set(layouts[breakpoint].map((item) => item.i));
-
-      instanceIds.forEach((id, index) => {
-        if (!existingIds.has(id)) {
-          const defaultLayout = {
-            i: id,
-            x: viewMode === "mobile" ? 0 : (index % 2) * 6,
-            y: viewMode === "mobile" ? index * 4 : Math.floor(index / 2) * 5,
-            w: viewMode === "mobile" ? 2 : 6,
-            h: viewMode === "mobile" ? 4 : 5,
-            minW: viewMode === "mobile" ? 2 : 4,
-            minH: 3,
-          };
-          layouts[breakpoint].push(defaultLayout);
-          updated = true;
-        }
-      });
-    }
+    });
 
     if (updated) {
-      this.updateLayouts(layouts);
+      this.updateLayout(currentLayout);
     }
   }
 }

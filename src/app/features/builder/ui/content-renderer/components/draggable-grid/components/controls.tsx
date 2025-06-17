@@ -10,7 +10,7 @@ export const DragDropControls: React.FC<DragDropControlsProps> = ({
   onLoadLayout,
   hasUnsavedChanges = false,
   isLoading = false,
-  layouts,
+  layout,
   viewMode,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -42,14 +42,12 @@ export const DragDropControls: React.FC<DragDropControlsProps> = ({
   };
 
   const getLayoutInfo = (): { items: number; hasLayout: boolean } => {
-    if (!layouts || !layouts[viewMode]) {
+    if (!layout) {
       return { items: 0, hasLayout: false };
     }
-    
-    const currentLayout = layouts[viewMode];
     return {
-      items: currentLayout.length,
-      hasLayout: currentLayout.length > 0,
+      items: layout.length,
+      hasLayout: layout.length > 0,
     };
   };
 

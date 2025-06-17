@@ -51,6 +51,7 @@
   overflow: hidden;
   margin: 0 auto;
   width: 100%;
+  max-width: none;
 }
 
 .previewContent {
@@ -62,6 +63,18 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: visible;
   position: relative;
+}
+
+/* Ensure preview content area matches default styling */
+.previewContent :global(.container) {
+  background: white !important;
+  padding: 8px !important;
+  min-height: 500px !important;
+}
+
+.previewContent :global(.contentArea) {
+  background: white !important;
+  overflow: visible !important;
 }
 
 .componentWrapper {
@@ -133,7 +146,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 20px;
+  padding: 11px;
 }
 
 .previewOverlay * {
@@ -145,15 +158,18 @@
   cursor: default !important;
 }
 
-/* Grid layout styling */
+/* Ensure grid layout renders consistently with builder view */
 .previewOverlay :global(.react-grid-layout) {
+  position: relative !important;
   min-height: 500px !important;
+  width: 100% !important;
 }
 
 .previewOverlay :global(.react-grid-item) {
   border: 1px solid rgba(0, 0, 0, 0.1) !important;
   border-radius: 4px !important;
   background: white !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
 }
 
 .previewOverlay :global(.react-grid-item:hover) {

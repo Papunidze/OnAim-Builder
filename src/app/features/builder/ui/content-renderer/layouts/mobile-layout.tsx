@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import type { Layouts } from 'react-grid-layout';
+import type { Layout } from 'react-grid-layout';
 import { DraggableGridLayout } from "../components/draggable-grid";
 import type { ComponentInstanceState } from "../types";
 import styles from "./mobile-layout.module.css";
@@ -9,9 +9,10 @@ interface MobileLayoutProps {
   instances?: ComponentInstanceState[];
   onRetry?: (id: string) => void;
   isPending?: boolean;
-  onLayoutChange?: (layouts: Layouts) => void;
-  savedLayouts?: Layouts;
+  onLayoutChange?: (layout: Layout[]) => void;
+  savedLayouts?: Layout[];
   useDragAndDrop?: boolean;
+  readOnly?: boolean;
 }
 
 export function MobileLayout({ 
@@ -21,7 +22,8 @@ export function MobileLayout({
   isPending = false,
   onLayoutChange,
   savedLayouts,
-  useDragAndDrop = false
+  useDragAndDrop = false,
+  readOnly = false
 }: MobileLayoutProps): JSX.Element {
   return (
     <div className={styles.mobileFrame}>
@@ -34,6 +36,7 @@ export function MobileLayout({
             isPending={isPending}
             onLayoutChange={onLayoutChange}
             savedLayouts={savedLayouts}
+            readOnly={readOnly}
           />
         ) : (
           children

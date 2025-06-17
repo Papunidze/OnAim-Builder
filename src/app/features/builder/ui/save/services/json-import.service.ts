@@ -1,8 +1,8 @@
 import { builderService } from "@app-shared/services/builder";
 import type { SaveData, ComponentExportData } from "../types/save.types";
 import type { ComponentState } from "@app-shared/services/builder";
+
 import { layoutService } from "../../content-renderer/services/layout.service";
-import type { Layouts } from "react-grid-layout";
 
 export class JSONImportService {
   static async importFromFile(file: File): Promise<boolean> {
@@ -21,7 +21,7 @@ export class JSONImportService {
       builderService.clear();
 
       // Clear existing layouts
-      layoutService.clearLayouts();
+      layoutService.clearLayout();
 
       if (saveData.project.metadata.projectName) {
         builderService.setProjectName(saveData.project.metadata.projectName);
@@ -49,36 +49,40 @@ export class JSONImportService {
 
       // Then restore layouts with proper ID mapping
       if (saveData.project.layouts) {
-        console.log("Restoring layouts:", saveData.project.layouts);
-        console.log("ID mapping:", idMapping);
+        console.warn("Restoring layouts:", saveData.project.layouts);
+        console.warn("ID mapping:", idMapping);
 
-        const updatedLayouts: Layouts = {};
+        // Get the layout for desktop (assuming 'lg' breakpoint)
+        const layouts = saveData.project.layouts.lg || [];
 
-        // Map old component IDs to new ones in the layouts
-        for (const [breakpoint, layoutItems] of Object.entries(
-          saveData.project.layouts
-        )) {
-          updatedLayouts[breakpoint] = layoutItems.map((item) => {
-            const newId = idMapping.get(item.i) || item.i;
-            return {
-              ...item,
-              i: newId,
-            };
-          });
+        if (layouts.length > 0) {
+          // Update the layout items with new component IDs
+          const updatedLayouts = layouts.map((layoutItem) => ({
+            ...layoutItem,
+            i: idMapping.get(layoutItem.i) || layoutItem.i, // Use new ID if available, otherwise keep original
+          }));
+
+          console.warn("Updated layouts with new IDs:", updatedLayouts);
+
+          // Update the layout service
+          const { layoutService } = await import(
+            "../../content-renderer/services/layout.service"
+          );
+          layoutService.updateLayout(updatedLayouts);
+
+          console.warn(
+            "Layout restored successfully with",
+            updatedLayouts.length,
+            "items"
+          );
         }
-
-        console.log("Updated layouts with new IDs:", updatedLayouts);
-        layoutService.updateLayouts(updatedLayouts);
-
-        // Ensure any missing components get default layouts
-        layoutService.ensureInstancesInLayouts(importedComponentIds, viewMode);
       } else {
         // No saved layouts, create default ones for all imported components
-        console.log(
+        console.warn(
           "No saved layouts, creating defaults for:",
           importedComponentIds
         );
-        layoutService.ensureInstancesInLayouts(importedComponentIds, viewMode);
+        layoutService.ensureInstancesInLayout(importedComponentIds);
       }
 
       if (saveData.project.language) {
@@ -131,14 +135,14 @@ export class JSONImportService {
   private static async readFileContent(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = (e): void => {
         if (e.target?.result) {
           resolve(e.target.result as string);
         } else {
           reject(new Error("Failed to read file"));
         }
       };
-      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.onerror = (): void => reject(new Error("Failed to read file"));
       reader.readAsText(file);
     });
   }

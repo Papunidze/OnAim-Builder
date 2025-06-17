@@ -104,11 +104,19 @@ export class BuilderService {
     this.saveHistory();
 
     const componentId = this.generateId();
+    
+    // Ensure component has proper default props including title
+    const defaultProps = {
+      title: name, // Use component name as default title
+      description: `A beautiful ${name.toLowerCase()} component`,
+      ...options?.props, // Allow options to override defaults
+    };
+
     const initialComponent: ComponentState = {
       id: componentId,
       name,
       viewMode,
-      props: options?.props || {},
+      props: defaultProps,
       styles: options?.styles || {},
       position: options?.position,
       size: options?.size,
@@ -153,20 +161,38 @@ export class BuilderService {
             if (settingsObject) {
               targetComponent.compiledData.settingsObject = settingsObject;
 
-              if (
-                Object.keys(targetComponent.props).length === 0 &&
-                typeof settingsObject.getValues === "function"
-              ) {
+              // Always ensure we have default values, merging with existing props
+              if (typeof settingsObject.getValues === "function") {
                 try {
                   const defaultValues = settingsObject.getValues();
                   if (defaultValues && typeof defaultValues === "object") {
-                    targetComponent.props = { ...defaultValues };
+                    // Merge default values with existing props, but preserve existing values
+                    const mergedProps = {
+                      ...defaultValues,
+                      ...targetComponent.props, // Existing props take priority
+                    };
+                    
+                    // Ensure title is always present
+                    if (!mergedProps.title) {
+                      mergedProps.title = name;
+                    }
+                    
+                    targetComponent.props = mergedProps;
                   }
                 } catch (error) {
                   console.warn(
                     `Failed to extract default values from settings for component ${name}:`,
                     error
                   );
+                  // Ensure title is still present even if settings fail
+                  if (!targetComponent.props.title) {
+                    targetComponent.props.title = name;
+                  }
+                }
+              } else {
+                // Fallback: ensure title is present when no getValues method
+                if (!targetComponent.props.title) {
+                  targetComponent.props.title = name;
                 }
               }
             }
@@ -177,9 +203,25 @@ export class BuilderService {
             );
             targetComponent.status = "error";
             targetComponent.error = `Failed to compile settings: ${(error as Error).message}`;
+            
+            // Even on error, ensure title is present
+            if (!targetComponent.props.title) {
+              targetComponent.props.title = name;
+            }
+          }
+        } else {
+          // No settings file found, ensure basic props are set
+          if (!targetComponent.props.title) {
+            targetComponent.props.title = name;
           }
         }
+      } else {
+        // No file data, ensure basic props are set
+        if (!targetComponent.props.title) {
+          targetComponent.props.title = name;
+        }
       }
+      
       if (targetComponent.status !== "error") {
         targetComponent.status = "loaded";
       }
@@ -191,6 +233,11 @@ export class BuilderService {
       if (targetComponent) {
         targetComponent.status = "error";
         targetComponent.error = `Failed to load component data: ${(error as Error).message}`;
+        
+        // Even on error, ensure title is present
+        if (!targetComponent.props.title) {
+          targetComponent.props.title = name;
+        }
       }
     }
 

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import type { Layouts } from 'react-grid-layout';
+import type { Layout } from 'react-grid-layout';
 
 import { ContentRenderer } from '../../content-renderer';
 import { DragDropControls } from './controls';
@@ -16,17 +16,18 @@ export const EnhancedContentRenderer: React.FC<EnhancedContentRendererProps> = (
   enableDragDropByDefault = false,
   autoSaveLayouts = true,
   className,
+  readOnly = false,
 }) => {
   const [isDragDropEnabled, setIsDragDropEnabled] = useState(enableDragDropByDefault);
   
-  const {
-    layouts,
-    updateLayouts,
-    resetLayouts,
-    saveLayouts,
-    loadLayouts,
-    isLoading,
-    hasUnsavedChanges,
+  const { 
+    layout, 
+    updateLayouts, 
+    resetLayouts, 
+    saveLayouts, 
+    loadLayouts, 
+    isLoading, 
+    hasUnsavedChanges 
   } = useDragAndDropLayouts({
     projectId,
     viewMode,
@@ -38,8 +39,8 @@ export const EnhancedContentRenderer: React.FC<EnhancedContentRendererProps> = (
   }, []);
 
   const handleLayoutChange = useCallback(
-    (newLayouts: Layouts) => {
-      updateLayouts(newLayouts);
+    (newLayout: Layout[]) => {
+      updateLayouts(newLayout);
     },
     [updateLayouts]
   );
@@ -55,8 +56,9 @@ export const EnhancedContentRenderer: React.FC<EnhancedContentRendererProps> = (
     viewMode,
     useDragAndDrop: isDragDropEnabled,
     onLayoutChange: handleLayoutChange,
-    savedLayouts: layouts,
-  }), [components, viewMode, isDragDropEnabled, handleLayoutChange, layouts]);
+    savedLayouts: layout,
+    readOnly: readOnly || !isDragDropEnabled,
+  }), [components, viewMode, isDragDropEnabled, handleLayoutChange, layout, readOnly]);
 
   const containerClassName = useMemo(() => {
     const baseClasses = [styles.container];
@@ -77,7 +79,7 @@ export const EnhancedContentRenderer: React.FC<EnhancedContentRendererProps> = (
           onLoadLayout={loadLayouts}
           hasUnsavedChanges={hasUnsavedChanges}
           isLoading={isLoading}
-          layouts={layouts}
+          layout={layout}
           viewMode={viewMode}
         />
       )}
