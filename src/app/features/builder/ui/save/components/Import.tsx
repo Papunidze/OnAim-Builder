@@ -1,7 +1,7 @@
 import type { JSX } from "react";
 import { useState, useRef } from "react";
 import styles from "../save.module.css";
-import { JSONExportService } from "../services/json-export.service";
+import { JSONImportService } from "../services/json-import.service";
 import { Image } from "@app-shared/components";
 
 interface ImportProps {
@@ -24,8 +24,7 @@ const Import = ({ onImportComplete }: ImportProps): JSX.Element => {
     setIsImporting(true);
 
     try {
-      const content = await file.text();
-      const success = await JSONExportService.import(content);
+      const success = await JSONImportService.importFromFile(file);
       
       if (success) {
         onImportComplete?.(true, "Project imported successfully with grid layouts!");

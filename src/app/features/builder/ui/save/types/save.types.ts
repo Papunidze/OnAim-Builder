@@ -1,4 +1,4 @@
-import type { Layouts } from "react-grid-layout";
+import type { Layouts, Layout } from "react-grid-layout";
 
 export interface SaveProps {
   viewMode: "desktop" | "mobile";
@@ -56,7 +56,7 @@ export interface SaveData {
       globalState: Record<string, Record<string, string>>;
       lastActiveLanguage: string;
     };
-    layouts?: Layouts;
+    layouts?: Layout[] | Layouts;
   };
   components: ComponentExportData[];
 }

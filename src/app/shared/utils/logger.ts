@@ -19,7 +19,6 @@ export const logger: Logger = {
     }
   },
   error: (message: string, ...args: unknown[]): void => {
-    // Always log errors, even in production
     console.error(message, ...args);
   },
   debug: (message: string, ...args: unknown[]): void => {
