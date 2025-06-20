@@ -114,6 +114,14 @@ export const useDragAndDropLayouts = ({
       isUpdatingFromHook.current = true;
       layoutService.updateLayout(newLayout);
 
+      // CRITICAL FIX: Save immediately to localStorage to ensure JSON export has latest data
+      try {
+        const storageKey = getStorageKey("layout");
+        localStorage.setItem(storageKey, JSON.stringify(newLayout));
+      } catch (error) {
+        console.warn("Failed to immediately save layout to localStorage:", error);
+      }
+
       if (autoSave) {
         if (autoSaveTimeout) {
           clearTimeout(autoSaveTimeout);
@@ -126,7 +134,7 @@ export const useDragAndDropLayouts = ({
         setAutoSaveTimeout(timeout);
       }
     },
-    [autoSave, autoSaveDelay, autoSaveTimeout, saveLayouts]
+    [autoSave, autoSaveDelay, autoSaveTimeout, saveLayouts, getStorageKey]
   );
 
   // Reset layouts to empty state

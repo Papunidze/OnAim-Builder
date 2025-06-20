@@ -53,7 +53,7 @@ export const EnhancedContentRenderer: React.FC<EnhancedContentRendererProps> = (
 
       // Debounce rapid changes to prevent excessive updates
       const now = Date.now();
-      if (now - lastUpdateTimeRef.current < 100) { // 100ms debounce
+      if (now - lastUpdateTimeRef.current < 50) { // Reduced to 50ms debounce for faster response
         return;
       }
       lastUpdateTimeRef.current = now;
@@ -112,7 +112,7 @@ export const EnhancedContentRenderer: React.FC<EnhancedContentRendererProps> = (
         // Reset flag after a delay to allow the update cycle to complete
         setTimeout(() => {
           isUpdatingFromLayoutRef.current = false;
-        }, 200);
+        }, 100);
       }
     },
     [updateLayouts, updateComponent, layout]

@@ -6,7 +6,6 @@ import {
   downloadFile,
 } from "../utils/save.utils";
 import { LanguageStateUtils } from "../../language";
-import { layoutService } from "../../content-renderer/services/layout.service";
 
 export class JSONExportService {
   static generateSaveData(viewMode: "desktop" | "mobile"): SaveData {
@@ -42,39 +41,30 @@ export class JSONExportService {
       return { name, count };
     });
 
-    // Get current grid layout data
-    const currentLayouts = layoutService.getLayout();
-    
-    // CRITICAL FIX: Ensure ALL components are included in layout data
-    // Create a complete layout that includes every component
+    // CRITICAL FIX: Generate layout data directly from current component positions
+    // This ensures we always export the ACTUAL current positions, not stale grid data
     const componentIds = components.map(comp => comp.id);
-    const layoutMap = new Map(currentLayouts.map(layout => [layout.i, layout]));
     
-    // Build complete layout including missing components
-    const completeLayout = componentIds.map((componentId, index) => {
-      const existingLayout = layoutMap.get(componentId);
-      if (existingLayout) {
-        return existingLayout;
-      }
-      
-      // Component missing from layout - create layout from component position/size
+    // Build layout directly from current component positions (like Preview does)
+    const realTimeLayout = componentIds.map((componentId, index) => {
       const component = components.find(c => c.id === componentId);
-      if (component) {
+      if (component && component.position && component.size) {
+        // Convert actual pixel positions to grid coordinates
         const gridUnitSize = 100;
         return {
           i: componentId,
-          x: Math.round((component.position?.x || 0) / gridUnitSize),
-          y: Math.round((component.position?.y || 0) / gridUnitSize),
-          w: Math.max(3, Math.round((component.size?.width || 400) / gridUnitSize)),
-          h: Math.max(2, Math.round((component.size?.height || 300) / gridUnitSize)),
+          x: Math.round((component.position.x || 0) / gridUnitSize),
+          y: Math.round((component.position.y || 0) / gridUnitSize),
+          w: Math.max(3, Math.round((component.size.width || 400) / gridUnitSize)),
+          h: Math.max(2, Math.round((component.size.height || 300) / gridUnitSize)),
           minW: 3,
           minH: 2,
-          moved: false,
+          moved: component.position.x > 0 || component.position.y > 0, // Mark as moved if not at origin
           static: false,
         };
       }
       
-      // Fallback - create default layout
+      // Fallback for components without position data
       const col = index % 2;
       const row = Math.floor(index / 2);
       return {
@@ -90,8 +80,8 @@ export class JSONExportService {
       };
     });
 
-    // Create layout data in a simple format (no breakpoints needed)
-    const layoutData = completeLayout;
+    // Use the real-time layout data (same source as Preview)
+    const layoutData = realTimeLayout;
 
     return {
       project: {
@@ -121,6 +111,7 @@ export class JSONExportService {
   }
 
   static export(viewMode: "desktop" | "mobile"): void {
+    // Generate save data directly from current component state (same as Preview)
     const saveData = this.generateSaveData(viewMode);
     const filename = generateFilename({
       format: "json",
