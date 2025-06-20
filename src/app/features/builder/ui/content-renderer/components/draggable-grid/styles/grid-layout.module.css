@@ -21,12 +21,12 @@
 .layout {
   position: relative !important;
   width: 100% !important;
-  min-height: 400px;
   background: white;
   border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: auto;
   box-sizing: border-box;
+  min-height: 100vh;
 }
 
 /* Grid Items - Optimized for performance */

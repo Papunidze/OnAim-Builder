@@ -36,7 +36,8 @@ export function usePreview(): UsePreviewReturn {
     previewService.closePreview();
   }, []);
 
-  const getPreviewComponents = useCallback(() => {
+  // Get fresh components every time, and re-compute when builder state changes
+  const previewComponents = useCallback(() => {
     return getComponents(state.options.viewMode);
   }, [getComponents, state.options.viewMode]);
 
@@ -46,7 +47,7 @@ export function usePreview(): UsePreviewReturn {
     options: state.options,
     openPreview,
     closePreview,
-    components: getPreviewComponents(),
+    components: previewComponents(),
   };
 }
 

@@ -158,7 +158,6 @@
   cursor: default !important;
 }
 
-/* Ensure grid layout renders consistently with builder view */
 .previewOverlay :global(.react-grid-layout) {
   position: relative !important;
   min-height: 500px !important;

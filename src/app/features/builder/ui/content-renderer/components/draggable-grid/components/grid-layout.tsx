@@ -21,13 +21,33 @@ const SimpleGridLayout = ReactGridLayout;
 // Helper function to ensure layout items stay within grid bounds
 const constrainLayout = (layout: Layout[], cols: number = 12): Layout[] => {
   return layout.map(item => {
-    const maxX = Math.max(0, cols - item.w);
+    
+    // Provide reasonable defaults for invalid dimensions instead of forcing to 1x1
+    const defaultWidth = 4;  // Default component width
+    const defaultHeight = 3; // Default component height
+    const minWidth = 3;      // Minimum reasonable width
+    const minHeight = 2;     // Minimum reasonable height
+    
+    // Use defaults when dimensions are invalid (undefined, null, 0, or NaN)
+    const validWidth = (item.w && item.w > 0) ? item.w : defaultWidth;
+    const validHeight = (item.h && item.h > 0) ? item.h : defaultHeight;
+    
+    // Debug logging for invalid dimensions
+    if (!item.w || item.w <= 0 || !item.h || item.h <= 0) {
+      console.warn(`[GridLayout] Component ${item.i} had invalid dimensions:`, {
+        originalW: item.w,
+        originalH: item.h,
+        correctedW: validWidth,
+        correctedH: validHeight
+      });
+    }
+    
     const constrainedItem = {
       ...item,
-      x: Math.max(0, Math.min(item.x, maxX)), // Ensure x is within bounds
-      y: Math.max(0, item.y), // Ensure y is not negative
-      w: Math.max(1, Math.min(item.w, cols)), // Ensure width is reasonable
-      h: Math.max(1, item.h), // Ensure height is positive
+      x: Math.max(0, Math.min(item.x || 0, Math.max(0, cols - validWidth))), // Ensure x is within bounds
+      y: Math.max(0, item.y || 0), // Ensure y is not negative
+      w: Math.max(minWidth, Math.min(validWidth, cols)), // Use reasonable minimum width
+      h: Math.max(minHeight, validHeight), // Use reasonable minimum height
     };
     
     return constrainedItem;

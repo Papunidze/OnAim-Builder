@@ -39,12 +39,12 @@ class LayoutService {
       
       return {
         i: id,
-        x: col * 6, // 0 or 6 (for 2 columns)
-        y: row * 5, // Stacked rows
-        w: 6, // Half width for 2x2 grid
-        h: 5, // Consistent height
-        minW: 4,
-        minH: 3,
+        x: col * 5, // 0 or 5 (4 width + 1 spacing)
+        y: row * 4, // Consistent with grid layout spacing
+        w: 4, // Match grid layout default width
+        h: 3, // Match grid layout default height  
+        minW: 3, // Match grid layout minimum width
+        minH: 2, // Match grid layout minimum height
       };
     });
 
@@ -64,12 +64,12 @@ class LayoutService {
         
         const defaultLayout = {
           i: id,
-          x: col * 6,
-          y: row * 5,
-          w: 6, 
-          h: 5, 
-          minW: 4,
-          minH: 3,
+          x: col * 5, // 0 or 5 (4 width + 1 spacing)
+          y: row * 4, // Consistent with grid layout spacing
+          w: 4, // Match grid layout default width
+          h: 3, // Match grid layout default height
+          minW: 3, // Match grid layout minimum width  
+          minH: 2, // Match grid layout minimum height
         };
         
         currentLayout.push(defaultLayout);

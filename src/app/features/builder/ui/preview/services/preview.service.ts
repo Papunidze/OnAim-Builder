@@ -75,6 +75,9 @@ export class PreviewService {
     this.state.isOpen = true;
     this.state.mode = mode;
     this.state.options.viewMode = viewMode;
+    
+    // Add timestamp to force fresh data fetch
+    this.state.options.openedAt = Date.now();
 
     this.emit("previewOpened", { viewMode });
     this.notifySubscribers();

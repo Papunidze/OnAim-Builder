@@ -1,48 +1,87 @@
 import type { JSX } from "react";
 import { usePreview } from "../hooks/usePreview.hooks";
-import { EnhancedContentRenderer } from "../../content-renderer";
-import { useDragAndDropLayouts } from "../../content-renderer/components/draggable-grid";
+import { ComponentInstance } from "../../content-renderer/components/component-instance";
+import { useComponentInstances } from "../../content-renderer/hooks/use-component-instances";
 import styles from "./preview-renderer.module.css";
 import type { ComponentState } from "@app-shared/services/builder";
 
-// Internal component that renders the actual content in preview
-function PreviewContent({ components, viewMode }: { components: ComponentState[], viewMode: "desktop" | "mobile" }): JSX.Element {
-  // Use the same layouts hook as the main builder to get saved layouts
-  const { isLoading } = useDragAndDropLayouts({
-    projectId: "main-builder",
-    viewMode,
-    autoSave: false,
-  });
-
-  // Show loading state while layouts are being fetched
-  if (isLoading) {
+function PreviewContent({
+  components,
+  viewMode: _viewMode,
+}: {
+  components: ComponentState[];
+  viewMode: "desktop" | "mobile";
+}): JSX.Element {
+  // Use the proper component instances hook to load components
+  const { instances, aggregatedStyles, retryComponent, isPending } = useComponentInstances(components);
+  
+  if (isPending) {
     return (
-      <div className={styles.previewContent} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+      <div style={{ 
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '600px',
+        background: '#f8f9fa'
+      }}>
         <div style={{ textAlign: 'center', color: '#666' }}>
           <div style={{ fontSize: '24px', marginBottom: '8px' }}>⏳</div>
-          <div>Loading layout...</div>
+          <div>Loading components...</div>
         </div>
       </div>
     );
   }
-
+  
   return (
-    <EnhancedContentRenderer
-      components={components}
-      viewMode={viewMode}
-      projectId="main-builder" // Use the same project ID as main builder to share layouts
-      showDragDropControls={false}
-      enableDragDropByDefault // Enable drag drop to render grid layout but keep controls hidden
-      autoSaveLayouts={false} // Don't auto-save in preview, but use saved layouts
-      className={styles.previewContent}
-      readOnly // Make the grid layout read-only in preview mode
-    />
+    <div style={{ 
+      position: 'relative', 
+      width: '100%', 
+      minHeight: '600px',
+      background: '#f8f9fa',
+      padding: '20px'
+    }}>
+      {/* Inject aggregated styles */}
+      {aggregatedStyles && (
+        <style dangerouslySetInnerHTML={{ __html: aggregatedStyles }} />
+      )}
+      
+      {instances.map((instance) => {
+        const component = components.find(c => c.id === instance.id);
+        if (!component) return null;
+        
+        const position = component.position || { x: 0, y: 0 };
+        const size = component.size || { width: 400, height: 300 };
+        
+        return (
+          <div
+            key={instance.id}
+            style={{
+              position: 'absolute',
+              left: `${position.x}px`,
+              top: `${position.y}px`,
+              width: `${size.width}px`,
+              height: `${size.height}px`,
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              background: 'white',
+              overflow: 'hidden',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+          >
+            <ComponentInstance 
+              instance={instance} 
+              onRetry={retryComponent}
+            />
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
 export function PreviewRenderer(): JSX.Element {
   const { components, options } = usePreview();
-
+  
   const handlePreviewClick = (e: React.MouseEvent): void => {
     e.preventDefault();
     e.stopPropagation();
@@ -80,10 +119,7 @@ export function PreviewRenderer(): JSX.Element {
         onMouseUp={handlePreviewClick}
       >
         <div className={styles.previewViewport}>
-          <PreviewContent 
-            components={components}
-            viewMode={options.viewMode}
-          />
+          <PreviewContent components={components} viewMode={options.viewMode} />
         </div>
       </div>
     </div>

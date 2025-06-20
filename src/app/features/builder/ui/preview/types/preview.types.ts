@@ -6,6 +6,7 @@ export interface PreviewOptions {
   showLabels?: boolean;
   backgroundColor?: string;
   scale?: number;
+  openedAt?: number;
 }
 
 export interface PreviewModalProps {
