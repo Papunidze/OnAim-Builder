@@ -96,7 +96,7 @@ const generateViteMainTsx = (componentData, viewMode = "desktop") => {
           : `${baseComponentName.charAt(0).toUpperCase() + baseComponentName.slice(1)} ${comp.instanceNumber}`;
 
       if (comp.hasLanguageData) {
-        const languageProps = `language={(${languageVarName}[currentLanguage] || ${languageVarName}['en'] || {})}`;
+        const languageProps = `language={(${languageVarName} as any)[currentLanguage] || (${languageVarName} as any)['en'] || {}}`;
 
         componentElements.push(`        <div className="component-wrapper">
           <div className="component-title">${displayName}</div>
@@ -116,13 +116,13 @@ const generateViteMainTsx = (componentData, viewMode = "desktop") => {
       }
     });
   });
-  return `import React, { useState, useEffect } from 'react'
-import ReactDOM from 'react-dom/client'
-import './index.css'
+  return `import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
 ${imports.join("\n")}
 
-function App() {
-  const [currentLanguage, setCurrentLanguage] = useState(() => {
+function App(): JSX.Element {
+  const [currentLanguage, setCurrentLanguage] = useState<string>(() => {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('lng') || 'en';
   });
@@ -158,7 +158,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,
-)`;
+);`;
 };
 
 const generateVitePackageJson = () => {
@@ -177,7 +177,6 @@ const generateVitePackageJson = () => {
       dependencies: {
         react: "^18.3.1",
         "react-dom": "^18.3.1",
-        "language-management-lib": "^1.0.1",
       },
       devDependencies: {
         "@eslint/js": "^9.13.0",
@@ -189,6 +188,7 @@ const generateVitePackageJson = () => {
         "eslint-plugin-react-refresh": "^0.4.14",
         globals: "^15.11.0",
         typescript: "~5.6.2",
+        "typescript-eslint": "^8.0.0",
         vite: "^5.4.10",
       },
     },
@@ -221,6 +221,8 @@ const generateTsConfig = () => {
         isolatedModules: true,
         moduleDetection: "force",
         noEmit: true,
+        allowSyntheticDefaultImports: true,
+        esModuleInterop: true,
         jsx: "react-jsx",
         strict: true,
         noUnusedLocals: true,
@@ -427,6 +429,41 @@ const generateViteEnvDts = () => {
   return `/// <reference types="vite/client" />`;
 };
 
+const generateEslintConfig = () => {
+  return `import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+
+export default tseslint.config(
+  { ignores: ['dist'] },
+  {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+    plugins: {
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
+      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
+    },
+  },
+)
+`;
+};
+
 module.exports = {
   generateMultipleComponentsPageTsx,
   generateViteMainTsx,
@@ -436,4 +473,5 @@ module.exports = {
   generateIndexHtml,
   generateIndexCss,
   generateViteEnvDts,
+  generateEslintConfig,
 };

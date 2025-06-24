@@ -8,6 +8,7 @@ const {
 
   downloadMultipleComponentsZip,
   checkComponentExists,
+  publishComponentsAndPreview,
 
   importProject,
   importProjectFromFile,
@@ -33,6 +34,8 @@ router.get("/folders/:name/files", fetchFilesInFolder);
 router.get("/folders/:name", fetchCompiledFilesInFolder);
 
 router.post("/download-multiple", downloadMultipleComponentsZip);
+
+router.post("/publish", publishComponentsAndPreview);
 
 router.get("/check/:name", checkComponentExists);
 

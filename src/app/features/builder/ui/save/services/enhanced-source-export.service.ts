@@ -3,6 +3,7 @@ import type { ComponentState } from "@app-shared/services/builder";
 import {
   downloadMultipleComponentsSources,
   checkComponentExists,
+  publishComponentsAndPreview,
 } from "../api/action";
 import { compileLanguageObject } from "../../language/compiler/language-compiler";
 
@@ -98,6 +99,107 @@ export class EnhancedSourceExportService {
       );
     }
   }
+
+  static async publishAndPreview(
+    viewMode: "desktop" | "mobile"
+  ): Promise<void> {
+    const components = builderService.getLiveComponents(viewMode);
+
+    if (components.length === 0) {
+      alert("No components found to publish");
+      return;
+    }
+
+    try {
+      const potentialNames = this.extractServerComponentNames(components);
+      if (potentialNames.length === 0) {
+        alert("No potential server components found.");
+        return;
+      }
+
+      const componentInstanceMap = new Map<string, number>();
+      const validComponents: {
+        name: string;
+        originalComponent: ComponentState;
+      }[] = [];
+
+      const usedComponentIndices = new Set<number>();
+
+      for (let i = 0; i < potentialNames.length; i++) {
+        const name = potentialNames[i];
+        const checkResult = await checkComponentExists(name);
+
+        if (checkResult.exists && checkResult.hasSettings) {
+          const originalComponentIndex = components.findIndex(
+            (comp, index) =>
+              this.extractBaseComponentName(comp) === name &&
+              !usedComponentIndices.has(index)
+          );
+
+          if (originalComponentIndex !== -1) {
+            const originalComponent = components[originalComponentIndex];
+            usedComponentIndices.add(originalComponentIndex);
+
+            const currentCount = componentInstanceMap.get(name) || 0;
+            componentInstanceMap.set(name, currentCount + 1);
+
+            const instanceId =
+              currentCount === 0 ? name : `${name}_${currentCount + 1}`;
+            validComponents.push({
+              name: instanceId,
+              originalComponent,
+            });
+          }
+        }
+      }
+
+      if (validComponents.length === 0) {
+        alert(
+          "No matching server components found. Make sure your components match uploaded folder names."
+        );
+        return;
+      }
+
+      const existingComponents = validComponents.map((comp) => comp.name);
+      const componentPropsMap: Record<string, Record<string, unknown>> = {};
+      const componentLanguageMap: Record<
+        string,
+        Record<string, Record<string, string>>
+      > = {};
+
+      validComponents.forEach(({ name, originalComponent }) => {
+        const componentProps = originalComponent.props || {};
+        if (componentProps && Object.keys(componentProps).length > 0) {
+          componentPropsMap[name] = componentProps as Record<string, unknown>;
+        }
+
+        const languageData =
+          this.extractComponentLanguageData(originalComponent);
+        if (languageData) {
+          componentLanguageMap[name] = languageData;
+        }
+      });
+
+      const previewUrl = await publishComponentsAndPreview(
+        existingComponents,
+        componentPropsMap,
+        componentLanguageMap,
+        viewMode
+      );
+
+      if (previewUrl) {
+        window.open(previewUrl, "_blank");
+      } else {
+        throw new Error("No preview URL received from server");
+      }
+    } catch (error) {
+      console.error("Failed to publish and preview:", error);
+      alert(
+        `Failed to publish: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+    }
+  }
+
   private static extractServerComponentNames(
     components: ComponentState[]
   ): string[] {

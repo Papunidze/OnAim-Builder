@@ -79,3 +79,46 @@ export const downloadMultipleComponentsSources = async (
     );
   }
 };
+
+export interface PublishResponse {
+  status: string;
+  data: {
+    previewUrl: string;
+    buildId: string;
+  };
+  message?: string;
+}
+
+export const publishComponentsAndPreview = async (
+  componentNames: string[],
+  componentPropsMap?: Record<string, Record<string, unknown>>,
+  componentLanguageMap?: Record<string, Record<string, Record<string, string>>>,
+  viewMode?: "desktop" | "mobile"
+): Promise<string> => {
+  try {
+    if (!Array.isArray(componentNames) || componentNames.length === 0) {
+      throw new Error("At least one component name is required");
+    }
+
+    const response = await rest.POST<PublishResponse>(`/file/publish`, {
+      body: {
+        componentNames,
+        componentPropsMap: componentPropsMap || {},
+        componentLanguageMap: componentLanguageMap || {},
+        viewMode: viewMode || "desktop",
+      },
+    });
+
+    if (!response || response.status !== "success") {
+      throw new Error(response?.message || "Failed to publish components");
+    }
+
+    return response.data.previewUrl;
+  } catch (error) {
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "Failed to publish and preview components"
+    );
+  }
+};

@@ -16,7 +16,7 @@ import { LanguageStateUtils } from "../language/utils/language-state.utils";
 
 const Save = ({ viewMode }: SaveProps): JSX.Element => {
   const { isOpen, dropdownRef, toggle, close } = useDropdown();
-  const { handleExport } = useExportHandlers(close);
+  const { handleExport, handlePublish, isLoading } = useExportHandlers(close);
   const { getSelectedComponent } = useBuilder();
   const { isTemplateDialogOpen, openTemplateDialog, closeTemplateDialog } =
     useTemplate();
@@ -91,6 +91,16 @@ const Save = ({ viewMode }: SaveProps): JSX.Element => {
       onClick: () =>
         handleExport(() =>
           EnhancedSourceExportService.downloadServerSources(viewMode)
+        ),
+    },
+    {
+      id: "publish",
+      label: isLoading ? "Publishing..." : "Publish & Preview",
+      description: "Build source code and get preview URL",
+      icon: "",
+      onClick: () =>
+        handlePublish(() =>
+          EnhancedSourceExportService.publishAndPreview(viewMode)
         ),
     },
     {
