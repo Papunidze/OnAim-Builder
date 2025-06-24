@@ -101,12 +101,15 @@ export class MobileValuesService {
   static applyMobileValues(
     settingsObject: SettingsObject,
     viewMode: "desktop" | "mobile",
-    onUpdate?: (values: Record<string, unknown>) => void
+    onUpdate?: (
+      values: Record<string, unknown>,
+      options?: { skipHistory?: boolean }
+    ) => void
   ): MobileValuesResult {
     if (viewMode === "mobile") {
       const result = this.getMobileValues(settingsObject);
       if (result.success && result.data && onUpdate) {
-        onUpdate(result.data);
+        onUpdate(result.data, { skipHistory: true });
       }
       return result;
     }
@@ -115,7 +118,7 @@ export class MobileValuesService {
       try {
         const desktopValues = settingsObject.getValues();
         if (onUpdate) {
-          onUpdate(desktopValues || {});
+          onUpdate(desktopValues || {}, { skipHistory: true });
         }
         return {
           success: true,

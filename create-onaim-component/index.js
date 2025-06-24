@@ -111,7 +111,7 @@ async function init() {
 
     const componentName = userInput
       .trim()
-      .split(/[\s\-_]+/) // Split on spaces, hyphens, underscores
+      .split(/[\s\-_]+/)
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join("");
 
@@ -390,7 +390,6 @@ function generateAPIComponent(
 
   const typeAnnotations = isTypeScript
     ? `
-// 🔷 TypeScript interfaces
 interface DataItem {
   id?: string | number;
   title?: string;
@@ -410,7 +409,6 @@ interface CacheData {
 
   return `${imports}${typeAnnotations}
 
-// 🗄️ Global cache (prevents API spam, shared across all instances)
 const globalDataCache${isTypeScript ? ": CacheData" : ""} = {
   data: null,
   timestamp: 0,

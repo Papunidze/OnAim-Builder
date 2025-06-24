@@ -3,9 +3,9 @@ export interface Template {
   name: string;
   description?: string;
   componentData: {
-    components: unknown; // The actual component state
-    language: Record<string, unknown>; // Language updates
-    settings: Record<string, unknown>; // Settings updates
+    components: unknown;
+    language: Record<string, unknown>;
+    settings: Record<string, unknown>;
   };
   createdAt: string;
   updatedAt: string;

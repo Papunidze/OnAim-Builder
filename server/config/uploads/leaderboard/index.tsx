@@ -32,7 +32,7 @@ const globalDataCache = {
   error: null as string | null,
 };
 
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 5 * 60 * 1000;
 
 const fetchLeaderboardData = async (): Promise<LeaderboardEntry[]> => {
   const initialId = "188";
@@ -174,7 +174,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
     const isDataFresh =
       globalDataCache.data && now - globalDataCache.timestamp < CACHE_DURATION;
 
-    // Always set initial load to false after first useEffect run
     setIsInitialLoad(false);
 
     if (isDataFresh || globalDataCache.loading) {
@@ -197,7 +196,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
             globalDataCache.error = null;
             globalDataCache.loading = false;
             setLocalError(null);
-            forceRerender({}); // Force re-render after cache update
+            forceRerender({});
           }
         })
         .catch((error) => {
@@ -207,7 +206,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
             globalDataCache.error = errorMessage;
             globalDataCache.loading = false;
             setLocalError(errorMessage);
-            forceRerender({}); // Force re-render after error
+            forceRerender({});
           }
         });
     }

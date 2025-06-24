@@ -60,14 +60,12 @@ export function useFormStates({
       try {
         let existingTranslations: Record<string, string> = {};
 
-        // First check if we have template language values
         if (selectedComponent?.props?.templateLanguage) {
           const templateLanguage = selectedComponent.props
             .templateLanguage as Record<string, Record<string, string>>;
           existingTranslations = templateLanguage[selectedLanguage] || {};
         }
 
-        // Fallback to component default language if no template language found
         if (Object.keys(existingTranslations).length === 0) {
           existingTranslations =
             languageObject.getTranslations(selectedLanguage);

@@ -57,6 +57,8 @@ export interface UseBuilderReturn {
   selectComponent: (componentId: string | null) => void;
   getSelectedComponent: () => ComponentState | null;
   selectedComponentId?: string;
+  getIsAddingComponent: () => boolean;
+  getIsUndoRedoInProgress: () => boolean;
 }
 
 export function useBuilder(): UseBuilderReturn {
@@ -196,6 +198,14 @@ export function useBuilder(): UseBuilderReturn {
   const projectName = builderService.getProjectName();
   const selectedComponentId = components.selectedComponentId;
 
+  const getIsAddingComponent = useCallback(() => {
+    return builderService.getIsAddingComponent();
+  }, []);
+
+  const getIsUndoRedoInProgress = useCallback(() => {
+    return builderService.getIsUndoRedoInProgress();
+  }, []);
+
   return {
     components,
     stats,
@@ -222,5 +232,7 @@ export function useBuilder(): UseBuilderReturn {
     selectComponent,
     getSelectedComponent,
     selectedComponentId,
+    getIsAddingComponent,
+    getIsUndoRedoInProgress,
   };
 }

@@ -47,8 +47,6 @@ export const settings = new SettingGroup({
   },
 });
 
-// settings.setJson(JSON.stringify(template));
-
 export type Settings = SettingsToProps<typeof settings>;
 
 export default settings;

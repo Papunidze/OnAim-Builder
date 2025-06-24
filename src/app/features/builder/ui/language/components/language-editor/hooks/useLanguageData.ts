@@ -29,7 +29,6 @@ export function useLanguageData({
       return { languageObject: null, error: "No component selected" };
     }
 
-    // First, try to get compiled language files
     if (selectedComponent.compiledData?.files) {
       const languageFile = selectedComponent.compiledData.files.find(
         (file: ComponentFile) => file.file === "language.ts"
@@ -44,20 +43,19 @@ export function useLanguageData({
           return { languageObject: compiled, error: null };
         } catch (err) {
           console.error("Error compiling language object:", err);
-          return { languageObject: null, error: "Failed to compile language data" };
+          return {
+            languageObject: null,
+            error: "Failed to compile language data",
+          };
         }
       }
     }
 
-    // If no compiled language files, check for template language
     if (selectedComponent.props?.templateLanguage) {
       try {
-        const templateLanguage = selectedComponent.props.templateLanguage as Record<
-          string,
-          Record<string, string>
-        >;
-        
-        // Create a minimal language content from template language
+        const templateLanguage = selectedComponent.props
+          .templateLanguage as Record<string, Record<string, string>>;
+
         const languageContent = `
 import { SetLanguage } from "language-management-lib";
 
@@ -65,7 +63,7 @@ const languageData = ${JSON.stringify(templateLanguage, null, 2)};
 
 export const lng = new SetLanguage(languageData, "en");
         `;
-        
+
         const compiled = compileLanguageObject(
           languageContent,
           selectedComponent.name
@@ -73,13 +71,20 @@ export const lng = new SetLanguage(languageData, "en");
         return { languageObject: compiled, error: null };
       } catch (err) {
         console.error("Error compiling template language:", err);
-        return { languageObject: null, error: "Failed to compile template language" };
+        return {
+          languageObject: null,
+          error: "Failed to compile template language",
+        };
       }
     }
 
     return { languageObject: null, error: "No language data available" };
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [selectedComponent, selectedComponent?.timestamp, selectedComponent?.props]);
+  }, [
+    selectedComponent,
+    selectedComponent?.timestamp,
+    selectedComponent?.props,
+  ]);
 
   const availableLanguages = useMemo<string[]>(() => {
     if (!languageObject) {

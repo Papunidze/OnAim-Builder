@@ -8,7 +8,7 @@ const {
 
   downloadMultipleComponentsZip,
   checkComponentExists,
-  
+
   importProject,
   importProjectFromFile,
   getImportStatus,
@@ -36,7 +36,6 @@ router.post("/download-multiple", downloadMultipleComponentsZip);
 
 router.get("/check/:name", checkComponentExists);
 
-// Import routes
 router.post("/import", importProject);
 
 router.post(

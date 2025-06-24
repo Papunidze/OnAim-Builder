@@ -268,7 +268,6 @@ router.post("/components/:componentName/apply-settings", async (req, res) => {
       }
     );
 
-    // Return settings without creating settings.json file
     res.json({
       success: true,
       message: "Settings applied successfully (in-memory)",

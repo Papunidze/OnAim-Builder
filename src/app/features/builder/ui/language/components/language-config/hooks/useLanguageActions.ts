@@ -38,8 +38,7 @@ export function useLanguageActions({
   const updateComponentFiles = useCallback(
     async (updatedContent: string): Promise<void> => {
       if (!selectedComponent) return;
-      
-      // Handle components with compiled language files
+
       if (selectedComponent.compiledData?.files) {
         const updatedFiles = selectedComponent.compiledData.files.map(
           (file: ComponentFile) => {
@@ -49,19 +48,17 @@ export function useLanguageActions({
             return file;
           }
         );
-        
+
         const now = Date.now();
-        
-        // Remove templateLanguage from props when updating compiled files
+
         const updatedProps = { ...selectedComponent.props };
         if (updatedProps.templateLanguage) {
           delete updatedProps.templateLanguage;
         }
-        
-        // Clear caches and update component
+
         invalidateComponentCache(selectedComponent.id);
         clearComponentInstanceCache(selectedComponent.id);
-        
+
         updateComponent(selectedComponent.id, {
           compiledData: {
             ...selectedComponent.compiledData,
@@ -70,19 +67,15 @@ export function useLanguageActions({
           props: updatedProps,
           timestamp: now,
         });
-        
-        // Final update with new timestamp to ensure re-render
+
         setTimeout(() => {
           updateComponent(selectedComponent.id, {
             timestamp: now + 1,
           });
         }, 50);
-      }
-      // Handle components with template language (convert to compiled files)
-      else if (selectedComponent.props?.templateLanguage) {
+      } else if (selectedComponent.props?.templateLanguage) {
         const now = Date.now();
-        
-        // Create compiled data structure with language file
+
         const compiledData = {
           files: [
             {
@@ -92,11 +85,9 @@ export function useLanguageActions({
           ],
         };
 
-        // Remove templateLanguage from props and add compiled data
         const updatedProps = { ...selectedComponent.props };
         delete updatedProps.templateLanguage;
 
-        // Clear caches and update component
         invalidateComponentCache(selectedComponent.id);
         clearComponentInstanceCache(selectedComponent.id);
 
@@ -106,7 +97,6 @@ export function useLanguageActions({
           timestamp: now,
         });
 
-        // Final update with new timestamp to ensure re-render
         setTimeout(() => {
           updateComponent(selectedComponent.id, {
             timestamp: now + 1,
@@ -114,7 +104,6 @@ export function useLanguageActions({
         }, 50);
       }
 
-      // Refresh language data after updates complete
       setTimeout(() => {
         refreshLanguages();
       }, 100);

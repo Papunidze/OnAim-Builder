@@ -17,7 +17,11 @@ interface UseMobileValuesReturn {
   applyMobileValues: (
     settingsObject: SettingsObject,
     viewMode: "desktop" | "mobile",
-    onUpdate?: (values: Record<string, unknown>) => void
+    onUpdate?: (
+      values: Record<string, unknown>,
+      options?: { skipHistory?: boolean }
+    ) => void,
+    options?: { skipHistory?: boolean }
   ) => Promise<MobileValuesResult>;
   getFilteredMobileValues: (
     settingsObject: SettingsObject
@@ -99,7 +103,11 @@ export function useMobileValues(): UseMobileValuesReturn {
     async (
       settingsObject: SettingsObject,
       viewMode: "desktop" | "mobile",
-      onUpdate?: (values: Record<string, unknown>) => void
+      onUpdate?: (
+        values: Record<string, unknown>,
+        options?: { skipHistory?: boolean }
+      ) => void,
+      options?: { skipHistory?: boolean }
     ): Promise<MobileValuesResult> => {
       setIsLoading(true);
       setError(null);
@@ -110,6 +118,9 @@ export function useMobileValues(): UseMobileValuesReturn {
           settingsObject,
           viewMode,
           onUpdate
+            ? (values): void =>
+                onUpdate(values, { skipHistory: options?.skipHistory })
+            : undefined
         );
 
         if (!result.success) {

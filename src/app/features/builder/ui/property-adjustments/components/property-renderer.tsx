@@ -62,7 +62,10 @@ class SettingsRenderer {
   private readonly onSettingsObjectChange: (
     settingsObject: SettingsObject | null
   ) => void;
+  private readonly getIsAddingComponent: () => boolean;
+  private readonly getIsUndoRedoInProgress: () => boolean;
   private isApplyingValues = false;
+  private isInitializingMobile = false;
   private currentSettingsObject: SettingsObject | null = null;
   private propsCache = new WeakMap<SettingsObject, PropertyValue>();
 
@@ -75,13 +78,17 @@ class SettingsRenderer {
       options?: { skipHistory?: boolean; isMobileDefaultValue?: boolean }
     ) => void,
     viewMode: "desktop" | "mobile",
-    onSettingsObjectChange: (settingsObject: SettingsObject | null) => void
+    onSettingsObjectChange: (settingsObject: SettingsObject | null) => void,
+    getIsAddingComponent: () => boolean,
+    getIsUndoRedoInProgress: () => boolean
   ) {
     this.hostElement = hostElement;
     this.onError = onError;
     this.onUpdate = onUpdate;
     this.viewMode = viewMode;
     this.onSettingsObjectChange = onSettingsObjectChange;
+    this.getIsAddingComponent = getIsAddingComponent;
+    this.getIsUndoRedoInProgress = getIsUndoRedoInProgress;
   }
 
   private clearHost(): void {
@@ -108,7 +115,16 @@ class SettingsRenderer {
         if (this.isApplyingValues) return;
 
         const mergedProps = { ...newValues };
-        this.onUpdate(componentId, { props: mergedProps });
+        const shouldSkipHistory =
+          this.isApplyingValues ||
+          this.isInitializingMobile ||
+          this.getIsAddingComponent() ||
+          this.getIsUndoRedoInProgress();
+        this.onUpdate(
+          componentId,
+          { props: mergedProps },
+          { skipHistory: shouldSkipHistory }
+        );
 
         if (
           this.viewMode === "mobile" &&
@@ -145,7 +161,14 @@ class SettingsRenderer {
 
     try {
       if (this.viewMode === "mobile") {
-        if (typeof settingsObject.getMobileValues === "function") {
+        if (currentProps && Object.keys(currentProps).length > 0) {
+          if (typeof settingsObject.setValue === "function") {
+            const originalFlag = this.isApplyingValues;
+            this.isApplyingValues = false;
+            settingsObject.setValue(currentProps);
+            this.isApplyingValues = originalFlag;
+          }
+        } else if (typeof settingsObject.getMobileValues === "function") {
           const existingMobileValues = settingsObject.getMobileValues();
           if (
             existingMobileValues &&
@@ -165,24 +188,20 @@ class SettingsRenderer {
             );
           }
         } else {
-          if (currentProps && typeof settingsObject.setValue === "function") {
-            settingsObject.setValue(currentProps);
-          } else {
-            try {
-              const mobileResult =
-                MobileValuesService.getFilteredMobileValues(settingsObject);
-              if (
-                mobileResult.success &&
-                mobileResult.data &&
-                Object.keys(mobileResult.data).length > 0
-              ) {
-                if (typeof settingsObject.setValue === "function") {
-                  settingsObject.setValue(mobileResult.data);
-                }
+          try {
+            const mobileResult =
+              MobileValuesService.getFilteredMobileValues(settingsObject);
+            if (
+              mobileResult.success &&
+              mobileResult.data &&
+              Object.keys(mobileResult.data).length > 0
+            ) {
+              if (typeof settingsObject.setValue === "function") {
+                settingsObject.setValue(mobileResult.data);
               }
-            } catch {
-              console.error("Failed to set mobile values");
             }
+          } catch {
+            console.error("Failed to set mobile values");
           }
         }
       } else {
@@ -206,6 +225,10 @@ class SettingsRenderer {
     componentId: string,
     currentProps?: PropertyValue
   ): void {
+    const wasAlreadyInitializing = this.isInitializingMobile;
+    if (!wasAlreadyInitializing) {
+      this.isInitializingMobile = true;
+    }
     let valuesToSet: PropertyValue = {};
     let shouldSetMobileValues = false;
 
@@ -269,6 +292,10 @@ class SettingsRenderer {
       settingsObject.setValue(valuesToSet);
       this.isApplyingValues = originalFlag;
     }
+
+    if (!wasAlreadyInitializing) {
+      this.isInitializingMobile = false;
+    }
   }
 
   getMobileValues(
@@ -307,14 +334,12 @@ class SettingsRenderer {
       typeof this.currentSettingsObject.setValue === "function"
     ) {
       try {
-        // Temporarily disable the isApplyingValues flag to allow forced updates
         const wasApplyingValues = this.isApplyingValues;
         this.isApplyingValues = true;
         this.currentSettingsObject.setValue(props);
         this.isApplyingValues = wasApplyingValues;
       } catch {
         console.error("Failed to update settings UI");
-        // Reset the flag even if there's an error
         this.isApplyingValues = false;
       }
     }
@@ -329,7 +354,6 @@ class SettingsRenderer {
     try {
       this.clearHost();
       this.currentSettingsObject = null;
-      // Clear props cache to ensure fresh state after undo/redo operations
       this.propsCache = new WeakMap<SettingsObject, PropertyValue>();
 
       const settingsContent = this.getSettingsContent(
@@ -360,12 +384,70 @@ class SettingsRenderer {
         this.setupSettingsHandlers(settingsObject, component.id);
         await new Promise((resolve) => setTimeout(resolve, 1));
 
+        const isUndoRedoInProgress = this.getIsUndoRedoInProgress();
+
         let propsToUse = component.props;
+
         if (
+          isUndoRedoInProgress &&
+          component.props &&
+          Object.keys(component.props).length > 0 &&
+          this.viewMode === "mobile"
+        ) {
+          if (typeof settingsObject.setMobileValues === "function") {
+            settingsObject.setMobileValues(component.props);
+          }
+          propsToUse = component.props;
+        } else if (this.viewMode === "mobile" && this.getIsAddingComponent()) {
+          try {
+            this.isInitializingMobile = true;
+
+            let baseDefaults = {};
+            if (typeof settingsObject.getValues === "function") {
+              baseDefaults = settingsObject.getValues() || {};
+            }
+
+            const mobileResult =
+              MobileValuesService.getFilteredMobileValues(settingsObject);
+
+            if (
+              mobileResult.success &&
+              mobileResult.data &&
+              Object.keys(mobileResult.data).length > 0
+            ) {
+              propsToUse = { ...baseDefaults, ...mobileResult.data };
+            } else {
+              if (typeof settingsObject.getMobileValues === "function") {
+                const directMobileValues = settingsObject.getMobileValues();
+                if (
+                  directMobileValues &&
+                  Object.keys(directMobileValues).length > 0
+                ) {
+                  propsToUse = { ...baseDefaults, ...directMobileValues };
+                } else {
+                  propsToUse = baseDefaults;
+                }
+              } else {
+                propsToUse = baseDefaults;
+              }
+            }
+
+            if (component.id && propsToUse) {
+              this.onUpdate(
+                component.id,
+                { props: propsToUse },
+                { isMobileDefaultValue: true }
+              );
+            }
+          } catch (error) {
+            console.error("Failed to apply mobile defaults:", error);
+          }
+        } else if (
           this.viewMode === "mobile" &&
           (!propsToUse || Object.keys(propsToUse).length === 0)
         ) {
           try {
+            this.isInitializingMobile = true;
             const mobileResult =
               MobileValuesService.getFilteredMobileValues(settingsObject);
             if (
@@ -381,13 +463,35 @@ class SettingsRenderer {
                   { isMobileDefaultValue: true }
                 );
               }
+            } else {
+              // Try to get component defaults if no mobile values
+              if (typeof settingsObject.getValues === "function") {
+                const defaultValues = settingsObject.getValues();
+                if (defaultValues && Object.keys(defaultValues).length > 0) {
+                  propsToUse = defaultValues;
+                  if (component.id) {
+                    this.onUpdate(
+                      component.id,
+                      { props: propsToUse },
+                      { isMobileDefaultValue: true }
+                    );
+                  }
+                }
+              }
             }
-          } catch {
-            console.error("Failed to update settings UI");
+          } catch (error) {
+            console.error("Failed to update settings UI:", error);
           }
+          // Don't reset flag yet - applySettingsStyles will also trigger onChange
+        } else {
+          // Using existing props or desktop mode
         }
 
         this.applySettingsStyles(settingsObject, component.id, propsToUse);
+
+        if (this.viewMode === "mobile" && this.isInitializingMobile) {
+          this.isInitializingMobile = false;
+        }
       }
 
       this.onError("");
@@ -443,8 +547,14 @@ export const PropertyRenderer = memo(function PropertyRenderer({
 }: {
   viewMode: "desktop" | "mobile";
 }): JSX.Element {
-  const { getSelectedComponent, updateComponent, selectedComponentId } =
-    useBuilder();
+  const {
+    getSelectedComponent,
+    updateComponent,
+    selectedComponentId,
+    getIsAddingComponent,
+    components,
+    getIsUndoRedoInProgress,
+  } = useBuilder();
   const { error, setError, clearError } = useComponentState();
   const settingsHost = useRef<HTMLDivElement>(null);
   const settingsRenderer = useRef<SettingsRenderer | null>(null);
@@ -454,7 +564,8 @@ export const PropertyRenderer = memo(function PropertyRenderer({
 
   const selectedComponent = useMemo(
     () => getSelectedComponent(),
-    [getSelectedComponent]
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+    [getSelectedComponent, components]
   );
 
   useEffect(() => {
@@ -464,10 +575,18 @@ export const PropertyRenderer = memo(function PropertyRenderer({
         setError,
         updateComponent,
         viewMode,
-        setCurrentSettingsObject
+        setCurrentSettingsObject,
+        getIsAddingComponent,
+        getIsUndoRedoInProgress
       );
     }
-  }, [setError, updateComponent, viewMode]);
+  }, [
+    setError,
+    updateComponent,
+    viewMode,
+    getIsAddingComponent,
+    getIsUndoRedoInProgress,
+  ]);
 
   useEffect(() => {
     const renderer = settingsRenderer.current;

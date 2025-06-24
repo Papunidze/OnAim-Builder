@@ -26,11 +26,13 @@ export class BuilderService {
   private subscribers: (() => void)[] = [];
   private eventListeners = new Map<
     keyof BuilderServiceEvents,
-    EventCallback<unknown>[]
+    Set<EventCallback<unknown>>
   >();
   private undoStack: BuilderState[] = [];
   private redoStack: BuilderState[] = [];
   private readonly MAX_HISTORY = 50;
+  private isAddingComponent = false;
+  private isUndoRedoInProgress = false;
 
   constructor() {}
 
@@ -39,24 +41,22 @@ export class BuilderService {
     callback: EventCallback<BuilderServiceEvents[K]>
   ): () => void {
     if (!this.eventListeners.has(event)) {
-      this.eventListeners.set(event, []);
+      this.eventListeners.set(event, new Set<EventCallback<unknown>>());
     }
 
     const listeners = this.eventListeners.get(event)!;
-    listeners.push(callback as EventCallback<unknown>);
+    listeners.add(callback as EventCallback<unknown>);
 
     return () => {
-      const index = listeners.indexOf(callback as EventCallback<unknown>);
-      if (index > -1) {
-        listeners.splice(index, 1);
-      }
+      listeners.delete(callback as EventCallback<unknown>);
     };
   }
   private emit<K extends keyof BuilderServiceEvents>(
     event: K,
     data: BuilderServiceEvents[K]
   ): void {
-    const listeners = this.eventListeners.get(event) || [];
+    const listeners =
+      this.eventListeners.get(event) || new Set<EventCallback<unknown>>();
     listeners.forEach((callback) => callback(data));
   }
 
@@ -102,6 +102,7 @@ export class BuilderService {
       size?: { width: number; height: number };
     }
   ): Promise<ComponentState> {
+    this.isAddingComponent = true;
     this.saveHistory();
 
     const componentId = this.generateId();
@@ -200,6 +201,11 @@ export class BuilderService {
     const finalComponent = this.state[viewMode].find(
       (c) => c.id === componentId
     );
+
+    setTimeout(() => {
+      this.isAddingComponent = false;
+    }, 100);
+
     return finalComponent || initialComponent;
   }
 
@@ -287,7 +293,13 @@ export class BuilderService {
             return false;
           }
 
-          if (!options?.skipHistory && !options?.isMobileDefaultValue) {
+          const shouldSkipHistory =
+            options?.skipHistory ||
+            options?.isMobileDefaultValue ||
+            this.isAddingComponent ||
+            this.isUndoRedoInProgress;
+
+          if (!shouldSkipHistory) {
             this.saveHistory();
           }
 
@@ -476,6 +488,14 @@ export class BuilderService {
     return this.state.metadata.projectName;
   }
 
+  getIsAddingComponent(): boolean {
+    return this.isAddingComponent;
+  }
+
+  getIsUndoRedoInProgress(): boolean {
+    return this.isUndoRedoInProgress;
+  }
+
   canUndo(): boolean {
     return this.undoStack.length > 0;
   }
@@ -488,13 +508,19 @@ export class BuilderService {
     if (this.undoStack.length === 0) {
       return false;
     }
+    this.isUndoRedoInProgress = true;
+
     const previousState = this.undoStack.pop()!;
     this.redoStack.push(JSON.parse(JSON.stringify(this.state)));
     this.state = previousState;
 
     this.invalidateAllComponentCaches();
-
     this.notifySubscribers();
+
+    setTimeout(() => {
+      this.isUndoRedoInProgress = false;
+    }, 200);
+
     return true;
   }
 
@@ -503,14 +529,20 @@ export class BuilderService {
       return false;
     }
 
+    this.isUndoRedoInProgress = true;
+
     const nextState = this.redoStack.pop()!;
     this.undoStack.push(JSON.parse(JSON.stringify(this.state)));
     this.state = nextState;
 
-    // Invalidate component cache for all components to ensure visual updates
     this.invalidateAllComponentCaches();
 
     this.notifySubscribers();
+
+    setTimeout(() => {
+      this.isUndoRedoInProgress = false;
+    }, 200);
+
     return true;
   }
 
@@ -521,7 +553,6 @@ export class BuilderService {
     if (fromMode === toMode) {
       return;
     }
-
     this.saveHistory();
 
     const sourceComponents = this.state[fromMode];
@@ -554,12 +585,10 @@ export class BuilderService {
 
   private invalidateAllComponentCaches(): void {
     try {
-      // Import and clear component loader cache
       import(
         "../../../features/builder/ui/content-renderer/services/component-loader"
       )
         .then((loaderModule) => {
-          // Invalidate cache for all components
           const allComponents = [...this.state.desktop, ...this.state.mobile];
           allComponents.forEach((component) => {
             loaderModule.invalidateComponentCache(component.id);
@@ -569,12 +598,10 @@ export class BuilderService {
           console.error("Component loader cache invalidation error:", error)
         );
 
-      // Import and clear component instance cache
       import(
         "../../../features/builder/ui/content-renderer/services/component-cache"
       )
         .then((cacheModule) => {
-          // Clear all component instance caches to force re-render
           cacheModule.clearComponentInstanceCache();
         })
         .catch((error) =>
