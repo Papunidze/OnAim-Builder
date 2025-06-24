@@ -1,0 +1,44 @@
+{
+  "name": "full blue",
+  "description": "",
+  "settings": {
+    "leaderboard": {
+      "test": "test",
+      "background": "0, 86, 224",
+      "width": 860,
+      "fontSize": 16,
+      "padding": 20,
+      "opacity": 100,
+      "border": {
+        "size": 0,
+        "color": "0, 0, 30",
+        "opacity": 100,
+        "radius": 12
+      }
+    }
+  },
+  "language": {
+    "en": {
+      "title": "Leaderboard",
+      "button": "Click Me",
+      "rank": "Rank",
+      "player": "Player",
+      "score": "Score",
+      "loading": "Loading...",
+      "error": "Error",
+      "noDataAlt": "No data found"
+    },
+    "ka": {
+      "title": "ლიდერბორდი",
+      "button": "დააჭირე",
+      "rank": "რანგი",
+      "player": "მოთამაშე",
+      "score": "ქულა",
+      "loading": "იტვირთება...",
+      "error": "შეცდომა",
+      "noDataAlt": "მონაცემები არ მოიძებნა"
+    }
+  },
+  "createdAt": "2025-06-24T09:44:15.687Z",
+  "updatedAt": "2025-06-24T09:44:15.687Z"
+}

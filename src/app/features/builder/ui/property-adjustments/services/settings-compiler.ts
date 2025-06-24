@@ -200,16 +200,6 @@ export function getCompiledSettings(
   return compiled;
 }
 
-export function clearSettingsCache(): void {
-  settingsCache.clear();
-}
-
 export function clearSettingsCacheForComponent(componentName: string): void {
   settingsCache.clearForComponent(componentName);
-}
-
-export function getSettingsCacheStats(): { size: number } {
-  return {
-    size: settingsCache.size,
-  };
 }

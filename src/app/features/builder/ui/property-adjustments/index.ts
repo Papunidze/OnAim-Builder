@@ -22,4 +22,4 @@ export {
   type SetMobileValuesResult,
 } from "./services";
 
-export { useMobileValues } from "./hooks";
+
