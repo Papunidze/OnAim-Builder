@@ -5,9 +5,9 @@ import {
   getCompiledSettings,
   type SettingsObject,
 } from "../services/settings-compiler";
-import type { ComponentFileData } from "../../content-renderer/types";
 import styles from "./property-renderer.module.css";
 import { MobileValuesService } from "../services/mobile-values.service";
+import type { ComponentFileData } from "../../content-renderer";
 
 interface PropertyValue {
   [key: string]: unknown;
@@ -307,9 +307,15 @@ class SettingsRenderer {
       typeof this.currentSettingsObject.setValue === "function"
     ) {
       try {
+        // Temporarily disable the isApplyingValues flag to allow forced updates
+        const wasApplyingValues = this.isApplyingValues;
+        this.isApplyingValues = true;
         this.currentSettingsObject.setValue(props);
+        this.isApplyingValues = wasApplyingValues;
       } catch {
         console.error("Failed to update settings UI");
+        // Reset the flag even if there's an error
+        this.isApplyingValues = false;
       }
     }
   }
@@ -323,6 +329,8 @@ class SettingsRenderer {
     try {
       this.clearHost();
       this.currentSettingsObject = null;
+      // Clear props cache to ensure fresh state after undo/redo operations
+      this.propsCache = new WeakMap<SettingsObject, PropertyValue>();
 
       const settingsContent = this.getSettingsContent(
         component.compiledData?.files
@@ -395,6 +403,7 @@ class SettingsRenderer {
   clear(): void {
     this.clearHost();
     this.currentSettingsObject = null;
+    this.propsCache = new WeakMap<SettingsObject, PropertyValue>();
     this.onSettingsObjectChange(null);
   }
 }
@@ -468,22 +477,6 @@ export const PropertyRenderer = memo(function PropertyRenderer({
       renderer?.clear();
       previousPropsRef.current = undefined;
       previousComponentIdRef.current = undefined;
-      return;
-    }
-
-    const currentComponentId = selectedComponent.id;
-    const currentProps = selectedComponent.props;
-    const previousProps = previousPropsRef.current;
-    const previousComponentId = previousComponentIdRef.current;
-
-    if (
-      currentComponentId === previousComponentId &&
-      previousProps &&
-      currentProps &&
-      JSON.stringify(previousProps) !== JSON.stringify(currentProps)
-    ) {
-      renderer.forceUpdateSettingsUI(currentProps);
-      previousPropsRef.current = currentProps;
       return;
     }
 

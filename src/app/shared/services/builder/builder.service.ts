@@ -91,6 +91,7 @@ export class BuilderService {
     this.subscribers.forEach((sub) => sub());
     this.updateMetadata();
   }
+
   async addComponent(
     name: string,
     viewMode: "desktop" | "mobile",
@@ -369,6 +370,9 @@ export class BuilderService {
   setState(newState: Partial<BuilderState>): void {
     this.saveHistory();
     this.state = { ...this.state, ...newState };
+
+    this.invalidateAllComponentCaches();
+
     this.emit("stateLoaded", this.state);
     this.notifySubscribers();
   }
@@ -487,6 +491,9 @@ export class BuilderService {
     const previousState = this.undoStack.pop()!;
     this.redoStack.push(JSON.parse(JSON.stringify(this.state)));
     this.state = previousState;
+
+    this.invalidateAllComponentCaches();
+
     this.notifySubscribers();
     return true;
   }
@@ -499,6 +506,10 @@ export class BuilderService {
     const nextState = this.redoStack.pop()!;
     this.undoStack.push(JSON.parse(JSON.stringify(this.state)));
     this.state = nextState;
+
+    // Invalidate component cache for all components to ensure visual updates
+    this.invalidateAllComponentCaches();
+
     this.notifySubscribers();
     return true;
   }
@@ -538,6 +549,39 @@ export class BuilderService {
       this.notifySubscribers();
     } else {
       console.warn("Copy operation failed:", copyResult.error);
+    }
+  }
+
+  private invalidateAllComponentCaches(): void {
+    try {
+      // Import and clear component loader cache
+      import(
+        "../../../features/builder/ui/content-renderer/services/component-loader"
+      )
+        .then((loaderModule) => {
+          // Invalidate cache for all components
+          const allComponents = [...this.state.desktop, ...this.state.mobile];
+          allComponents.forEach((component) => {
+            loaderModule.invalidateComponentCache(component.id);
+          });
+        })
+        .catch((error) =>
+          console.error("Component loader cache invalidation error:", error)
+        );
+
+      // Import and clear component instance cache
+      import(
+        "../../../features/builder/ui/content-renderer/services/component-cache"
+      )
+        .then((cacheModule) => {
+          // Clear all component instance caches to force re-render
+          cacheModule.clearComponentInstanceCache();
+        })
+        .catch((error) =>
+          console.error("Component instance cache invalidation error:", error)
+        );
+    } catch (error) {
+      console.error("Failed to import cache modules:", error);
     }
   }
 }

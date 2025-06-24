@@ -116,9 +116,13 @@ export function useBuilder(): UseBuilderReturn {
     []
   );
 
-  const getComponent = useCallback((id: string) => {
-    return builderService.getComponent(id);
-  }, []);
+  const getComponent = useCallback(
+    (id: string) => {
+      return builderService.getComponent(id);
+    },
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+    [components]
+  );
 
   const clear = useCallback(() => {
     builderService.clear();
@@ -178,7 +182,8 @@ export function useBuilder(): UseBuilderReturn {
 
   const getSelectedComponent = useCallback(() => {
     return builderService.getSelectedComponent();
-  }, []);
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [components]);
 
   const copyComponents = useCallback(
     (fromMode: "desktop" | "mobile", toMode: "desktop" | "mobile") => {
@@ -190,7 +195,7 @@ export function useBuilder(): UseBuilderReturn {
   const stats = builderService.getStats();
   const projectName = builderService.getProjectName();
   const selectedComponentId = components.selectedComponentId;
-  
+
   return {
     components,
     stats,

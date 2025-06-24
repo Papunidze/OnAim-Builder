@@ -33,7 +33,6 @@ function getComponentCacheKey(
     component.compiledData?.files && component.compiledData.files.length > 0;
   const hasTemplateLanguage = component.props?.templateLanguage;
 
-  // Include template language in cache key when no compiled files exist
   const templateLanguageKey =
     hasTemplateLanguage && !hasCompiledFiles
       ? JSON.stringify(component.props.templateLanguage)
@@ -81,14 +80,13 @@ function computeComponentProps(
 
   if (!component) return defaultResult;
 
-  // Include language file content in cache key for more accurate invalidation
   const languageFileContent =
     component.compiledData?.files?.find(
       (file: { file: string }) => file.file === "language.ts"
     )?.content || "";
 
   const templateLanguage = component.props?.templateLanguage || {};
-  
+
   const cacheKey = `${component.id}-${component.timestamp}-${JSON.stringify(component.props)}-${languageFileContent.length}-${JSON.stringify(templateLanguage)}`;
 
   if (propsCache.has(component)) {
@@ -187,10 +185,9 @@ export const lng = new SetLanguage(lngObject, "en");
   }
 
   if (component.props?.templateLanguage) {
-    // IMPORTANT: Only use template language if we don't have a valid compiled language file
-    // This prevents template language from overriding edited compiled language
-    const hasValidCompiledLanguage = languageObject && Object.keys(languageValue).length > 0;
-    
+    const hasValidCompiledLanguage =
+      languageObject && Object.keys(languageValue).length > 0;
+
     if (!hasValidCompiledLanguage) {
       const templateLanguage = component.props.templateLanguage as Record<
         string,
