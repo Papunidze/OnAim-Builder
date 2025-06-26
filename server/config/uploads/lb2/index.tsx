@@ -19,6 +19,7 @@ const Leaderboard: React.FC<LeaderboardProps> = (props) => {
     { name: "Eve", score: 780 },
     { name: "Mallory", score: 630 },
   ];
+  console.warn("po");
   const leaderboardSettings = props.settings.leaderboard || {};
   return (
     <div

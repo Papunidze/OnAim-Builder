@@ -113,21 +113,37 @@
 }
 
 .componentWrapper {
-  border: 1px solid #e0e0e0;
   border-radius: 8px;
   margin: 8px 0;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.2s ease;
+  border: 2px solid transparent;
+  position: relative;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .componentWrapper:hover {
-  border-color: #007bff;
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+  border-color: #e0e7ff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .componentWrapper.selected {
-  outline: 5px solid #007bff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: #f8faff;
+}
+
+.componentWrapper.selected::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #3b82f6;
+  z-index: 1;
 }
 
 .componentPreparing {

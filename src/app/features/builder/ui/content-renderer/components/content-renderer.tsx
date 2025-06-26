@@ -67,7 +67,7 @@ export const ContentRenderer = memo(function ContentRenderer({
   components,
   viewMode,
 }: ContentRendererProps): JSX.Element {
-  const { instances, aggregatedStyles, retryComponent, isPending } =
+  const { instances, aggregatedStyles, retryComponent } =
     useComponentInstances(components);
 
   const hasComponents = components.length > 0;
@@ -77,19 +77,18 @@ export const ContentRenderer = memo(function ContentRenderer({
       return <NoComponentsMessage />;
     }
 
-    return (
-      <>
-        {aggregatedStyles && <StyleElement styles={aggregatedStyles} />}
-        <ComponentsList
-          instances={instances}
-          onRetry={retryComponent}
-          isPending={isPending}
-        />
-      </>
-    );
-  }, [hasComponents, aggregatedStyles, instances, retryComponent, isPending]);
+    return null;
+  }, [hasComponents]);
 
   const Layout = viewMode === "desktop" ? DesktopLayout : MobileLayout;
 
-  return <Layout>{content}</Layout>;
+  const layoutProps = {
+    children: content,
+    instances: hasComponents ? instances : undefined,
+    aggregatedStyles,
+    onRetry: retryComponent,
+    readOnly: false,
+  };
+
+  return <Layout {...layoutProps} />;
 });
