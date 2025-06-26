@@ -38,13 +38,11 @@ export function useGridLayout({
   const [layout, setLayout] = useState<Layout[]>(() => {
     if (persistLayout) {
       const savedLayout = gridService.loadLayout(viewMode);
-      // Check if saved layout has old small dimensions and regenerate if so
       if (savedLayout && savedLayout.length > 0) {
         const hasOldDimensions = savedLayout.some(item => item.w <= 1 || item.h <= 1);
         if (!hasOldDimensions) {
           return savedLayout;
         }
-        // Clear old layout and regenerate with new config
         gridService.clearLayout(viewMode);
       }
     }
@@ -64,12 +62,6 @@ export function useGridLayout({
 
   useEffect(() => {
     if (previousInstancesRef.current !== instanceIds) {
-      console.log("Instances changed, updating layout...", { 
-        prev: previousInstancesRef.current, 
-        current: instanceIds,
-        instancesLength: instances.length 
-      });
-      
       if (instances.length === 0) {
         setLayout([]);
         setIsLayoutLoading(false);
@@ -80,8 +72,6 @@ export function useGridLayout({
       const currentLayout = layout;
       const needsLayoutUpdate = gridService.hasLayoutChanged(currentLayout, instances);
       
-      console.log("Layout change needed:", needsLayoutUpdate);
-      
       if (needsLayoutUpdate) {
         setIsLayoutLoading(true);
         
@@ -89,10 +79,8 @@ export function useGridLayout({
           try {
             const newLayout = gridService.generateDefaultLayout(instances, viewMode as 'desktop' | 'mobile');
             const validatedLayout = gridService.validateLayout(newLayout);
-            console.log("New layout generated:", validatedLayout);
             setLayout(validatedLayout);
-          } catch (error) {
-            console.error("Error generating layout:", error);
+          } catch {
             setLayout([]);
           } finally {
             setIsLayoutLoading(false);
@@ -101,7 +89,7 @@ export function useGridLayout({
 
         previousInstancesRef.current = instanceIds;
 
-        return () => {
+        return (): void => {
           clearTimeout(timeoutId);
         };
       } else {
@@ -110,7 +98,7 @@ export function useGridLayout({
       
       previousInstancesRef.current = instanceIds;
     }
-  }, [instanceIds, instances]);
+  }, [instanceIds, instances, layout, viewMode]);
 
   const handleLayoutChange = useCallback((newLayout: Layout[]) => {
     const validatedLayout = gridService.validateLayout(newLayout);
@@ -121,13 +109,11 @@ export function useGridLayout({
     }
   }, [viewMode, autoSave, persistLayout, isDragging, isResizing]);
 
-  const handleDragStart = useCallback((_layout: Layout[], oldItem: Layout, _newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
-    console.log("Drag started for item:", oldItem.i);
+  const handleDragStart = useCallback((_layout: Layout[], _oldItem: Layout, _newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
     setIsDragging(true);
   }, []);
 
-  const handleDragStop = useCallback((layout: Layout[], _oldItem: Layout, newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
-    console.log("Drag stopped for item:", newItem.i);
+  const handleDragStop = useCallback((layout: Layout[], _oldItem: Layout, _newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
     setIsDragging(false);
     const validatedLayout = gridService.validateLayout(layout);
     setLayout(validatedLayout);
@@ -137,13 +123,11 @@ export function useGridLayout({
     }
   }, [viewMode, persistLayout]);
 
-  const handleResizeStart = useCallback((_layout: Layout[], oldItem: Layout, _newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
-    console.log("Resize started for item:", oldItem.i);
+  const handleResizeStart = useCallback((_layout: Layout[], _oldItem: Layout, _newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
     setIsResizing(true);
   }, []);
 
-  const handleResizeStop = useCallback((layout: Layout[], _oldItem: Layout, newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
-    console.log("Resize stopped for item:", newItem.i);
+  const handleResizeStop = useCallback((layout: Layout[], _oldItem: Layout, _newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
     setIsResizing(false);
     const validatedLayout = gridService.validateLayout(layout);
     setLayout(validatedLayout);

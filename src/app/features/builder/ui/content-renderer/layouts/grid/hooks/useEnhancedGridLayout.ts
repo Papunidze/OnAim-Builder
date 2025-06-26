@@ -46,7 +46,6 @@ export function useEnhancedGridLayout({
   const [isResizing, setIsResizing] = useState(false);
 
   useEffect(() => {
-    console.log(`[${viewMode.toUpperCase()}] FORCING layout regeneration. Bypassing localStorage.`);
     setIsLayoutLoading(true);
 
     const newLayout = useOptimizedLayout 
@@ -56,10 +55,7 @@ export function useEnhancedGridLayout({
     setLayout(newLayout);
     setIsLayoutLoading(false);
     
-    console.log(`[${viewMode.toUpperCase()}] New layout generated:`);
-    enhancedGridService.logLayoutInfo(newLayout, viewModeTyped);
-
-  }, [viewMode, instances, useOptimizedLayout]);
+  }, [viewMode, instances, useOptimizedLayout, viewModeTyped]);
 
   const config = useMemo(() => {
     return enhancedGridService.getConfig(viewModeTyped);
@@ -74,12 +70,6 @@ export function useEnhancedGridLayout({
 
   useEffect(() => {
     if (previousInstancesRef.current !== instanceIds) {
-      console.log(`${viewMode} instances changed:`, { 
-        prev: previousInstancesRef.current, 
-        current: instanceIds,
-        instancesLength: instances.length 
-      });
-      
       if (instances.length === 0) {
         setLayout([]);
         setIsLayoutLoading(false);
@@ -90,27 +80,19 @@ export function useEnhancedGridLayout({
       const currentLayout = layout;
       const needsLayoutUpdate = enhancedGridService.hasLayoutChanged(currentLayout, instances);
       
-      console.log(`${viewMode} layout change needed:`, needsLayoutUpdate);
-      
       if (needsLayoutUpdate) {
         setIsLayoutLoading(true);
         
         const timeoutId = setTimeout(() => {
           try {
-            console.log(`Generating new ${viewMode} layout for ${instances.length} instances`);
-            
             const newLayout = useOptimizedLayout 
               ? enhancedGridService.generateOptimizedLayout(instances, viewModeTyped)
               : enhancedGridService.generateDefaultLayout(instances, viewModeTyped);
             
             const validatedLayout = enhancedGridService.validateLayout(newLayout);
             
-            console.log(`New ${viewMode} layout generated:`, validatedLayout);
-            enhancedGridService.logLayoutInfo(validatedLayout, viewModeTyped);
-            
             setLayout(validatedLayout);
-          } catch (error) {
-            console.error(`Error generating ${viewMode} layout:`, error);
+          } catch {
             setLayout([]);
           } finally {
             setIsLayoutLoading(false);
@@ -139,13 +121,11 @@ export function useEnhancedGridLayout({
     }
   }, [viewMode, autoSave, persistLayout, isDragging, isResizing]);
 
-  const handleDragStart = useCallback((_layout: Layout[], oldItem: Layout, _newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
-    console.log(`${viewMode} drag started for item:`, oldItem.i);
+  const handleDragStart = useCallback((): void => {
     setIsDragging(true);
-  }, [viewMode]);
+  }, []);
 
-  const handleDragStop = useCallback((layout: Layout[], _oldItem: Layout, newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
-    console.log(`${viewMode} drag stopped for item:`, newItem.i);
+  const handleDragStop = useCallback((layout: Layout[], _oldItem: Layout, _newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
     setIsDragging(false);
     const validatedLayout = enhancedGridService.validateLayout(layout);
     setLayout(validatedLayout);
@@ -155,13 +135,11 @@ export function useEnhancedGridLayout({
     }
   }, [viewMode, persistLayout]);
 
-  const handleResizeStart = useCallback((_layout: Layout[], oldItem: Layout, _newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
-    console.log(`${viewMode} resize started for item:`, oldItem.i);
+  const handleResizeStart = useCallback((): void => {
     setIsResizing(true);
-  }, [viewMode]);
+  }, []);
 
-  const handleResizeStop = useCallback((layout: Layout[], _oldItem: Layout, newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
-    console.log(`${viewMode} resize stopped for item:`, newItem.i);
+  const handleResizeStop = useCallback((layout: Layout[], _oldItem: Layout, _newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
     setIsResizing(false);
     const validatedLayout = enhancedGridService.validateLayout(layout);
     setLayout(validatedLayout);
@@ -171,16 +149,14 @@ export function useEnhancedGridLayout({
     }
   }, [viewMode, persistLayout]);
 
-  const resetLayout = useCallback(() => {
+  const resetLayout = useCallback((): void => {
     const newLayout = enhancedGridService.resetToDefaultLayout(instances, viewModeTyped);
     setLayout(newLayout);
-    console.log(`${viewMode} layout reset:`, newLayout);
-  }, [instances, viewMode, viewModeTyped]);
+  }, [instances, viewModeTyped]);
 
-  const saveCurrentLayout = useCallback(() => {
+  const saveCurrentLayout = useCallback((): void => {
     if (persistLayout) {
       enhancedGridService.saveLayout(viewMode, layout);
-      console.log(`${viewMode} layout saved`);
     }
   }, [viewMode, layout, persistLayout]);
 
@@ -190,7 +166,6 @@ export function useEnhancedGridLayout({
       if (savedLayout) {
         const validatedLayout = enhancedGridService.validateLayout(savedLayout);
         setLayout(validatedLayout);
-        console.log(`${viewMode} layout loaded:`, validatedLayout);
       }
     }
   }, [viewMode, persistLayout]);
@@ -199,13 +174,11 @@ export function useEnhancedGridLayout({
     if (persistLayout) {
       enhancedGridService.clearLayout(viewMode);
       resetLayout();
-      console.log(`${viewMode} layout cleared`);
     }
   }, [viewMode, persistLayout, resetLayout]);
 
   const exportLayout = useCallback(() => {
     const exported = enhancedGridService.exportLayout(viewMode);
-    console.log(`${viewMode} layout exported`);
     return exported;
   }, [viewMode]);
 
@@ -216,7 +189,6 @@ export function useEnhancedGridLayout({
       if (persistLayout) {
         enhancedGridService.saveLayout(viewMode, result.layout);
       }
-      console.log(`${viewMode} layout imported:`, result.layout);
       return true;
     }
     return false;

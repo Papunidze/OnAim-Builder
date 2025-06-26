@@ -17,7 +17,6 @@ const DraggableGridLayout = memo(function DraggableGridLayout({
   const {
     layout,
     config,
-    isLayoutLoading,
     isDragging,
     handleLayoutChange,
     handleDragStart,
@@ -60,7 +59,7 @@ const DraggableGridLayout = memo(function DraggableGridLayout({
         isDraggable={!readOnly}
         compactType={null}
         preventCollision={false}
-        useCSSTransforms={true}
+        useCSSTransforms
         draggableHandle=".drag-handle"
         resizeHandle={<div className={styles.resizeHandle}><span className={styles.resizeIcon}></span></div>}
       >
@@ -75,7 +74,7 @@ const DraggableGridLayout = memo(function DraggableGridLayout({
             <div className={styles.componentWrapper}>
               <ComponentInstance
                 instance={instance}
-                onRetry={(id) => console.log("Retry:", id)}
+                onRetry={() => { return; }}
               />
             </div>
           </div>

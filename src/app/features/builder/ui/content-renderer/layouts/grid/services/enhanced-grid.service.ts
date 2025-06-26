@@ -104,7 +104,6 @@ export class EnhancedGridService {
     this.layouts.set(key, [...layout]);
     
     try {
-      // Clear old version layouts
       this.clearOldVersionLayouts(viewMode);
       localStorage.setItem(key, JSON.stringify(layout));
     } catch (error) {
@@ -115,17 +114,14 @@ export class EnhancedGridService {
   loadLayout(viewMode: string): Layout[] | null {
     const key = `enhanced_layout_${viewMode}_v${this.configVersion}`;
     
-    // First check memory cache
     if (this.layouts.has(key)) {
       return [...this.layouts.get(key)!];
     }
 
-    // Then check localStorage
     try {
       const stored = localStorage.getItem(key);
       if (stored) {
         const layout = JSON.parse(stored) as Layout[];
-        // Validate that layout items have proper dimensions
         const validLayout = this.validateAndEnhanceLayout(layout, viewMode as 'desktop' | 'mobile');
         this.layouts.set(key, validLayout);
         return [...validLayout];
@@ -248,21 +244,8 @@ export class EnhancedGridService {
   }
 
   // Debug helpers
-  logLayoutInfo(layout: Layout[], viewMode: 'desktop' | 'mobile'): void {
-    const config = this.configs[viewMode];
-    console.log(`=== ${viewMode.toUpperCase()} LAYOUT INFO ===`);
-    console.log('Config:', config);
-    console.log('Layout items:', layout.length);
-    layout.forEach((item, index) => {
-      const actualWidth = (item.w / config.cols) * 100;
-      const actualHeight = item.h * config.rowHeight;
-      console.log(`Item ${index + 1}:`, {
-        id: item.i,
-        gridPosition: `${item.x},${item.y}`,
-        gridSize: `${item.w}x${item.h}`,
-        actualSize: `${actualWidth.toFixed(1)}% x ${actualHeight}px`
-      });
-    });
+  logLayoutInfo(_layout: Layout[], _viewMode: 'desktop' | 'mobile'): void {
+    return;
   }
 }
 

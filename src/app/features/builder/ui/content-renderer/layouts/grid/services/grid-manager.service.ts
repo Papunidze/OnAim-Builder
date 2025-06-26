@@ -149,6 +149,14 @@ export class GridManager {
     this.currentLayout = [];
     this.instances = [];
   }
+
+  getLayout(): Layout[] {
+    return this.currentLayout;
+  }
+
+  isReady(): boolean {
+    return this.isInitialized;
+  }
 }
 
 // Factory function for creating grid managers
