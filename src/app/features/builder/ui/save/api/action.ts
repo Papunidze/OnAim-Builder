@@ -17,6 +17,13 @@ export interface ComponentCheckResponse {
   };
 }
 
+export interface ComponentLayoutData {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 export const checkComponentExists = async (
   componentName: string
 ): Promise<ComponentCheckResponse["data"]> => {
@@ -50,7 +57,8 @@ export const downloadMultipleComponentsSources = async (
   componentNames: string[],
   componentPropsMap?: Record<string, Record<string, unknown>>,
   componentLanguageMap?: Record<string, Record<string, Record<string, string>>>,
-  viewMode?: "desktop" | "mobile"
+  viewMode?: "desktop" | "mobile",
+  componentLayoutMap?: Record<string, ComponentLayoutData>
 ): Promise<void> => {
   try {
     if (!Array.isArray(componentNames) || componentNames.length === 0) {
@@ -68,6 +76,7 @@ export const downloadMultipleComponentsSources = async (
         componentNames,
         componentPropsMap: componentPropsMap || {},
         componentLanguageMap: componentLanguageMap || {},
+        componentLayoutMap: componentLayoutMap || {},
         viewMode: viewMode || "desktop",
       },
     });
@@ -93,7 +102,8 @@ export const publishComponentsAndPreview = async (
   componentNames: string[],
   componentPropsMap?: Record<string, Record<string, unknown>>,
   componentLanguageMap?: Record<string, Record<string, Record<string, string>>>,
-  viewMode?: "desktop" | "mobile"
+  viewMode?: "desktop" | "mobile",
+  componentLayoutMap?: Record<string, ComponentLayoutData>
 ): Promise<string> => {
   try {
     if (!Array.isArray(componentNames) || componentNames.length === 0) {
@@ -105,6 +115,7 @@ export const publishComponentsAndPreview = async (
         componentNames,
         componentPropsMap: componentPropsMap || {},
         componentLanguageMap: componentLanguageMap || {},
+        componentLayoutMap: componentLayoutMap || {},
         viewMode: viewMode || "desktop",
       },
     });

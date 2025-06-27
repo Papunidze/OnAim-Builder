@@ -119,6 +119,7 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
   const componentNames = req.body?.componentNames || [];
   const componentPropsMap = req.body?.componentPropsMap || {};
   const componentLanguageMap = req.body?.componentLanguageMap || {};
+  const componentLayoutMap = req.body?.componentLayoutMap || {};
   const viewMode = req.body?.viewMode || "desktop";
 
   if (!Array.isArray(componentNames) || componentNames.length === 0) {
@@ -176,6 +177,7 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
     const instanceCount = componentInstanceMap.get(folder) + 1;
     componentInstanceMap.set(folder, instanceCount);
     const componentProps = componentPropsMap[componentName] || {};
+    const componentLayout = componentLayoutMap[componentName] || null;
     const settingsConfig = await loadSettingsConfig(
       dir,
       folder,
@@ -249,6 +251,7 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
       hasLanguageData: !!(
         componentLanguageData && Object.keys(componentLanguageData).length > 0
       ),
+      layout: componentLayout,
     });
   }
   const mainTsxContent = generateViteMainTsx(processedComponents, viewMode);
@@ -274,6 +277,22 @@ const downloadMultipleComponentsZip = catchAsync(async (req, res, next) => {
 
   const eslintConfigContent = generateEslintConfig();
   archive.append(eslintConfigContent, { name: `eslint.config.js` });
+
+  // Add Satoshi font files
+  const fontsDir = path.join(__dirname, "../../public/fonts");
+  try {
+    const fontFiles = await fs.readdir(fontsDir);
+    for (const fontFile of fontFiles) {
+      if (fontFile.endsWith('.woff2')) {
+        const fontPath = path.join(fontsDir, fontFile);
+        const fontContent = await fs.readFile(fontPath);
+        archive.append(fontContent, { name: `public/fonts/${fontFile}` });
+      }
+    }
+  } catch (error) {
+    console.warn('Could not copy font files:', error.message);
+  }
+
   const readmeContent = `# OnAim Builder Components
 
 This is a Vite React TypeScript application containing your OnAim Builder components with full language support.
@@ -516,6 +535,7 @@ const publishComponentsAndPreview = catchAsync(async (req, res, next) => {
   const componentNames = req.body?.componentNames || [];
   const componentPropsMap = req.body?.componentPropsMap || {};
   const componentLanguageMap = req.body?.componentLanguageMap || {};
+  const componentLayoutMap = req.body?.componentLayoutMap || {};
   const viewMode = req.body?.viewMode || "desktop";
 
   if (!Array.isArray(componentNames) || componentNames.length === 0) {
@@ -564,6 +584,7 @@ const publishComponentsAndPreview = catchAsync(async (req, res, next) => {
       componentInstanceMap.set(folder, instanceCount);
 
       const componentProps = componentPropsMap[componentName] || {};
+      const componentLayout = componentLayoutMap[componentName] || null;
       const settingsConfig = await loadSettingsConfig(
         dir,
         folder,
@@ -653,6 +674,7 @@ const publishComponentsAndPreview = catchAsync(async (req, res, next) => {
         hasLanguageData: !!(
           componentLanguageData && Object.keys(componentLanguageData).length > 0
         ),
+        layout: componentLayout,
       });
     }
 
@@ -682,6 +704,25 @@ const publishComponentsAndPreview = catchAsync(async (req, res, next) => {
 
     const eslintConfigContent = generateEslintConfig();
     await fs.writeFile(path.join(buildDir, "eslint.config.js"), eslintConfigContent);
+
+    // Add Satoshi font files
+    const publicDir = path.join(buildDir, "public");
+    const publicFontsDir = path.join(publicDir, "fonts");
+    await fs.mkdir(publicFontsDir, { recursive: true });
+    
+    const fontsDir = path.join(__dirname, "../../public/fonts");
+    try {
+      const fontFiles = await fs.readdir(fontsDir);
+      for (const fontFile of fontFiles) {
+        if (fontFile.endsWith('.woff2')) {
+          const fontPath = path.join(fontsDir, fontFile);
+          const destPath = path.join(publicFontsDir, fontFile);
+          await fs.copyFile(fontPath, destPath);
+        }
+      }
+    } catch (error) {
+      console.warn('Could not copy font files:', error.message);
+    }
 
     const { exec } = require("child_process");
     const { promisify } = require("util");

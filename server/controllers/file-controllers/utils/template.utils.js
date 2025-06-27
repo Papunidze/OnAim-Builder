@@ -62,6 +62,25 @@ const generateViteMainTsx = (componentData, viewMode = "desktop") => {
   const imports = [];
   const componentElements = [];
 
+  // Calculate grid dimensions based on layout data
+  let maxX = 0;
+  let maxY = 0;
+  let hasLayoutData = false;
+
+  componentData.forEach((comp) => {
+    if (comp.layout) {
+      hasLayoutData = true;
+      maxX = Math.max(maxX, comp.layout.x + comp.layout.w);
+      maxY = Math.max(maxY, comp.layout.y + comp.layout.h);
+    }
+  });
+
+  // Set default grid if no layout data
+  if (!hasLayoutData) {
+    maxX = 12; // Default 12 column grid
+    maxY = Math.ceil(componentData.length / 2); // Rough estimate
+  }
+
   Object.entries(componentGroups).forEach(([baseComponentName, instances]) => {
     const componentClassName = `${baseComponentName.charAt(0).toUpperCase() + baseComponentName.slice(1)}Component`;
 
@@ -89,26 +108,36 @@ const generateViteMainTsx = (componentData, viewMode = "desktop") => {
         ? `${baseComponentName}_${comp.instanceNumber}language`
         : null;
 
-      const displayName =
-        comp.instanceNumber === 1
-          ? baseComponentName.charAt(0).toUpperCase() +
-            baseComponentName.slice(1)
-          : `${baseComponentName.charAt(0).toUpperCase() + baseComponentName.slice(1)} ${comp.instanceNumber}`;
+      // Generate proper CSS Grid positioning styles
+      let positioningStyles = '';
+      if (comp.layout && hasLayoutData) {
+        positioningStyles = `
+          gridColumn: '${comp.layout.x + 1} / ${comp.layout.x + comp.layout.w + 1}',
+          gridRow: '${comp.layout.y + 1} / ${comp.layout.y + comp.layout.h + 1}',`;
+      }
 
       if (comp.hasLanguageData) {
         const languageProps = `language={(${languageVarName} as any)[currentLanguage] || (${languageVarName} as any)['en'] || {}}`;
 
-        componentElements.push(`        <div className="component-wrapper">
-          <div className="component-title">${displayName}</div>
-          <${componentClassName} 
+        componentElements.push(`        <div style={{${positioningStyles}
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'stretch'
+        }}>
+          <${componentClassName}
             settings={${settingsVarName}}
             ${languageProps}
           />
         </div>`);
       } else {
-        componentElements.push(`        <div className="component-wrapper">
-          <div className="component-title">${displayName}</div>
-          <${componentClassName} 
+        componentElements.push(`        <div style={{${positioningStyles}
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'stretch'
+        }}>
+          <${componentClassName}
             settings={${settingsVarName}}
             language={{}}
           />
@@ -116,6 +145,7 @@ const generateViteMainTsx = (componentData, viewMode = "desktop") => {
       }
     });
   });
+
   return `import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
@@ -134,22 +164,17 @@ function App(): JSX.Element {
   }, [currentLanguage]);
 
   return (
-    <div className="app">
-      <div className="app-header">
-        <h1>OnAim Builder Components</h1>
-        <select value={currentLanguage} onChange={(e) => setCurrentLanguage(e.target.value)}>
-          <option value="en">EN</option>
-          <option value="ka">KA</option>
-          <option value="ru">RU</option>
-        </select>
-      </div>
-      <div className="${viewMode}-frame">
-        <div className="${viewMode}-content">
-          <div className="components-container">
+    <div className="app-container" style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(${maxX}, 1fr)',
+      gridTemplateRows: 'repeat(${maxY}, minmax(100px, 1fr))',
+      gap: '0px',
+      width: '100vw',
+      height: '100vh',
+      overflow: 'hidden',
+      background: '#f5f5f5'
+    }}>
 ${componentElements.join("\n")}
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
@@ -244,7 +269,7 @@ const generateIndexHtml = () => {
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OnAim Builder Components</title>
+    <title>My Website</title>
   </head>
   <body>
     <div id="root"></div>
@@ -254,173 +279,104 @@ const generateIndexHtml = () => {
 };
 
 const generateIndexCss = () => {
-  return `* {
+  return `/* Import Satoshi font family */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Variable.woff2') format('woff2-variations');
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-:root {
-  --spacing-lg: 24px;
-  --spacing-md: 16px;
-  --spacing-4xl: 32px;
-  --spacing-5xl: 40px;
-  --background-primary: #ffffff;
-  --border-radius-md: 8px;
-  --primary-color: #02cc59;
-  --text-color: #333;
-  --border-color: #ddd;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  line-height: 1.6;
-  color: var(--text-color);
-  background-color: #f5f5f5;
-}
-
-.app {
-  min-height: 100vh;
-  padding: 20px;
-}
-
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding: 20px;
-  background: var(--background-primary);
-  border-radius: var(--border-radius-md);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.app-header h1 {
-  margin: 0;
-  color: var(--text-color);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.language-selector {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.language-selector label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-color);
-}
-
-.language-select {
-  padding: 8px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: white;
-  font-size: 14px;
-  color: var(--text-color);
-  cursor: pointer;
-  transition: border-color 0.2s ease;
-}
-
-.language-select:hover {
-  border-color: var(--primary-color);
-}
-
-.language-select:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(2, 204, 89, 0.1);
-}
-
-
-.desktop-frame {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: var(--spacing-lg);
-  background: var(--background-primary);
-  border-radius: var(--border-radius-md);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.desktop-content {
-  position: relative;
-  width: 100%;
+html, body {
   height: 100%;
-  min-height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-width: none;
-  background: var(--background-primary) no-repeat top/cover local;
-  padding: var(--spacing-md) var(--spacing-4xl) var(--spacing-5xl);
-}
-
-.desktop-content::-webkit-scrollbar {
-  display: none;
-}
-
-.mobile-frame {
-  width: 375px;
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 16px;
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e0e0e0;
-}
-
-.mobile-content {
   width: 100%;
-  min-height: 600px;
+  font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: #f5f5f5;
+  overflow: hidden;
 }
 
-.components-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+#root {
+  height: 100%;
+  width: 100%;
 }
 
-.component-wrapper {
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 20px;
-  background: white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.app-container {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
 }
 
-.component-title {
-  margin-bottom: 15px;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-color);
+/* Ensure components maintain their styling */
+.app-container > div {
+  contain: layout style;
+}
+
+/* Mobile responsive behavior */
+@media (max-width: 1200px) {
+  .app-container {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    padding: 10px !important;
+    gap: 10px !important;
+    height: auto !important;
+    min-height: 100vh !important;
+  }
+  
+  .app-container > div {
+    grid-column: unset !important;
+    grid-row: unset !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 200px !important;
+    flex-shrink: 0 !important;
+  }
 }
 
 @media (max-width: 768px) {
-  .desktop-frame {
-    max-width: 100%;
-    padding: 12px;
+  .app-container {
+    padding: 8px !important;
+    gap: 8px !important;
   }
-  
-  .desktop-content {
-    padding: 12px;
-  }
-  
-  .app {
-    padding: 10px;
-  }
+}
 
-  .app-header {
-    flex-direction: column;
-    gap: 15px;
-    text-align: center;
-  }
-
-  .app-header h1 {
-    font-size: 20px;
+@media (max-width: 480px) {
+  .app-container {
+    padding: 5px !important;
+    gap: 5px !important;
   }
 }`;
 };

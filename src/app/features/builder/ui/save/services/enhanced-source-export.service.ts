@@ -6,6 +6,14 @@ import {
   publishComponentsAndPreview,
 } from "../api/action";
 import { compileLanguageObject } from "../../language/compiler/language-compiler";
+import { enhancedGridService } from "../../content-renderer/layouts/grid/services/enhanced-grid.service";
+
+export interface ComponentLayoutData {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
 
 export class EnhancedSourceExportService {
   static async downloadServerSources(
@@ -19,6 +27,35 @@ export class EnhancedSourceExportService {
     }
 
     try {
+      // Get the current grid layout to determine positioning and order
+      const gridLayout = enhancedGridService.loadLayout(viewMode);
+      const visualOrderMap = new Map<string, { order: number; layout: ComponentLayoutData }>();
+      
+      if (gridLayout && gridLayout.length > 0) {
+        // Sort layout items by their visual position (top to bottom, left to right)
+        const sortedLayout = [...gridLayout].sort((a, b) => {
+          // First sort by row (y position)
+          if (a.y !== b.y) {
+            return a.y - b.y;
+          }
+          // Then sort by column (x position) within the same row
+          return a.x - b.x;
+        });
+
+        // Create visual order mapping with layout data
+        sortedLayout.forEach((layoutItem, index) => {
+          visualOrderMap.set(layoutItem.i, {
+            order: index,
+            layout: {
+              x: layoutItem.x,
+              y: layoutItem.y,
+              w: layoutItem.w,
+              h: layoutItem.h,
+            }
+          });
+        });
+      }
+
       const potentialNames = this.extractServerComponentNames(components);
       if (potentialNames.length === 0) {
         alert("No potential server components found.");
@@ -28,6 +65,8 @@ export class EnhancedSourceExportService {
       const validComponents: {
         name: string;
         originalComponent: ComponentState;
+        visualOrder: number;
+        gridLayout?: ComponentLayoutData;
       }[] = [];
 
       const usedComponentIndices = new Set<number>();
@@ -52,9 +91,17 @@ export class EnhancedSourceExportService {
 
             const instanceId =
               currentCount === 0 ? name : `${name}_${currentCount + 1}`;
+            
+            // Get visual order and layout data
+            const visualData = visualOrderMap.get(originalComponent.id);
+            const visualOrder = visualData?.order ?? originalComponentIndex;
+            const gridLayoutData = visualData?.layout;
+
             validComponents.push({
               name: instanceId,
               originalComponent,
+              visualOrder,
+              gridLayout: gridLayoutData,
             });
           }
         }
@@ -66,14 +113,19 @@ export class EnhancedSourceExportService {
         );
         return;
       }
+
+      // Sort components by their visual order for proper positioning
+      validComponents.sort((a, b) => a.visualOrder - b.visualOrder);
+
       const existingComponents = validComponents.map((comp) => comp.name);
       const componentPropsMap: Record<string, Record<string, unknown>> = {};
       const componentLanguageMap: Record<
         string,
         Record<string, Record<string, string>>
       > = {};
+      const componentLayoutMap: Record<string, ComponentLayoutData> = {};
 
-      validComponents.forEach(({ name, originalComponent }) => {
+      validComponents.forEach(({ name, originalComponent, gridLayout }) => {
         const componentProps = originalComponent.props || {};
         if (componentProps && Object.keys(componentProps).length > 0) {
           componentPropsMap[name] = componentProps as Record<string, unknown>;
@@ -84,13 +136,19 @@ export class EnhancedSourceExportService {
         if (languageData) {
           componentLanguageMap[name] = languageData;
         }
+
+        // Add grid layout information for positioning
+        if (gridLayout) {
+          componentLayoutMap[name] = gridLayout;
+        }
       });
 
       await downloadMultipleComponentsSources(
         existingComponents,
         componentPropsMap,
         componentLanguageMap,
-        viewMode
+        viewMode,
+        componentLayoutMap
       );
     } catch (error) {
       console.error("Failed to download server sources:", error);
@@ -111,6 +169,35 @@ export class EnhancedSourceExportService {
     }
 
     try {
+      // Get the current grid layout to determine positioning and order
+      const gridLayout = enhancedGridService.loadLayout(viewMode);
+      const visualOrderMap = new Map<string, { order: number; layout: ComponentLayoutData }>();
+      
+      if (gridLayout && gridLayout.length > 0) {
+        // Sort layout items by their visual position (top to bottom, left to right)
+        const sortedLayout = [...gridLayout].sort((a, b) => {
+          // First sort by row (y position)
+          if (a.y !== b.y) {
+            return a.y - b.y;
+          }
+          // Then sort by column (x position) within the same row
+          return a.x - b.x;
+        });
+
+        // Create visual order mapping with layout data
+        sortedLayout.forEach((layoutItem, index) => {
+          visualOrderMap.set(layoutItem.i, {
+            order: index,
+            layout: {
+              x: layoutItem.x,
+              y: layoutItem.y,
+              w: layoutItem.w,
+              h: layoutItem.h,
+            }
+          });
+        });
+      }
+
       const potentialNames = this.extractServerComponentNames(components);
       if (potentialNames.length === 0) {
         alert("No potential server components found.");
@@ -121,6 +208,8 @@ export class EnhancedSourceExportService {
       const validComponents: {
         name: string;
         originalComponent: ComponentState;
+        visualOrder: number;
+        gridLayout?: ComponentLayoutData;
       }[] = [];
 
       const usedComponentIndices = new Set<number>();
@@ -145,9 +234,17 @@ export class EnhancedSourceExportService {
 
             const instanceId =
               currentCount === 0 ? name : `${name}_${currentCount + 1}`;
+            
+            // Get visual order and layout data
+            const visualData = visualOrderMap.get(originalComponent.id);
+            const visualOrder = visualData?.order ?? originalComponentIndex;
+            const gridLayoutData = visualData?.layout;
+
             validComponents.push({
               name: instanceId,
               originalComponent,
+              visualOrder,
+              gridLayout: gridLayoutData,
             });
           }
         }
@@ -160,14 +257,18 @@ export class EnhancedSourceExportService {
         return;
       }
 
+      // Sort components by their visual order for proper positioning
+      validComponents.sort((a, b) => a.visualOrder - b.visualOrder);
+
       const existingComponents = validComponents.map((comp) => comp.name);
       const componentPropsMap: Record<string, Record<string, unknown>> = {};
       const componentLanguageMap: Record<
         string,
         Record<string, Record<string, string>>
       > = {};
+      const componentLayoutMap: Record<string, ComponentLayoutData> = {};
 
-      validComponents.forEach(({ name, originalComponent }) => {
+      validComponents.forEach(({ name, originalComponent, gridLayout }) => {
         const componentProps = originalComponent.props || {};
         if (componentProps && Object.keys(componentProps).length > 0) {
           componentPropsMap[name] = componentProps as Record<string, unknown>;
@@ -178,13 +279,19 @@ export class EnhancedSourceExportService {
         if (languageData) {
           componentLanguageMap[name] = languageData;
         }
+
+        // Add grid layout information for positioning
+        if (gridLayout) {
+          componentLayoutMap[name] = gridLayout;
+        }
       });
 
       const previewUrl = await publishComponentsAndPreview(
         existingComponents,
         componentPropsMap,
         componentLanguageMap,
-        viewMode
+        viewMode,
+        componentLayoutMap
       );
 
       if (previewUrl) {
