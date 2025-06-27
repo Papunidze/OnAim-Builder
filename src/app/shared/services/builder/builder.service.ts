@@ -11,6 +11,7 @@ import {
 import { loadComponentData } from "@app-features/builder/ui/content-renderer/services";
 import { copyService } from "@app-features/builder/ui/copy/services/copy.service";
 import { isEqual } from "lodash";
+import { enhancedGridService } from "@app-features/builder/ui/content-renderer/layouts/grid/services/enhanced-grid.service";
 
 export class BuilderService {
   private state: BuilderState = {
@@ -560,8 +561,55 @@ export class BuilderService {
       return;
     }
 
+    // Get the current grid layout for the source mode to preserve order
+    const sourceLayout = enhancedGridService.loadLayout(fromMode);
+    let orderedComponents = [...sourceComponents];
+
+    // If we have a saved layout, sort components by their visual order in the grid
+    if (sourceLayout && sourceLayout.length > 0) {
+      // Create a map of component ID to layout position for sorting
+      const layoutPositionMap = new Map<string, { x: number; y: number; order: number }>();
+      
+      // Sort layout items by their visual position (top to bottom, left to right)
+      const sortedLayout = [...sourceLayout].sort((a, b) => {
+        // First sort by row (y position)
+        if (a.y !== b.y) {
+          return a.y - b.y;
+        }
+        // Then sort by column (x position) within the same row
+        return a.x - b.x;
+      });
+
+      // Assign order numbers based on sorted visual positions
+      sortedLayout.forEach((layoutItem, index) => {
+        layoutPositionMap.set(layoutItem.i, {
+          x: layoutItem.x,
+          y: layoutItem.y,
+          order: index
+        });
+      });
+
+      // Sort components based on their visual order in the grid
+      orderedComponents = sourceComponents.sort((a, b) => {
+        const aPosition = layoutPositionMap.get(a.id);
+        const bPosition = layoutPositionMap.get(b.id);
+        
+        // If both components have layout positions, sort by order
+        if (aPosition && bPosition) {
+          return aPosition.order - bPosition.order;
+        }
+        
+        // If only one has a position, prioritize the one with position
+        if (aPosition && !bPosition) return -1;
+        if (!aPosition && bPosition) return 1;
+        
+        // If neither has a position, maintain original order
+        return 0;
+      });
+    }
+
     const copyResult = copyService.copyComponents(
-      sourceComponents,
+      orderedComponents,
       fromMode,
       toMode,
       {
