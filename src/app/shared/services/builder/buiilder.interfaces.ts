@@ -6,6 +6,13 @@ export interface ComponentState {
   styles: Record<string, string>;
   position?: { x: number; y: number };
   size?: { width: number; height: number };
+  // Grid layout information for undo/redo functionality
+  gridLayout?: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  };
   timestamp: number;
   component?: React.ComponentType<unknown>;
   compiledData?: {

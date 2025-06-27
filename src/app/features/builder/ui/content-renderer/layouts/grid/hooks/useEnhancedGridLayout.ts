@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import type { Layout } from "react-grid-layout";
 import type { ComponentInstanceState } from "../../../types";
 import { enhancedGridService, type GridConfig } from "../services/enhanced-grid.service";
+import { useBuilder } from "@app-shared/services/builder/useBuilder.service";
 
 export interface UseEnhancedGridLayoutOptions {
   viewMode: string;
@@ -39,6 +40,7 @@ export function useEnhancedGridLayout({
   useOptimizedLayout = true,
 }: UseEnhancedGridLayoutOptions): UseEnhancedGridLayoutReturn {
   const viewModeTyped = viewMode as 'desktop' | 'mobile';
+  const { updateComponent, getComponents, components } = useBuilder();
   
   const [layout, setLayout] = useState<Layout[]>(() => {
     if (instances.length === 0) return [];
@@ -84,11 +86,87 @@ export function useEnhancedGridLayout({
   }, [viewModeTyped]);
 
   const previousInstancesRef = useRef<string>("");
+  const componentsSignatureRef = useRef<string>("");
 
   const instancesSignature = useMemo(
     () => instances.map((i) => `${i.id}:${i.name}`).sort().join("|"),
     [instances]
   );
+
+  // Get current view mode components directly from the builder state with stable reference
+  const currentViewModeComponents = useMemo(() => {
+    return components[viewModeTyped] || [];
+  }, [components, viewModeTyped]);
+
+  // Create a stable signature for components with gridLayout data
+  const currentComponentsSignature = useMemo(() => {
+    return currentViewModeComponents
+      .map(comp => `${comp.id}:${comp.timestamp}:${comp.gridLayout ? `${comp.gridLayout.x},${comp.gridLayout.y},${comp.gridLayout.w},${comp.gridLayout.h}` : 'no-grid'}`)
+      .sort()
+      .join("|");
+  }, [currentViewModeComponents]);
+
+  // Effect to restore grid layout from component state when undo/redo occurs
+  useEffect(() => {
+    if (currentComponentsSignature === componentsSignatureRef.current) {
+      return; // No changes, skip
+    }
+    
+    const hasGridLayoutData = currentViewModeComponents.some(comp => comp.gridLayout);
+    
+    if (hasGridLayoutData && !isDragging && !isResizing) {
+      const restoredLayout: Layout[] = [];
+      
+      currentViewModeComponents.forEach(comp => {
+        if (comp.gridLayout) {
+          restoredLayout.push({
+            i: comp.id,
+            x: comp.gridLayout.x,
+            y: comp.gridLayout.y,
+            w: comp.gridLayout.w,
+            h: comp.gridLayout.h,
+            minW: config.minWidth,
+            minH: config.minHeight,
+            maxW: config.maxWidth,
+            maxH: config.maxHeight,
+          });
+        }
+      });
+      
+      if (restoredLayout.length > 0) {
+        const validatedLayout = enhancedGridService.validateLayout(restoredLayout);
+        setLayout(validatedLayout);
+        
+        if (persistLayout) {
+          enhancedGridService.saveLayout(viewMode, validatedLayout);
+        }
+      }
+    }
+    
+    componentsSignatureRef.current = currentComponentsSignature;
+  }, [currentComponentsSignature, config, isDragging, isResizing, persistLayout, viewMode, currentViewModeComponents]);
+
+  // Effect to sync initial grid layout to component state
+  useEffect(() => {
+    if (!isDragging && !isResizing && layout.length > 0) {
+      const components = getComponents(viewModeTyped);
+      
+      layout.forEach(layoutItem => {
+        const component = components.find(comp => comp.id === layoutItem.i);
+        if (component && !component.gridLayout) {
+          // Save initial grid layout to component state for undo/redo tracking
+          updateComponent(component.id, {
+            gridLayout: {
+              x: layoutItem.x,
+              y: layoutItem.y,
+              w: layoutItem.w,
+              h: layoutItem.h,
+            }
+          }, { skipHistory: true }); // Skip history for initial sync to avoid unnecessary undo states
+        }
+      });
+    }
+  }, [layout, getComponents, viewModeTyped, updateComponent, isDragging, isResizing]);
 
   useEffect(() => {
     if (previousInstancesRef.current !== instancesSignature) {
@@ -176,7 +254,7 @@ export function useEnhancedGridLayout({
     setIsDragging(true);
   }, []);
 
-  const handleDragStop = useCallback((layout: Layout[], _oldItem: Layout, _newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
+  const handleDragStop = useCallback((layout: Layout[], oldItem: Layout, newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
     setIsDragging(false);
     const validatedLayout = enhancedGridService.validateLayout(layout);
     setLayout(validatedLayout);
@@ -184,13 +262,28 @@ export function useEnhancedGridLayout({
     if (persistLayout) {
       enhancedGridService.saveLayout(viewMode, validatedLayout);
     }
-  }, [viewMode, persistLayout]);
+
+    // Save to undo/redo history if the position actually changed
+    if (oldItem.x !== newItem.x || oldItem.y !== newItem.y) {
+      const componentId = newItem.i;
+      
+      updateComponent(componentId, { 
+        gridLayout: {
+          x: newItem.x,
+          y: newItem.y,
+          w: newItem.w,
+          h: newItem.h,
+        },
+        timestamp: Date.now()
+      });
+    }
+  }, [viewMode, persistLayout, updateComponent]);
 
   const handleResizeStart = useCallback((): void => {
     setIsResizing(true);
   }, []);
 
-  const handleResizeStop = useCallback((layout: Layout[], _oldItem: Layout, _newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
+  const handleResizeStop = useCallback((layout: Layout[], oldItem: Layout, newItem: Layout, _placeholder: Layout, _e: MouseEvent, _element: HTMLElement) => {
     setIsResizing(false);
     const validatedLayout = enhancedGridService.validateLayout(layout);
     setLayout(validatedLayout);
@@ -198,7 +291,22 @@ export function useEnhancedGridLayout({
     if (persistLayout) {
       enhancedGridService.saveLayout(viewMode, validatedLayout);
     }
-  }, [viewMode, persistLayout]);
+
+    // Save to undo/redo history if the size actually changed
+    if (oldItem.w !== newItem.w || oldItem.h !== newItem.h) {
+      const componentId = newItem.i;
+      
+      updateComponent(componentId, { 
+        gridLayout: {
+          x: newItem.x,
+          y: newItem.y,
+          w: newItem.w,
+          h: newItem.h,
+        },
+        timestamp: Date.now()
+      });
+    }
+  }, [viewMode, persistLayout, updateComponent]);
 
   const resetLayout = useCallback((): void => {
     const newLayout = enhancedGridService.resetToDefaultLayout(instances, viewModeTyped);

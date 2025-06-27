@@ -285,11 +285,16 @@ export class BuilderService {
                 component[key as keyof ComponentState]
           );
 
+          // Check for gridLayout changes specifically
+          const hasGridLayoutChanges = updates.gridLayout && 
+            !isEqual(updates.gridLayout, component.gridLayout);
+
           if (
             !hasPropsChanges &&
             !hasStylesChanges &&
             !hasCompiledDataChanges &&
-            !hasOtherChanges
+            !hasOtherChanges &&
+            !hasGridLayoutChanges
           ) {
             return false;
           }
@@ -513,6 +518,7 @@ export class BuilderService {
 
     const previousState = this.undoStack.pop()!;
     this.redoStack.push(JSON.parse(JSON.stringify(this.state)));
+    
     this.state = previousState;
 
     this.invalidateAllComponentCaches();
@@ -534,6 +540,7 @@ export class BuilderService {
 
     const nextState = this.redoStack.pop()!;
     this.undoStack.push(JSON.parse(JSON.stringify(this.state)));
+    
     this.state = nextState;
 
     this.invalidateAllComponentCaches();
