@@ -20,8 +20,8 @@ export class GridManager {
     this.options = {
       autoSave: true,
       persistLayout: true,
-      onLayoutChange: () => {},
-      onError: () => {},
+      onLayoutChange: (): void => {},
+      onError: (): void => {},
       ...options,
     };
   }

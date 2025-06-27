@@ -42,14 +42,14 @@ export class EnhancedGridService {
   generateDefaultLayout(instances: ComponentInstanceState[], viewMode: 'desktop' | 'mobile' = 'desktop'): Layout[] {
     const config = this.configs[viewMode];
     
-    return instances.map((instance, index) => {
+    const layout = instances.map((instance, index) => {
       const col = index % config.componentsPerRow;
       const row = Math.floor(index / config.componentsPerRow);
       
       const xPosition = col * config.componentWidth;
       const safeX = Math.min(xPosition, config.cols - config.componentWidth);
 
-      return {
+      const layoutItem = {
         i: instance.id,
         x: safeX,
         y: row * config.defaultHeight,
@@ -60,7 +60,11 @@ export class EnhancedGridService {
         maxW: config.maxWidth,
         maxH: config.maxHeight
       };
+      
+      return layoutItem;
     });
+    
+    return layout;
   }
 
   generateOptimizedLayout(instances: ComponentInstanceState[], viewMode: 'desktop' | 'mobile' = 'desktop'): Layout[] {
@@ -147,7 +151,6 @@ export class EnhancedGridService {
 
   private clearOldVersionLayouts(viewMode: string): void {
     try {
-      // Clear old version layouts
       localStorage.removeItem(`layout_${viewMode}`);
       localStorage.removeItem(`enhanced_layout_${viewMode}_v1.0`);
     } catch (error) {
@@ -160,10 +163,8 @@ export class EnhancedGridService {
     
     return layout.map(item => ({
       ...item,
-      // Ensure minimum dimensions
-      w: Math.max(item.w || config.componentWidth, config.minWidth),
-      h: Math.max(item.h || config.defaultHeight, config.minHeight),
-      // Add min/max constraints
+      w: Math.max(item.w || config.componentWidth, config.componentWidth, config.minWidth),
+      h: Math.max(item.h || config.defaultHeight, config.defaultHeight, config.minHeight),
       minW: config.minWidth,
       minH: config.minHeight,
       maxW: config.maxWidth,
@@ -243,7 +244,6 @@ export class EnhancedGridService {
     return null;
   }
 
-  // Debug helpers
   logLayoutInfo(_layout: Layout[], _viewMode: 'desktop' | 'mobile'): void {
     return;
   }

@@ -40,22 +40,44 @@ export function useEnhancedGridLayout({
 }: UseEnhancedGridLayoutOptions): UseEnhancedGridLayoutReturn {
   const viewModeTyped = viewMode as 'desktop' | 'mobile';
   
-  const [layout, setLayout] = useState<Layout[]>([]);
-  const [isLayoutLoading, setIsLayoutLoading] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isResizing, setIsResizing] = useState(false);
-
-  useEffect(() => {
-    setIsLayoutLoading(true);
-
+  const [layout, setLayout] = useState<Layout[]>(() => {
+    if (instances.length === 0) return [];
+    
+    if (persistLayout) {
+      const savedLayout = enhancedGridService.loadLayout(viewMode);
+      if (savedLayout && savedLayout.length > 0) {
+        const hasOldDimensions = savedLayout.some(item => item.w <= 1 || item.h <= 1);
+        if (!hasOldDimensions) {
+          const instanceIds = new Set(instances.map(i => i.id));
+          const layoutIds = new Set(savedLayout.map(item => item.i));
+          
+          const missingInstances = instances.filter(i => !layoutIds.has(i.id));
+          
+          if (missingInstances.length > 0) {
+            
+            const newLayoutItems = useOptimizedLayout 
+              ? enhancedGridService.generateOptimizedLayout(missingInstances, viewModeTyped)
+              : enhancedGridService.generateDefaultLayout(missingInstances, viewModeTyped);
+            
+            
+            const combinedLayout = [...savedLayout.filter(item => instanceIds.has(item.i)), ...newLayoutItems];
+            
+            return combinedLayout;
+          }
+          
+          return savedLayout.filter(item => instanceIds.has(item.i));
+        }
+        enhancedGridService.clearLayout(viewMode);
+      }
+    }
     const newLayout = useOptimizedLayout 
       ? enhancedGridService.generateOptimizedLayout(instances, viewModeTyped)
       : enhancedGridService.generateDefaultLayout(instances, viewModeTyped);
-    
-    setLayout(newLayout);
-    setIsLayoutLoading(false);
-    
-  }, [viewMode, instances, useOptimizedLayout, viewModeTyped]);
+    return newLayout;
+  });
+  const [isLayoutLoading, setIsLayoutLoading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
 
   const config = useMemo(() => {
     return enhancedGridService.getConfig(viewModeTyped);
@@ -63,63 +85,92 @@ export function useEnhancedGridLayout({
 
   const previousInstancesRef = useRef<string>("");
 
-  const instanceIds = useMemo(
-    () => instances.map((i) => i.id).join(","),
+  const instancesSignature = useMemo(
+    () => instances.map((i) => `${i.id}:${i.name}`).sort().join("|"),
     [instances]
   );
 
   useEffect(() => {
-    if (previousInstancesRef.current !== instanceIds) {
+    if (previousInstancesRef.current !== instancesSignature) {
       if (instances.length === 0) {
         setLayout([]);
         setIsLayoutLoading(false);
-        previousInstancesRef.current = instanceIds;
+        previousInstancesRef.current = instancesSignature;
         return;
       }
       
-      const currentLayout = layout;
-      const needsLayoutUpdate = enhancedGridService.hasLayoutChanged(currentLayout, instances);
-      
-      if (needsLayoutUpdate) {
-        setIsLayoutLoading(true);
+      // Use callback to get current layout state
+      setLayout(currentLayout => {
+        // Only check for layout changes if we actually have new or removed components
+        const currentInstanceIds = new Set(instances.map(i => i.id));
+        const layoutInstanceIds = new Set(currentLayout.map(item => item.i));
         
-        const timeoutId = setTimeout(() => {
-          try {
-            const newLayout = useOptimizedLayout 
-              ? enhancedGridService.generateOptimizedLayout(instances, viewModeTyped)
-              : enhancedGridService.generateDefaultLayout(instances, viewModeTyped);
+        const hasNewComponents = instances.some(i => !layoutInstanceIds.has(i.id));
+        const hasRemovedComponents = currentLayout.some(item => !currentInstanceIds.has(item.i));
+        
+        if (hasNewComponents || hasRemovedComponents) {
+          setIsLayoutLoading(true);
+          
+          // Preserve existing layout items for components that still exist
+          const existingLayoutItems = currentLayout.filter(item => 
+            instances.some(instance => instance.id === item.i)
+          );
+          
+          // Only generate layout for truly new components
+          const newInstances = instances.filter(instance => 
+            !currentLayout.some(item => item.i === instance.id)
+          );
+          
+          let newLayout: Layout[];
+          
+          if (newInstances.length > 0) {
+            const newLayoutItems = useOptimizedLayout 
+              ? enhancedGridService.generateOptimizedLayout(newInstances, viewModeTyped)
+              : enhancedGridService.generateDefaultLayout(newInstances, viewModeTyped);
             
-            const validatedLayout = enhancedGridService.validateLayout(newLayout);
             
-            setLayout(validatedLayout);
-          } catch {
-            setLayout([]);
-          } finally {
-            setIsLayoutLoading(false);
+            const maxY = existingLayoutItems.length > 0 
+              ? Math.max(...existingLayoutItems.map(item => item.y + item.h))
+              : 0;
+            
+            const adjustedNewItems = newLayoutItems.map(item => ({
+              ...item,
+              y: item.y + maxY
+            }));
+            
+            
+            newLayout = [...existingLayoutItems, ...adjustedNewItems];
+          } else {
+            newLayout = existingLayoutItems;
           }
-        }, 50);
-
-        previousInstancesRef.current = instanceIds;
-
-        return () => {
-          clearTimeout(timeoutId);
-        };
-      } else {
-        setIsLayoutLoading(false);
-      }
+          
+          const validatedLayout = enhancedGridService.validateLayout(newLayout);
+          
+          setIsLayoutLoading(false);
+          return validatedLayout;
+        } else {
+          setIsLayoutLoading(false);
+          return currentLayout;
+        }
+      });
       
-      previousInstancesRef.current = instanceIds;
+      previousInstancesRef.current = instancesSignature;
     }
-  }, [instanceIds, instances, viewMode, viewModeTyped, useOptimizedLayout, layout]);
+  }, [instancesSignature, instances, viewModeTyped, useOptimizedLayout]);
 
   const handleLayoutChange = useCallback((newLayout: Layout[]) => {
     const validatedLayout = enhancedGridService.validateLayout(newLayout);
+    
+    // Only update if layout actually changed
+    const layoutChanged = JSON.stringify(layout) !== JSON.stringify(validatedLayout);
+    if (!layoutChanged) return;
+    
     setLayout(validatedLayout);
 
     if (autoSave && persistLayout && !isDragging && !isResizing) {
       enhancedGridService.saveLayout(viewMode, validatedLayout);
     }
-  }, [viewMode, autoSave, persistLayout, isDragging, isResizing]);
+  }, [viewMode, autoSave, persistLayout, isDragging, isResizing, layout]);
 
   const handleDragStart = useCallback((): void => {
     setIsDragging(true);

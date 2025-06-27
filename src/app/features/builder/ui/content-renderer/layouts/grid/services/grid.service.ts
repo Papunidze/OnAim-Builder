@@ -77,6 +77,47 @@ export class GridService {
     });
   }
 
+  generateLayoutForNewInstances(
+    instances: ComponentInstanceState[], 
+    existingLayout: Layout[], 
+    viewMode: 'desktop' | 'mobile' = 'desktop'
+  ): Layout[] {
+    const config = this.configs[viewMode];
+    
+    const occupiedPositions = new Set<string>();
+    
+    existingLayout.forEach(item => {
+      for (let x = item.x; x < item.x + item.w; x++) {
+        for (let y = item.y; y < item.y + item.h; y++) {
+          occupiedPositions.add(`${x},${y}`);
+        }
+      }
+    });
+    
+    const maxY = existingLayout.length > 0 
+      ? Math.max(...existingLayout.map(item => item.y + item.h))
+      : 0;
+    
+    return instances.map((instance, index) => {
+      const col = index % config.componentsPerRow;
+      const row = Math.floor(index / config.componentsPerRow);
+      
+      const xPosition = col * config.componentWidth;
+      const safeX = Math.min(xPosition, config.cols - config.componentWidth);
+      const yPosition = maxY + (row * config.defaultHeight);
+
+      return {
+        i: instance.id,
+        x: safeX,
+        y: yPosition,
+        w: config.componentWidth,
+        h: config.defaultHeight,
+        minW: 2,
+        minH: 2,
+      };
+    });
+  }
+
   saveLayout(viewMode: string, layout: Layout[]): void {
     const key = `layout_${viewMode}`;
     this.layouts.set(key, [...layout]);

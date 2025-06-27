@@ -23,7 +23,6 @@ const DraggableGridLayout = memo(function DraggableGridLayout({
     handleDragStop,
     handleResizeStart,
     handleResizeStop,
-    logLayoutInfo,
   } = useEnhancedGridLayout({
     viewMode,
     instances,
@@ -31,13 +30,6 @@ const DraggableGridLayout = memo(function DraggableGridLayout({
     persistLayout: !readOnly,
     useOptimizedLayout: true,
   });
-
-  if (layout.length > 0) {
-    console.log(`=== ${viewMode.toUpperCase()} GRID COMPONENT ===`);
-    console.log("Layout:", layout);
-    console.log("Config:", config);
-    logLayoutInfo();
-  }
 
 
   return (
@@ -52,7 +44,6 @@ const DraggableGridLayout = memo(function DraggableGridLayout({
         onResizeStop={handleResizeStop}
         cols={config.cols}
         rowHeight={config.rowHeight}
-        width={1200}
         margin={config.margin}
         containerPadding={config.containerPadding}
         isResizable={!readOnly}
@@ -63,22 +54,49 @@ const DraggableGridLayout = memo(function DraggableGridLayout({
         draggableHandle=".drag-handle"
         resizeHandle={<div className={styles.resizeHandle}><span className={styles.resizeIcon}></span></div>}
       >
-        {instances.map((instance) => (
-          <div key={instance.id} className={styles.gridItem}>
-            <div className={`drag-handle ${styles.dragHandle}`}>
-              <span className={styles.dragIcon}></span>
+        {instances
+          .filter(instance => layout.some(item => item.i === instance.id))
+          .map((instance) => {
+          const layoutItem = layout.find(item => item.i === instance.id);
+          
+          
+          return (
+            <div 
+              key={instance.id} 
+              className={styles.gridItem}
+              style={{
+                border: `3px solid ${layoutItem?.w === 1 ? 'red' : 'green'}`,
+                boxSizing: 'border-box'
+              }}
+            >
+              <div className={`drag-handle ${styles.dragHandle}`}>
+                <span className={styles.dragIcon}></span>
+              </div>
+              {!readOnly && (
+                <div className={`status-indicator ${styles.statusIndicator} ${styles.active}`}></div>
+              )}
+              <div className={styles.componentWrapper}>
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  background: 'rgba(0,0,0,0.7)',
+                  color: 'white',
+                  padding: '2px 4px',
+                  fontSize: '10px',
+                  zIndex: 1000,
+                  pointerEvents: 'none'
+                }}>
+                  {layoutItem ? `${layoutItem.w}x${layoutItem.h}` : 'NO LAYOUT'}
+                </div>
+                <ComponentInstance
+                  instance={instance}
+                  onRetry={() => { return; }}
+                />
+              </div>
             </div>
-            {!readOnly && (
-              <div className={`status-indicator ${styles.statusIndicator} ${styles.active}`}></div>
-            )}
-            <div className={styles.componentWrapper}>
-              <ComponentInstance
-                instance={instance}
-                onRetry={() => { return; }}
-              />
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </ResponsiveGridLayout>
     </div>
   );
