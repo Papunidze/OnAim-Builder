@@ -1,7 +1,7 @@
 import type { JSX } from "react";
 import { useState } from "react";
 import styles from "../save.module.css";
-import { JSONImportService } from "../services/export.services";
+import { JSONImportService } from "../services/json-import.service";
 import { Image } from "@app-shared/components";
 
 interface ImportProps {

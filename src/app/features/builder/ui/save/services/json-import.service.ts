@@ -1,6 +1,8 @@
 import { builderService } from "@app-shared/services/builder";
 import type { SaveData, ComponentExportData } from "../types/save.types";
 import type { ComponentState } from "@app-shared/services/builder";
+import { enhancedGridService } from "../../content-renderer/layouts/grid/services/enhanced-grid.service";
+import type { Layout } from "react-grid-layout";
 
 export class JSONImportService {
   static async importFromFile(file: File): Promise<boolean> {
@@ -27,15 +29,55 @@ export class JSONImportService {
         | "desktop"
         | "mobile";
 
-      const idMapping = new Map<string, string>();
+      // Sort components by their visual order if available
+      const sortedComponents = [...componentsToImport].sort((a, b) => {
+        // Use visualOrder if available, otherwise maintain original order
+        const orderA = a.visualOrder ?? componentsToImport.indexOf(a);
+        const orderB = b.visualOrder ?? componentsToImport.indexOf(b);
+        return orderA - orderB;
+      });
 
-      for (const componentData of componentsToImport) {
+      const idMapping = new Map<string, string>();
+      const gridLayoutItems: Layout[] = [];
+
+      for (const componentData of sortedComponents) {
         const newComponent = await this.importComponent(
           componentData,
           viewMode
         );
         if (newComponent) {
           idMapping.set(componentData.component.id, newComponent.id);
+          
+          // Collect grid layout data for restoration
+          if (componentData.layout.gridLayout) {
+            gridLayoutItems.push({
+              i: newComponent.id,
+              x: componentData.layout.gridLayout.x,
+              y: componentData.layout.gridLayout.y,
+              w: componentData.layout.gridLayout.w,
+              h: componentData.layout.gridLayout.h,
+              minW: 2,
+              minH: 2,
+            });
+          }
+        }
+      }
+
+      // Restore grid layout if we have grid layout data
+      if (gridLayoutItems.length > 0) {
+        // Save the grid layout to localStorage for the view mode
+        enhancedGridService.saveLayout(viewMode, gridLayoutItems);
+        
+        // Update components with gridLayout information for undo/redo system
+        for (let i = 0; i < sortedComponents.length; i++) {
+          const componentData = sortedComponents[i];
+          const newId = idMapping.get(componentData.component.id);
+          
+          if (newId && componentData.layout.gridLayout) {
+            builderService.updateComponent(newId, {
+              gridLayout: componentData.layout.gridLayout
+            }, { skipHistory: true });
+          }
         }
       }
 

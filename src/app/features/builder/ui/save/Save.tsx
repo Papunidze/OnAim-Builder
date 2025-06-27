@@ -13,6 +13,7 @@ import { ComponentTemplateApiService } from "../components/templates/services/co
 import { useBuilder } from "@app-shared/services/builder/useBuilder.service";
 import { extractComponentSettings } from "./utils/save.utils";
 import { LanguageStateUtils } from "../language/utils/language-state.utils";
+import { JSONImportService } from "./services/json-import.service";
 
 const Save = ({ viewMode }: SaveProps): JSX.Element => {
   const { isOpen, dropdownRef, toggle, close } = useDropdown();
@@ -20,6 +21,20 @@ const Save = ({ viewMode }: SaveProps): JSX.Element => {
   const { getSelectedComponent } = useBuilder();
   const { isTemplateDialogOpen, openTemplateDialog, closeTemplateDialog } =
     useTemplate();
+
+  const handleImport = async (): Promise<void> => {
+    try {
+      const success = await JSONImportService.handleFileImport();
+      if (success) {
+        alert("Project imported successfully! Grid layout has been restored.");
+      } else {
+        alert("Import cancelled or failed");
+      }
+    } catch (error) {
+      console.error("Import error:", error);
+      alert("Failed to import project");
+    }
+  };
 
   const handleSaveTemplate = async (templateData: {
     name: string;
@@ -77,9 +92,16 @@ const Save = ({ viewMode }: SaveProps): JSX.Element => {
 
   const dropdownOptions: DropdownOption[] = [
     {
+      id: "import-json",
+      label: "Import JSON",
+      description: "Import project with preserved grid layout",
+      icon: "",
+      onClick: handleImport,
+    },
+    {
       id: "json",
       label: "Download JSON",
-      description: "Export project data",
+      description: "Export project data with grid layout",
       icon: "",
       onClick: () => handleExport(() => JSONExportService.export(viewMode)),
     },

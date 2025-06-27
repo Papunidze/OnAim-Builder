@@ -6,12 +6,61 @@ import {
   downloadFile,
 } from "../utils/save.utils";
 import { LanguageStateUtils } from "../../language";
+import { enhancedGridService } from "../../content-renderer/layouts/grid/services/enhanced-grid.service";
 
 export class JSONExportService {
   static generateSaveData(viewMode: "desktop" | "mobile"): SaveData {
     const components = builderService.getLiveComponents(viewMode);
-    const componentData = components.map((comp, index) => {
+    
+    // Get the current grid layout to determine visual ordering
+    const gridLayout = enhancedGridService.loadLayout(viewMode);
+    const visualOrderMap = new Map<string, number>();
+    
+    if (gridLayout && gridLayout.length > 0) {
+      // Sort layout items by their visual position (top to bottom, left to right)
+      const sortedLayout = [...gridLayout].sort((a, b) => {
+        // First sort by row (y position)
+        if (a.y !== b.y) {
+          return a.y - b.y;
+        }
+        // Then sort by column (x position) within the same row
+        return a.x - b.x;
+      });
+
+      // Create visual order mapping
+      sortedLayout.forEach((layoutItem, index) => {
+        visualOrderMap.set(layoutItem.i, index);
+      });
+    }
+
+    // Sort components by their visual order for proper export
+    const sortedComponents = [...components].sort((a, b) => {
+      const orderA = visualOrderMap.get(a.id) ?? components.indexOf(a);
+      const orderB = visualOrderMap.get(b.id) ?? components.indexOf(b);
+      return orderA - orderB;
+    });
+
+    const componentData = sortedComponents.map((comp, index) => {
       const exportData = transformComponentToExportData(comp, index);
+
+      // Add grid layout information if available
+      if (gridLayout) {
+        const layoutItem = gridLayout.find(item => item.i === comp.id);
+        if (layoutItem) {
+          exportData.layout.gridLayout = {
+            x: layoutItem.x,
+            y: layoutItem.y,
+            w: layoutItem.w,
+            h: layoutItem.h,
+          };
+        }
+      }
+
+      // Add visual order for import restoration
+      const visualOrder = visualOrderMap.get(comp.id);
+      if (visualOrder !== undefined) {
+        exportData.visualOrder = visualOrder;
+      }
 
       const languageState =
         LanguageStateUtils.extractLanguageFromComponent(comp);

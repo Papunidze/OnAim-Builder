@@ -17,6 +17,12 @@ export interface ComponentExportData {
       coordinates: { x: number; y: number };
     };
     size?: { width: number; height: number };
+    gridLayout?: {
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+    };
   };
   configuration: {
     settings: Record<string, unknown>;
@@ -24,6 +30,7 @@ export interface ComponentExportData {
     styles: Record<string, unknown>;
     elementSpecificCSS: string;
   };
+  visualOrder?: number;
   language?: {
     currentLanguage: string;
     languageData: Record<string, Record<string, string>>;
